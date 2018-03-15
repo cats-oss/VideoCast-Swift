@@ -1,0 +1,6 @@
+[submodule "SRT/srt"]
+	path = SRT/srt
+	url = https://github.com/Haivision/srt
+[submodule "SRT/openssl"]
+	path = SRT/openssl
+	url = https://github.com/x2on/OpenSSL-for-iPhone
