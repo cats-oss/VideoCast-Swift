@@ -17,4 +17,8 @@ s.frameworks          = [ 'VideoToolbox', 'AudioToolbox', 'AVFoundation', 'CFNet
 'CoreVideo', 'OpenGLES', 'Foundation', 'CoreGraphics' ]
 
 s.libraries           = 'c++'
+
+s.pod_target_xcconfig = {
+    'CLANG_WARN_DOCUMENTATION_COMMENTS' => 'NO',
+}
 end
