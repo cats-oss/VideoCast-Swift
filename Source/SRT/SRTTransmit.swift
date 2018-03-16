@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SRT
 
 enum SRTError: Error {
     case invalidArgument(message: String)

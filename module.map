@@ -1,0 +1,5 @@
+module VideoCast [system] {
+    header "SRT/Includes/srt.h"
+    header "SRT/udt_wrapper.h"
+    export *
+}

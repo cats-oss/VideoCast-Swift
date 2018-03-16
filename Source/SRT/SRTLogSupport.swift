@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SRT
 
 public enum SRTLogLevel: Int {
     case alert

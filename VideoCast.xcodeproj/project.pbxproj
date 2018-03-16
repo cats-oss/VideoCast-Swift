@@ -19,6 +19,11 @@
 		812B917A2018556100D93731 /* BasicVideoFilterBGRA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812B91782018556100D93731 /* BasicVideoFilterBGRA.swift */; };
 		812B917D20188C6400D93731 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812B917C20188C6400D93731 /* Util.swift */; };
 		812B917E20188C6400D93731 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812B917C20188C6400D93731 /* Util.swift */; };
+		81386158205B864F00017B13 /* srt4udt.h in Headers */ = {isa = PBXBuildFile; fileRef = 81386153205B864E00017B13 /* srt4udt.h */; };
+		81386159205B864F00017B13 /* udt.h in Headers */ = {isa = PBXBuildFile; fileRef = 81386154205B864E00017B13 /* udt.h */; };
+		8138615A205B864F00017B13 /* srt.h in Headers */ = {isa = PBXBuildFile; fileRef = 81386155205B864F00017B13 /* srt.h */; };
+		8138615B205B864F00017B13 /* platform_sys.h in Headers */ = {isa = PBXBuildFile; fileRef = 81386156205B864F00017B13 /* platform_sys.h */; };
+		8138615C205B864F00017B13 /* logging_api.h in Headers */ = {isa = PBXBuildFile; fileRef = 81386157205B864F00017B13 /* logging_api.h */; };
 		813B2DDD201B14B4005658ED /* Buffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813B2DDC201B14B4005658ED /* Buffer.swift */; };
 		813B2DDE201B14B4005658ED /* Buffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813B2DDC201B14B4005658ED /* Buffer.swift */; };
 		814265C41FFF5519001258F2 /* IMetaData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814265C31FFF5519001258F2 /* IMetaData.swift */; };
@@ -35,6 +40,8 @@
 		814265D41FFF6EBD001258F2 /* IVideoMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814265D21FFF6EBD001258F2 /* IVideoMixer.swift */; };
 		814265D61FFF6F35001258F2 /* IAudioMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814265D51FFF6F35001258F2 /* IAudioMixer.swift */; };
 		814265D71FFF6F35001258F2 /* IAudioMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814265D51FFF6F35001258F2 /* IAudioMixer.swift */; };
+		814EA591205AD18D002D4657 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 814EA590205AD18D002D4657 /* LICENSE */; };
+		814EA593205AD199002D4657 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 814EA592205AD199002D4657 /* README.md */; };
 		815B0992201723D500DA6AF5 /* GLESUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815B0991201723D500DA6AF5 /* GLESUtil.swift */; };
 		8161D57E2057A82800813B7A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8161D57B20578A2B00813B7A /* libcrypto.a */; };
 		8161D57F2057A82800813B7A /* libsrt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 81BFD40920578428002E90D8 /* libsrt.a */; };
@@ -165,6 +172,11 @@
 		811D4B961FFF1B2E004EC189 /* VCSimpleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCSimpleSession.swift; sourceTree = "<group>"; };
 		812B91782018556100D93731 /* BasicVideoFilterBGRA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicVideoFilterBGRA.swift; sourceTree = "<group>"; };
 		812B917C20188C6400D93731 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
+		81386153205B864E00017B13 /* srt4udt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = srt4udt.h; sourceTree = "<group>"; };
+		81386154205B864E00017B13 /* udt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = udt.h; sourceTree = "<group>"; };
+		81386155205B864F00017B13 /* srt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = srt.h; sourceTree = "<group>"; };
+		81386156205B864F00017B13 /* platform_sys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_sys.h; sourceTree = "<group>"; };
+		81386157205B864F00017B13 /* logging_api.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = logging_api.h; sourceTree = "<group>"; };
 		813B2DDC201B14B4005658ED /* Buffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Buffer.swift; sourceTree = "<group>"; };
 		814265C31FFF5519001258F2 /* IMetaData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMetaData.swift; sourceTree = "<group>"; };
 		814265C61FFF57F2001258F2 /* IEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IEncoder.swift; sourceTree = "<group>"; };
@@ -173,6 +185,10 @@
 		814265CF1FFF6DD1001258F2 /* IMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMixer.swift; sourceTree = "<group>"; };
 		814265D21FFF6EBD001258F2 /* IVideoMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IVideoMixer.swift; sourceTree = "<group>"; };
 		814265D51FFF6F35001258F2 /* IAudioMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IAudioMixer.swift; sourceTree = "<group>"; };
+		814EA590205AD18D002D4657 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		814EA592205AD199002D4657 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		814EA594205AD1EB002D4657 /* VideoCast.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = VideoCast.podspec; sourceTree = "<group>"; };
+		814EA595205AD32E002D4657 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		815B0991201723D500DA6AF5 /* GLESUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLESUtil.swift; sourceTree = "<group>"; };
 		8161D57B20578A2B00813B7A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
 		816ECE9F1FFF27D4002AE4F9 /* VCSessionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCSessionDelegate.swift; sourceTree = "<group>"; };
@@ -280,6 +296,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		81052D71205BAD2200E00EF8 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				81B8CD69204F687C00B581F6 /* module.map */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
 		810C8CF2204E4B43002DFDCB /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -328,8 +352,11 @@
 		811F01F71FFE153C00557E7A = {
 			isa = PBXGroup;
 			children = (
-				81B8CD68204ECF8700B581F6 /* SRT */,
+				814EA58E205AD15A002D4657 /* Deployment */,
+				814EA58F205AD179002D4657 /* Documentation */,
 				818C0AF81FFE1B62008CF132 /* Source */,
+				81B8CD68204ECF8700B581F6 /* SRT */,
+				81052D71205BAD2200E00EF8 /* Supporting Files */,
 				818C0AFD1FFE1B6C008CF132 /* Tests */,
 				816E872C1FFE31C9005ACB46 /* Products */,
 				810C8CF2204E4B43002DFDCB /* Frameworks */,
@@ -349,6 +376,37 @@
 				81D1C1F62032917D0087F23E /* SepiaVideoFilter.swift */,
 			);
 			path = Basic;
+			sourceTree = "<group>";
+		};
+		81386152205B816A00017B13 /* Includes */ = {
+			isa = PBXGroup;
+			children = (
+				81386157205B864F00017B13 /* logging_api.h */,
+				81386156205B864F00017B13 /* platform_sys.h */,
+				81386155205B864F00017B13 /* srt.h */,
+				81386153205B864E00017B13 /* srt4udt.h */,
+				81386154205B864E00017B13 /* udt.h */,
+				81BFD40B2057864D002E90D8 /* version.h */,
+			);
+			path = Includes;
+			sourceTree = "<group>";
+		};
+		814EA58E205AD15A002D4657 /* Deployment */ = {
+			isa = PBXGroup;
+			children = (
+				814EA590205AD18D002D4657 /* LICENSE */,
+				814EA594205AD1EB002D4657 /* VideoCast.podspec */,
+				814EA595205AD32E002D4657 /* Package.swift */,
+			);
+			name = Deployment;
+			sourceTree = "<group>";
+		};
+		814EA58F205AD179002D4657 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				814EA592205AD199002D4657 /* README.md */,
+			);
+			name = Documentation;
 			sourceTree = "<group>";
 		};
 		816E872C1FFE31C9005ACB46 /* Products */ = {
@@ -507,12 +565,11 @@
 		81B8CD68204ECF8700B581F6 /* SRT */ = {
 			isa = PBXGroup;
 			children = (
-				81BFD40B2057864D002E90D8 /* version.h */,
+				81386152205B816A00017B13 /* Includes */,
 				81BFD4042057765D002E90D8 /* build_srt.sh */,
 				81BFD40620577C0E002E90D8 /* build_openssl.sh */,
 				8161D57B20578A2B00813B7A /* libcrypto.a */,
 				81BFD40920578428002E90D8 /* libsrt.a */,
-				81B8CD69204F687C00B581F6 /* module.map */,
 				81BFD40720577C29002E90D8 /* openssl */,
 				81BFD40120577573002E90D8 /* srt */,
 				81D33099204FEC17001E6AE7 /* udt_wrapper.cpp */,
@@ -569,8 +626,13 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				81386159205B864F00017B13 /* udt.h in Headers */,
+				8138615A205B864F00017B13 /* srt.h in Headers */,
 				816E872D1FFE34EB005ACB46 /* VideoCast.h in Headers */,
+				81386158205B864F00017B13 /* srt4udt.h in Headers */,
 				81D3309C204FEC17001E6AE7 /* udt_wrapper.h in Headers */,
+				8138615C205B864F00017B13 /* logging_api.h in Headers */,
+				8138615B205B864F00017B13 /* platform_sys.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -712,6 +774,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				814EA593205AD199002D4657 /* README.md in Resources */,
+				814EA591205AD18D002D4657 /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -928,6 +992,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = jp.co.cyberagent.VideoCast;
 				PRODUCT_NAME = VideoCast;
 				SKIP_INSTALL = YES;
+				SWIFT_INCLUDE_PATHS = "${SRCROOT}";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
@@ -959,6 +1024,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = jp.co.cyberagent.VideoCast;
 				PRODUCT_NAME = VideoCast;
 				SKIP_INSTALL = YES;
+				SWIFT_INCLUDE_PATHS = "${SRCROOT}";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

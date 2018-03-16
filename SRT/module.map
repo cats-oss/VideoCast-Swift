@@ -1,5 +1,0 @@
-module SRT [system] {
-    header "srt/srtcore/srt.h"
-    header "udt_wrapper.h"
-    export *
-}

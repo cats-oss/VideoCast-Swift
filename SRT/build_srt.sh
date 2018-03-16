@@ -30,6 +30,11 @@ pushd ./build/ios_arm64
 make
 popd
 
-cp ./build/ios_arm64/version.h .
+cp ./build/ios_arm64/version.h Includes
+cp ./srt/srtcore/srt.h Includes
+cp ./srt/srtcore/logging_api.h Includes
+cp ./srt/srtcore/platform_sys.h Includes
+cp ./srt/srtcore/udt.h Includes
+cp ./srt/srtcore/srt4udt.h Includes
 
 lipo -output libsrt.a -create ./build/ios_armv7/libsrt.a ./build/ios_arm64/libsrt.a

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SRT
 
 struct SRTOptionValue {
     var value: UnsafeRawPointer {

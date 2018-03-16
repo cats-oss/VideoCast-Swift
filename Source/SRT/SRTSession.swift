@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SRT
 
 public typealias SRTSessionParameters = MetaData<(
     chunk: Int32,
