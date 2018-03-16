@@ -2,9 +2,10 @@
 
 VideoCast-Swift is a framework for broadcasting live video. It is based on [VideoCore](https://github.com/jgh-/VideoCore-Inactive) C++ library but rewritten in Swift. It currently works with iOS. It is a work in progress and will eventually expand to other platforms such as OS X.
 
-###Table of Contents
+### Table of Contents
 * [Setup](#setup)
 * [Architecture Overview](#architecture-overview)
+* [Features](#features)
 * [Version History](#version-history)
 
 ## Setup
@@ -43,7 +44,21 @@ e.g. Source (Camera) -> Transform (Composite) -> Transform (H.264 Encode) -> Tra
  - Sources
    - Camera
    - Microphone
- 
+
+## Build SRT
+
+```
+git clone https://github.com/openfresh/VideoCast-Swift.git
+cd VideoCast-Swift
+
+git submodule update --init
+
+cd SRT
+./build_openssl.sh 
+./build_srt.sh
+
+```
+
 ## Version History
 
 * 0.1.0 
