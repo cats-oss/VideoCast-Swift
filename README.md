@@ -15,7 +15,7 @@ VideoCast-Swift is a framework for broadcasting live video. It is based on [Vide
 Create a `Podfile` with the contents
 ``` ruby
 platform :ios, '10.0'
-pod 'VideoCore', '~> 0.0.1'
+pod 'VideoCast', '~> 0.0.1'
 use_frameworks!
 ```
 Next, run `pod install` and open the `xcworkspace` file that is created.
