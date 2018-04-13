@@ -8,22 +8,21 @@
 
 import Foundation
 
-public typealias InstantiateFilter = () -> IFilter
-
 open class FilterFactory {
+    public typealias InstantiateFilter = () -> IFilter
+    
     private var filters: [String: IFilter] = [:]
     
     private static var registration: [String: InstantiateFilter] = [:]
     
-    
     public init() {
-        _ = BasicVideoFilterBGRA.registered
-        _ = BasicVideoFilterBGRAinYUVAout.registered
-        _ = FisheyeVideoFilter.registered
-        _ = GlowVideoFilter.registered
-        _ = GrayscaleVideoFilter.registered
-        _ = InvertColorsVideoFilter.registered
-        _ = SepiaVideoFilter.registered
+        _ = BasicVideoFilterBGRA.isRegistered
+        _ = BasicVideoFilterBGRAinYUVAout.isRegistered
+        _ = FisheyeVideoFilter.isRegistered
+        _ = GlowVideoFilter.isRegistered
+        _ = GrayscaleVideoFilter.isRegistered
+        _ = InvertColorsVideoFilter.isRegistered
+        _ = SepiaVideoFilter.isRegistered
     }
     
     open func filter(name: String) -> IFilter? {

@@ -10,7 +10,7 @@ import Foundation
 import GLKit
 
 open class BasicVideoFilterBGRA: BasicVideoFilter {
-    internal static let registered = registerFilter()
+    internal static let isRegistered = registerFilter()
     
     open override var name: String {
         return "com.videocast.filters.bgra"

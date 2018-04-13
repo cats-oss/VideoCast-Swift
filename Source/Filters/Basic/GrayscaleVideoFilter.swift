@@ -10,7 +10,7 @@ import Foundation
 import GLKit
 
 open class GrayscaleVideoFilter: BasicVideoFilter {
-    internal static let registered = registerFilter()
+    internal static let isRegistered = registerFilter()
     
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
