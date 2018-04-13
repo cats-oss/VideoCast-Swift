@@ -335,7 +335,7 @@ open class VCSimpleSession {
         
         var pixelBuffer: CVPixelBuffer? = nil
         
-        CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, options as NSDictionary?, &pixelBuffer)
+        CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, options as CFDictionary?, &pixelBuffer)
         
         CVPixelBufferLockBaseAddress(pixelBuffer!, [])
         
@@ -410,7 +410,7 @@ private extension VCSimpleSession {
         self.audioMixer = audioMixer
         
         // The H.264 Encoder introduces about 2 frames of latency, so we will set the minimum audio buffer duration to 2 frames.
-        audioMixer.setMinimumBufferDuration(frameDuration*2)
+        audioMixer.setMinimumBufferDuration(frameDuration * 2)
         
         // Add video mixer
         videoMixer = GLESVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height), frameDuration: frameDuration)
@@ -445,7 +445,7 @@ private extension VCSimpleSession {
         let aspectTransform = AspectTransform(boundingWidth: Int(videoSize.width),boundingHeight: Int(videoSize.height),aspectMode: atAspectMode)
         
         let positionTransform = PositionTransform(
-            x: Int(videoSize.width/2), y: Int(videoSize.height/2),
+            x: Int(videoSize.width / 2), y: Int(videoSize.height / 2),
             width: Int(Float(videoSize.width) * videoZoomFactor), height: Int(Float(videoSize.height) * videoZoomFactor),
             contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height)
         )
@@ -552,7 +552,7 @@ private extension VCSimpleSession {
             )
             annexbEncoder = AnnexbEncode(streamIndex, codecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC)
             streamIndex += 1
-            let audioStream = TSMultiplexer.Stream(id: 1, mediaType: .audio, videoCodecType: nil, timeBase: .init(value: 1, timescale: CMTimeScale(audioSampleRate)))
+            let audioStream = TSMultiplexer.Stream(id: 1, mediaType: .audio, videoCodecType: nil, timeBase: CMTime(value: 1, timescale: CMTimeScale(audioSampleRate)))
             adtsEncoder = ADTSEncode(streamIndex)
             
             let streams = [videoStream, audioStream]
