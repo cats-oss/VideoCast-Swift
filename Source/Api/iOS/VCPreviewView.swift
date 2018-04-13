@@ -17,54 +17,35 @@ open class VCPreviewView: UIView {
     private var vao: GLuint = 0
     private var matrixPos: GLuint = 0
     
-    private var currentBuffer: Int = 1
+    private var currentBuffer = 1
+    private var paused = false
     
-    private var paused: Atomic<Bool> = .init(false)
-    
-    private var current: [CVPixelBuffer?] = .init(repeating: nil, count: 2)
+    private var current = [CVPixelBuffer?](repeating: nil, count: 2)
+    private var texture = [CVOpenGLESTexture?](repeating: nil, count: 2)
     private var cache: CVOpenGLESTextureCache?
-    private var texture: [CVOpenGLESTexture?] = .init(repeating: nil, count: 2)
     
     private var context: EAGLContext?
-    private var glLayer: CAEAGLLayer?
+    private var glLayer: CAEAGLLayer {
+        return layer as! CAEAGLLayer
+    }
     
-    override open class var layerClass: AnyClass {
-        get {
-            return CAEAGLLayer.self
-        }
+    final public override class var layerClass: AnyClass {
+        return CAEAGLLayer.self
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        initInternal()
+        configure()
     }
     
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        initInternal()
-    }
-    
-    private func initInternal() {
-        // Initialization code
-        glLayer = layer as? CAEAGLLayer
-        
-        Logger.debug("Creating context")
-        context = EAGLContext(api: .openGLES2)
-        
-        if context == nil {
-            Logger.error("Context creation failed")
-        }
-        autoresizingMask = UIViewAutoresizing(rawValue: 0xFF)
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.setupGLES()
-        }
-        NotificationCenter.default.addObserver(self, selector: #selector(type(of: self).notification(notification:)), name: .UIApplicationDidEnterBackground, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(type(of: self).notification(notification:)), name: .UIApplicationWillEnterForeground, object: nil)
+        configure()
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        
         if shaderProgram != 0 {
             glDeleteProgram(shaderProgram)
         }
@@ -85,23 +66,11 @@ open class VCPreviewView: UIView {
     }
     
     open override func layoutSubviews() {
-        backgroundColor = .black
         generateGLESBuffers()
     }
     
-    @objc private func notification(notification: Notification) {
-        switch notification.name {
-        case .UIApplicationDidEnterBackground:
-            paused.value = true
-        case .UIApplicationWillEnterForeground:
-            paused.value = false
-        default:
-            break
-        }
-    }
-    
     open func drawFrame(pixelBuffer: CVPixelBuffer) {
-        guard !paused.value else { return }
+        guard !paused else { return }
         
         var updateTexture = false
         
@@ -119,10 +88,9 @@ open class VCPreviewView: UIView {
         
         DispatchQueue.main.async { [weak self] in
             guard let strongSelf = self else { return }
-            guard let buffer = strongSelf.current[_currentBuffer],
-                let cache = strongSelf.cache else {
-                    Logger.debug("unexpected return")
-                    return
+            
+            guard let buffer = strongSelf.current[_currentBuffer], let cache = strongSelf.cache else {
+                return assert(false, "unexpected return")
             }
             
             let current = EAGLContext.current()
@@ -131,35 +99,37 @@ open class VCPreviewView: UIView {
             if updateTexture {
                 // create a new texture
                 CVPixelBufferLockBaseAddress(buffer, .readOnly)
-                CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                             cache,
-                                                             buffer,
-                                                             nil,
-                                                             GLenum(GL_TEXTURE_2D),
-                                                             GL_RGBA,
-                                                             GLsizei(CVPixelBufferGetWidth(buffer)),
-                                                             GLsizei(CVPixelBufferGetHeight(buffer)),
-                                                             GLenum(GL_BGRA),
-                                                             GLenum(GL_UNSIGNED_BYTE),
-                                                             0,
-                                                             &strongSelf.texture[_currentBuffer])
-                guard let texture = strongSelf.texture[_currentBuffer] else {
-                    Logger.debug("unexpected return")
-                    return
+                CVOpenGLESTextureCacheCreateTextureFromImage(
+                    kCFAllocatorDefault,
+                    cache,
+                    buffer,
+                    nil,
+                    GLenum(GL_TEXTURE_2D),
+                    GL_RGBA,
+                    GLsizei(CVPixelBufferGetWidth(buffer)),
+                    GLsizei(CVPixelBufferGetHeight(buffer)),
+                    GLenum(GL_BGRA),
+                    GLenum(GL_UNSIGNED_BYTE),
+                    0,
+                    &strongSelf.texture[_currentBuffer]
+                )
+                
+                if let texture = strongSelf.texture[_currentBuffer] {
+                    glBindTexture(GLenum(GL_TEXTURE_2D),
+                                  CVOpenGLESTextureGetName(texture))
+                    glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLfloat(GL_LINEAR))
+                    glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLfloat(GL_LINEAR))
+                    glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GLfloat(GL_CLAMP_TO_EDGE))
+                    glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GLfloat(GL_CLAMP_TO_EDGE))
+                    
+                    CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
+                } else {
+                    return assert(false, "unexpected return")
                 }
-                
-                glBindTexture(GLenum(GL_TEXTURE_2D),
-                              CVOpenGLESTextureGetName(texture))
-                glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLfloat(GL_LINEAR))
-                glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLfloat(GL_LINEAR))
-                glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GLfloat(GL_CLAMP_TO_EDGE))
-                glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GLfloat(GL_CLAMP_TO_EDGE))
-                
-                CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
             }
+            
             guard let texture = strongSelf.texture[_currentBuffer] else {
-                Logger.debug("unexpected return")
-                return
+                return assert(false, "unexpected return")
             }
             
             // draw
@@ -177,8 +147,8 @@ open class VCPreviewView: UIView {
             
             let mult = (aspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac
             
-            wfac = width*mult / Float(strongSelf.bounds.size.width)
-            hfac = height*mult / Float(strongSelf.bounds.size.height)
+            wfac = width*mult / Float(strongSelf.bounds.width)
+            hfac = height*mult / Float(strongSelf.bounds.height)
             
             let matrix = GLKMatrix4ScaleWithVector3(GLKMatrix4Identity, GLKVector3Make(1 * wfac, -1 * hfac, 1))
             
@@ -186,56 +156,49 @@ open class VCPreviewView: UIView {
             glDrawArrays(GLenum(GL_TRIANGLES), 0, 6)
             glErrors()
             glBindRenderbuffer(GLenum(GL_RENDERBUFFER), strongSelf.renderBuffer)
-            if !strongSelf.paused.value {
+            
+            if !strongSelf.paused {
                 strongSelf.context?.presentRenderbuffer(Int(GL_RENDERBUFFER))
             }
+            
             EAGLContext.setCurrent(current)
             CVOpenGLESTextureCacheFlush(cache, 0)
         }
         
     }
-    
-    private func generateGLESBuffers() {
-        guard let glLayer = glLayer else {
-            Logger.debug("unexpected return")
-            return
+}
+
+private extension VCPreviewView {
+    func configure() {
+        backgroundColor = .black
+        
+        Logger.debug("Creating context")
+        context = EAGLContext(api: .openGLES2)
+        
+        if context == nil {
+            Logger.error("Context creation failed")
+        }
+        autoresizingMask = UIViewAutoresizing(rawValue: 0xFF)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.setupGLES()
         }
         
-        let current = EAGLContext.current()
-        EAGLContext.setCurrent(context)
-        
-        if renderBuffer != 0 {
-            glDeleteRenderbuffers(1, &renderBuffer)
-        }
-        if fbo != 0 {
-            glDeleteFramebuffers(1, &fbo)
-        }
-        glGenRenderbuffers(1, &renderBuffer)
-        glBindRenderbuffer(GLenum(GL_RENDERBUFFER), renderBuffer)
-        
-        context?.renderbufferStorage(Int(GL_RENDERBUFFER), from: glLayer)
-        
-        glErrors()
-        
-        glGenFramebuffers(1, &fbo)
-        glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo)
-        var width: GLint = 0, height: GLint = 0
-        glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_WIDTH), &width)
-        glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_HEIGHT), &height)
-        glFramebufferRenderbuffer(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), GLenum(GL_RENDERBUFFER), renderBuffer)
-        glErrors()
-        
-        glClearColor(0, 0, 0, 1)
-        
-        glViewport(0, 0, GLsizei(glLayer.bounds.size.width), GLsizei(glLayer.bounds.size.height))
-        
-        EAGLContext.setCurrent(current)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: .UIApplicationDidEnterBackground, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillEnterForeground), name: .UIApplicationWillEnterForeground, object: nil)
     }
     
-    private func setupGLES() {
+    @objc func applicationDidEnterBackground() {
+        paused = true
+    }
+    
+    @objc func applicationWillEnterForeground() {
+        paused = false
+    }
+    
+    func setupGLES() {
         guard let context = context else {
-            Logger.debug("unexpected return")
-            return
+            return assert(false, "unexpected return")
         }
         
         let current = EAGLContext.current()
@@ -264,6 +227,44 @@ open class VCPreviewView: UIView {
         glEnableVertexAttribArray(GLuint(attrtex))
         glVertexAttribPointer(GLuint(attrpos), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<Float>.size * 4), BUFFER_OFFSET(0))
         glVertexAttribPointer(GLuint(attrtex), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<Float>.size * 4), BUFFER_OFFSET(8))
+        
+        EAGLContext.setCurrent(current)
+    }
+    
+    func generateGLESBuffers() {
+        let current = EAGLContext.current()
+        EAGLContext.setCurrent(context)
+        
+        if renderBuffer != 0 {
+            glDeleteRenderbuffers(1, &renderBuffer)
+        }
+        
+        if fbo != 0 {
+            glDeleteFramebuffers(1, &fbo)
+        }
+        
+        glGenRenderbuffers(1, &renderBuffer)
+        glBindRenderbuffer(GLenum(GL_RENDERBUFFER), renderBuffer)
+        
+        context?.renderbufferStorage(Int(GL_RENDERBUFFER), from: glLayer)
+        
+        glErrors()
+        
+        glGenFramebuffers(1, &fbo)
+        glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo)
+        
+        var width: GLint = 0
+        var height: GLint = 0
+        
+        glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_WIDTH), &width)
+        glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_HEIGHT), &height)
+        glFramebufferRenderbuffer(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), GLenum(GL_RENDERBUFFER), renderBuffer)
+        
+        glErrors()
+        
+        glClearColor(0, 0, 0, 1)
+        
+        glViewport(0, 0, GLsizei(glLayer.bounds.size.width), GLsizei(glLayer.bounds.size.height))
         
         EAGLContext.setCurrent(current)
     }
