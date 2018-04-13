@@ -42,22 +42,6 @@ public enum VCVideoCodecType {
     case hevc
 }
 
-let minVideoBitrate: Int = 32000
-
-public typealias PixelBufferCallback = (_ data: UnsafeRawPointer, _ size: Int) -> Void
-
-class PixelBufferOutput: IOutput {    
-    var callback: PixelBufferCallback
-    
-    init(callback: @escaping PixelBufferCallback) {
-        self.callback = callback
-    }
-    
-    func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
-        callback(data, size)
-    }
-}
-
 open class VCSimpleSession {
     private var pbOutput: PixelBufferOutput?
     private var micSource: MicSource?
@@ -88,17 +72,18 @@ open class VCSimpleSession {
     private var tsMuxer: TSMultiplexer?
     private var fileSink: FileSink?
     
-    private let graphManagementQueue: DispatchQueue = .init(label: "com.videocast.session.graph")
+    private let graphManagementQueue = DispatchQueue(label: "jp.co.cyberagent.VideoCast.session.graph")
+    private let minVideoBitrate = 32000
     
-    private var bpsCeiling: Int = 0
+    private var bpsCeiling = 0
     
-    private var _torch: Bool = false
-    private var _audioChannelCount: Int = 2
+    private var _torch = false
+    private var _audioChannelCount = 2
     private var _audioSampleRate: Float = 44100
     private var _micGain: Float = 1
     private var _cameraState: VCCameraState
 
-    open var sessionState: VCSessionState = .none {
+    open var sessionState = VCSessionState.none {
         didSet {
             if Thread.isMainThread {
                 delegate.connectionStatusChanged?(sessionState)
@@ -110,13 +95,16 @@ open class VCSimpleSession {
             }
         }
     }
+    
     open var previewView: VCPreviewView
     
     open var videoSize: CGSize {
         didSet {
             aspectTransform?.setBoundingSize(boundingWidth: Int(videoSize.width), boundingHeight: Int(videoSize.height))
-            positionTransform?.setSize(width: Int(Float(videoSize.width) * videoZoomFactor),
-                                       height: Int(Float(videoSize.height) * videoZoomFactor))
+            positionTransform?.setSize(
+                width: Int(Float(videoSize.width) * videoZoomFactor),
+                height: Int(Float(videoSize.height) * videoZoomFactor)
+            )
         }
     }
     open var bitrate: Int        // Change will not take place until the next Session
@@ -133,31 +121,24 @@ open class VCSimpleSession {
         }
     }
     open var orientationLocked: Bool = false {
-        didSet {
-            cameraSource?.orientationLocked = orientationLocked
-        }
+        didSet { cameraSource?.orientationLocked = orientationLocked }
     }
     open var torch: Bool {
         get { return _torch }
-        set {
-            guard let cameraSource = cameraSource else {
-                Logger.debug("unexpected return")
-                return
-            }
-            _torch = cameraSource.setTorch(newValue)
-        }
+        set { _torch = cameraSource?.setTorch(newValue) ?? newValue }
     }
     open var videoZoomFactor: Float = 1 {
         didSet {
-            positionTransform?.setSize(width: Int(Float(videoSize.width) * videoZoomFactor),
-                                       height: Int(Float(videoSize.height) * videoZoomFactor))
+            positionTransform?.setSize(
+                width: Int(Float(videoSize.width) * videoZoomFactor),
+                height: Int(Float(videoSize.height) * videoZoomFactor)
+            )
         }
     }
     open var audioChannelCount: Int {
         get { return _audioChannelCount }
         set {
             _audioChannelCount = max(1, min(newValue, 2))
-            
             audioMixer?.setChannelCount(_audioChannelCount)
         }
     }
@@ -171,40 +152,38 @@ open class VCSimpleSession {
     open var micGain: Float {      // [0..1]
         get { return _micGain }
         set {
-            guard let audioMixer = audioMixer, let micSource = micSource else {
-                Logger.debug("unexpected return")
-                return
+            if let audioMixer = audioMixer, let micSource = micSource {
+                audioMixer.setSourceGain(WeakRefISource(value: micSource), gain: micGain)
             }
-            audioMixer.setSourceGain(WeakRefISource(value: micSource), gain: micGain)
             _micGain = newValue
         }
     }
-    open var focusPointOfInterest: CGPoint = CGPoint(x: 0.5, y: 0.5) {   // (0,0) is top-left, (1,1) is bottom-right
+    open var focusPointOfInterest = CGPoint(x: 0.5, y: 0.5) {   // (0,0) is top-left, (1,1) is bottom-right
         didSet {
             cameraSource?.setFocusPointOfInterest(x: Float(focusPointOfInterest.x), y: Float(focusPointOfInterest.y))
         }
     }
-    open var exposurePointOfInterest: CGPoint = CGPoint(x: 0.5, y: 0.5) {
+    open var exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5) {
         didSet {
             cameraSource?.setExposurePointOfInterest(x: Float(exposurePointOfInterest.x), y: Float(exposurePointOfInterest.y))
         }
     }
-    open var continuousAutofocus: Bool = false {
+    open var continuousAutofocus = false {
         didSet {
             cameraSource?.setContinuousAutofocus(continuousAutofocus)
         }
     }
-    open var continuousExposure: Bool = true {
+    open var continuousExposure = true {
         didSet {
             cameraSource?.setContinuousExposure(continuousExposure)
         }
     }
-    open var useAdaptiveBitrate: Bool = false { /* Default is off */
+    open var useAdaptiveBitrate = false { /* Default is off */
         didSet {
             bpsCeiling = bitrate
         }
     }
-    open private(set) var estimatedThroughput: Int = 0    /* Bytes Per Second. */
+    open private(set) var estimatedThroughput = 0    /* Bytes Per Second. */
     open var aspectMode: VCAspectMode {
         didSet {
             switch aspectMode {
@@ -215,13 +194,12 @@ open class VCSimpleSession {
             }
         }
     }
-    
     open var filter: VCFilter = .normal {    /* Default is normal */
         didSet {
             guard let videoMixer = videoMixer, let cameraSource = cameraSource else {
-                Logger.debug("unexpected return")
-                return
+                return Logger.debug("unexpected return")
             }
+            
             let filterName: String
             switch filter {
             case .normal:
@@ -239,30 +217,24 @@ open class VCSimpleSession {
             }
             
             Logger.info("FILTER IS : \(filter)")
-            guard  let videoFilter = videoMixer.filterFactory.filter(name: filterName) as? IVideoFilter else {
-                Logger.debug("unexpected return")
-                return
+            
+            if let videoFilter = videoMixer.filterFactory.filter(name: filterName) as? IVideoFilter {
+                videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: videoFilter)
             }
-            videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: videoFilter)
         }
     }
     
     open let delegate: VCSessionDelegate
     
-    private var applicationDocumentsDirectory: String? {
-        let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-        let basePath = (paths.count > 0) ? paths[0] : nil
-        return basePath
-    }
-    
-    public init(videoSize: CGSize,
-         frameRate fps: Int,
-         bitrate bps: Int,
-         videoCodecType: VCVideoCodecType = .h264,
-         useInterfaceOrientation: Bool = false,
-         cameraState: VCCameraState = .back,
-         aspectMode: VCAspectMode = .fit,
-         delegate: VCSessionDelegate = .init()) {
+    public init(
+        videoSize: CGSize,
+        frameRate fps: Int,
+        bitrate bps: Int,
+        videoCodecType: VCVideoCodecType = .h264,
+        useInterfaceOrientation: Bool = false,
+        cameraState: VCCameraState = .back,
+        aspectMode: VCAspectMode = .fit,
+        delegate: VCSessionDelegate = .init()) {
         self.delegate = delegate
         
         self.bitrate = bps
@@ -299,145 +271,23 @@ open class VCSimpleSession {
         }
     }
     
-    private func startRtmpSessionInternal(url: String, streamKey: String) {
-        let uri = url + "/" + streamKey
-        
-        outputSession = RTMPSession(uri: uri,
-                                    callback: { [weak self] (session, state)  in
-                                        guard let strongSelf = self else { return }
-                                        
-                                        Logger.info("ClientState: \(state)")
-                                        
-                                        switch state {
-                                        case .connected:
-                                            strongSelf.sessionState = .starting
-                                        case .sessionStarted:
-                                            strongSelf.graphManagementQueue.async { [weak strongSelf] in
-                                                strongSelf?.addEncodersAndPacketizers()
-                                            }
-                                            strongSelf.sessionState = .started
-                                        case .error:
-                                            strongSelf.sessionState = .error
-                                            strongSelf.endSession()
-                                        case .notConnected:
-                                            strongSelf.sessionState = .ended
-                                            strongSelf.endSession()
-                                        default:
-                                            break
-                                        }
-        })
-        
-        bpsCeiling = bitrate
-        
-        if useAdaptiveBitrate {
-            bitrate = 500000
-        }
-        
-        outputSession?.setBandwidthCallback({[weak self] (vector, predicted, inst) in
-            guard let strongSelf = self else { return }
-            
-            strongSelf.estimatedThroughput = Int(predicted)
-            guard let video = strongSelf.vtEncoder, let audio = strongSelf.aacEncoder, strongSelf.useAdaptiveBitrate else { return }
-            
-            strongSelf.delegate.detectedThroughput?(Int(predicted), video.bitrate)
-            
-            guard vector != 0 else { return }
-            
-            let vector = vector < 0 ? -1 : 1
-            
-            let videoBr = video.bitrate
-
-            switch videoBr {
-            case 500001...:
-                audio.bitrate = 128000
-            case 250001...500000:
-                audio.bitrate = 96000
-            default:
-                audio.bitrate = 80000
-            }
-            
-            switch videoBr {
-            case 1152001...:
-                video.bitrate = min(Int(videoBr / 384000 + vector) * 384000, strongSelf.bpsCeiling)
-            case 512001...:
-                video.bitrate = min(Int(videoBr / 128000 + vector) * 128000, strongSelf.bpsCeiling)
-            case 128001...:
-                video.bitrate = min(Int(videoBr / 64000 + vector) * 64000, strongSelf.bpsCeiling)
-            default:
-                video.bitrate = min(Int(videoBr / 32000 + vector) * 32000, minVideoBitrate)
-            }
-            Logger.info("\n(\(vector) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted)")
-        })
-        
-        let sp = RTMPSessionParameters()
-        
-        sp.data = (Int(videoSize.width),
-                   Int(videoSize.height),
-                   1 / Double(fps),
-                   bitrate,
-                   Double(audioSampleRate),
-                   audioChannelCount == 2)
-        
-        outputSession?.setSessionParameters(sp)
-    }
-    
     open func startSRTSession(url: String) {
         graphManagementQueue.async { [weak self] in
             self?.startSRTSessionInternal(url: url)
         }
     }
     
-    private func startSRTSessionInternal(url: String) {
-        outputSession = SRTSession(uri: url,
-                                    callback: { [weak self] (session, state)  in
-                                        guard let strongSelf = self else { return }
-                                        
-                                        Logger.info("ClientState: \(state)")
-                                        
-                                        switch state {
-                                        case .connecting:
-                                            strongSelf.sessionState = .starting
-                                        case .connected:
-                                            strongSelf.graphManagementQueue.async { [weak strongSelf] in
-                                                strongSelf?.addEncodersAndPacketizers()
-                                            }
-                                            strongSelf.sessionState = .started
-                                        case .error:
-                                            strongSelf.sessionState = .error
-                                            strongSelf.endSession()
-                                        case .notConnected:
-                                            strongSelf.sessionState = .ended
-                                            strongSelf.endSession()
-                                        default:
-                                            break
-                                        }
-        })
-        
-        let sp = SRTSessionParameters()
-        
-        sp.data = (
-            chunk: 0,
-            loglevel: .err,
-            logfa: .general,
-            logfile: "",
-            internal_log: true,
-            autoreconnect: false,
-            quiet: false,
-            fullstats: false,
-            report: 0,
-            stats: 0)
-        
-        outputSession?.setSessionParameters(sp)
-    }
-    
     open func endSession() {
         h264Packetizer = nil
         aacPacketizer = nil
+        
         if let vtEncoder = vtEncoder {
             videoSplit?.removeOutput(vtEncoder)
         }
+        
         vtEncoder = nil
         aacEncoder = nil
+        
         muxer?.stop {
             self.muxer = nil
         }
@@ -462,7 +312,95 @@ open class VCSimpleSession {
         }
     }
     
-    private func setupGraph() {
+    open func addPixelBufferSource(image: UIImage, rect: CGRect) {
+        guard let cgImage = image.cgImage, let videoMixer = videoMixer else {
+            return Logger.debug("unexpected return")
+        }
+        
+        let pixelBufferSource = PixelBufferSource(
+            width: cgImage.width,
+            height: cgImage.height,
+            pixelFormat: kCVPixelFormatType_32BGRA
+        )
+        self.pixelBufferSource = pixelBufferSource
+        
+        let width = cgImage.width
+        let height = cgImage.height
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        
+        let options: [String: Any] = [
+            kCVPixelBufferCGImageCompatibilityKey as String: true,
+            kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
+        ]
+        
+        var pixelBuffer: CVPixelBuffer? = nil
+        
+        CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, options as NSDictionary?, &pixelBuffer)
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer!, [])
+        
+        let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer!)
+        
+        let bytesPerPixel = 4
+        let bytesPerRow = bytesPerPixel * width
+        let bitsPerComponent = 8
+        let context = CGContext(
+            data: pixelData,
+            width: width,
+            height: height,
+            bitsPerComponent: bitsPerComponent,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        )
+        
+        context?.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        let pbAspect = AspectTransform(boundingWidth: Int(rect.size.width), boundingHeight: Int(rect.size.height), aspectMode: .fit)
+        self.pbAspect = pbAspect
+        
+        let pbPosition = PositionTransform(
+            x: Int(rect.origin.x),
+            y: Int(rect.origin.y),
+            width: Int(rect.size.width),
+            height: Int(rect.size.height),
+            contextWidth: Int(videoSize.width),
+            contextHeight: Int(videoSize.height)
+        )
+        self.pbPosition = pbPosition
+        
+        pixelBufferSource.setOutput(pbAspect)
+        pbAspect.setOutput(pbPosition)
+        pbPosition.setOutput(videoMixer)
+        videoMixer.registerSource(pixelBufferSource)
+        pixelBufferSource.pushPixelBuffer(data: pixelData!, size: width * height * 4)
+        
+        CVPixelBufferUnlockBaseAddress(pixelBuffer!, [])
+    }
+}
+
+private extension VCSimpleSession {
+    final class PixelBufferOutput: IOutput {
+        typealias PixelBufferCallback = (_ data: UnsafeRawPointer, _ size: Int) -> Void
+        
+        var callback: PixelBufferCallback
+        
+        init(callback: @escaping PixelBufferCallback) {
+            self.callback = callback
+        }
+        
+        func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
+            callback(data, size)
+        }
+    }
+    
+    var applicationDocumentsDirectory: String? {
+        let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+        let basePath = (paths.count > 0) ? paths[0] : nil
+        return basePath
+    }
+    
+    func setupGraph() {
         let frameDuration = 1 / Double(fps)
         
         // Add audio mixer
@@ -474,30 +412,29 @@ open class VCSimpleSession {
         // The H.264 Encoder introduces about 2 frames of latency, so we will set the minimum audio buffer duration to 2 frames.
         audioMixer.setMinimumBufferDuration(frameDuration*2)
         
-        if #available(iOS 8, *) {
-            // Add video mixer
-            videoMixer = GLESVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height), frameDuration: frameDuration)
+        // Add video mixer
+        videoMixer = GLESVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height), frameDuration: frameDuration)
+        
+        let videoSplit = Split()
+        
+        self.videoSplit = videoSplit
+        let preview = previewView
+        
+        let pbOutput = PixelBufferOutput(callback: { [weak self] (data: UnsafeRawPointer, size: Int)  in
+            guard let strongSelf = self else { return }
             
-            let videoSplit = Split()
+            let pixelBuffer = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
+            preview.drawFrame(pixelBuffer: pixelBuffer)
             
-            self.videoSplit = videoSplit
-            let preview = previewView
-            
-            let pbOutput = PixelBufferOutput(callback: { [weak self] (data: UnsafeRawPointer, size: Int)  in
-                guard let strongSelf = self else { return }
-                
-                let ref = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
-                preview.drawFrame(pixelBuffer: ref)
-                if strongSelf.sessionState == .none {
-                    strongSelf.sessionState = .previewStarted
-                }
-            })
-            self.pbOutput = pbOutput
-            
-            videoSplit.setOutput(pbOutput)
-            
-            videoMixer?.setOutput(videoSplit)
-        }
+            if strongSelf.sessionState == .none {
+                strongSelf.sessionState = .previewStarted
+            }
+        })
+        self.pbOutput = pbOutput
+        
+        videoSplit.setOutput(pbOutput)
+        
+        videoMixer?.setOutput(videoSplit)
         
         // Create sources
         
@@ -507,21 +444,22 @@ open class VCSimpleSession {
         cameraSource.orientationLocked = orientationLocked
         let aspectTransform = AspectTransform(boundingWidth: Int(videoSize.width),boundingHeight: Int(videoSize.height),aspectMode: atAspectMode)
         
-        let positionTransform = PositionTransform(x: Int(videoSize.width/2), y: Int(videoSize.height/2),
-                                                  width: Int(Float(videoSize.width) * videoZoomFactor), height: Int(Float(videoSize.height) * videoZoomFactor),
-                                                  contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height))
+        let positionTransform = PositionTransform(
+            x: Int(videoSize.width/2), y: Int(videoSize.height/2),
+            width: Int(Float(videoSize.width) * videoZoomFactor), height: Int(Float(videoSize.height) * videoZoomFactor),
+            contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height)
+        )
         
-        cameraSource.setupCamera(fps: fps, useFront: cameraState == .front, useInterfaceOrientation: useInterfaceOrientation, sessionPreset: nil, callback: {
+        cameraSource.setupCamera(fps: fps, useFront: cameraState == .front, useInterfaceOrientation: useInterfaceOrientation, sessionPreset: nil) {
             self.cameraSource?.setContinuousAutofocus(true)
             self.cameraSource?.setContinuousExposure(true)
             
             self.cameraSource?.setOutput(aspectTransform)
             
-            guard let videoMixer = self.videoMixer,
-                let filter = videoMixer.filterFactory.filter(name: "com.videocast.filters.bgra") as? IVideoFilter else {
-                    Logger.debug("unexpected return")
-                    return
+            guard let videoMixer = self.videoMixer, let filter = videoMixer.filterFactory.filter(name: "com.videocast.filters.bgra") as? IVideoFilter else {
+                return Logger.debug("unexpected return")
             }
+            
             videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: filter)
             self.filter = .normal
             aspectTransform.setOutput(positionTransform)
@@ -531,7 +469,7 @@ open class VCSimpleSession {
             
             // Inform delegate that camera source has been added
             self.delegate.didAddCameraSource?(self)
-        })
+        }
         
         // Add mic source
         micSource = MicSource(sampleRate: Double(audioSampleRate), channelCount: audioChannelCount)
@@ -546,25 +484,29 @@ open class VCSimpleSession {
         videoMixer?.start()
     }
     
-    private func addEncodersAndPacketizers() {
+    func addEncodersAndPacketizers() {
         guard let outputSession = outputSession else {
-            Logger.debug("unexpected return")
-            return
+            return Logger.debug("unexpected return")
         }
-        let ctsOffset: CMTime = .init(value: 2, timescale: Int32(fps))  // 2 * frame duration
+        
+        let ctsOffset = CMTime(value: 2, timescale: Int32(fps))  // 2 * frame duration
         
         // Add encoders
         
         let aacEncoder = AACEncode(frequencyInHz: Int(audioSampleRate), channelCount: audioChannelCount, averageBitrate: 96000)
         self.aacEncoder = aacEncoder
-        let vtEncoder = VTEncode(frame_w: Int(videoSize.width),
-                                 frame_h: Int(videoSize.height),
-                                 fps: fps,
-                                 bitrate: bitrate,
-                                 codecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC,
-                                 useBaseline: false,
-                                 ctsOffset: ctsOffset)
+        
+        let vtEncoder = VTEncode(
+            frame_w: Int(videoSize.width),
+            frame_h: Int(videoSize.height),
+            fps: fps,
+            bitrate: bitrate,
+            codecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC,
+            useBaseline: false,
+            ctsOffset: ctsOffset
+        )
         self.vtEncoder = vtEncoder
+        
         audioMixer?.setOutput(aacEncoder)
         videoSplit?.setOutput(vtEncoder)
         
@@ -588,30 +530,37 @@ open class VCSimpleSession {
             aacPacketizer.setOutput(outputSession)
         }
         
-        /*muxer = .init()
-         if let applicationDocumentsDirectory = applicationDocumentsDirectory, let muxer = muxer  {
-         let params: MP4SessionParameters = .init()
-         let file = applicationDocumentsDirectory + "/output.mp4"
-         params.data = (file, fps, Int(videoSize.width), Int(videoSize.height), videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC)
-         muxer.setSessionParameters(params)
-         aacSplit.setOutput(muxer)
-         vtSplit.setOutput(muxer)
-         }*/
-
+        /*
+        muxer = .init()
+        if let applicationDocumentsDirectory = applicationDocumentsDirectory, let muxer = muxer  {
+            let params: MP4SessionParameters = .init()
+            let file = applicationDocumentsDirectory + "/output.mp4"
+            params.data = (file, fps, Int(videoSize.width), Int(videoSize.height), videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC)
+            muxer.setSessionParameters(params)
+            aacSplit.setOutput(muxer)
+            vtSplit.setOutput(muxer)
+        }
+         */
+        
         if outputSession is SRTSession {
             var streamIndex = 0
-            let vSt = TSMultiplexer.Stream(id: 0, mediaType: .video, videoCodecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC, timeBase: .init(value: 1, timescale: CMTimeScale(fps)))
-            annexbEncoder  = AnnexbEncode(streamIndex, codecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC)
+            let videoStream = TSMultiplexer.Stream(
+                id: 0,
+                mediaType: .video,
+                videoCodecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC,
+                timeBase: CMTime(value: 1, timescale: CMTimeScale(fps))
+            )
+            annexbEncoder = AnnexbEncode(streamIndex, codecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC)
             streamIndex += 1
-            let aSt = TSMultiplexer.Stream(id: 1, mediaType: .audio, videoCodecType: nil, timeBase: .init(value: 1, timescale: CMTimeScale(audioSampleRate)))
+            let audioStream = TSMultiplexer.Stream(id: 1, mediaType: .audio, videoCodecType: nil, timeBase: .init(value: 1, timescale: CMTimeScale(audioSampleRate)))
             adtsEncoder = ADTSEncode(streamIndex)
-            let streams = [vSt, aSt]
-            tsMuxer = .init(streams, ctsOffset: ctsOffset)
-            if let tsMuxer = tsMuxer,
-                let adtsEncoder = adtsEncoder,
-                let annexbEncoder = annexbEncoder {
-                
-                /*fileSink = .init()
+            
+            let streams = [videoStream, audioStream]
+            tsMuxer = TSMultiplexer(streams, ctsOffset: ctsOffset)
+            
+            if let tsMuxer = tsMuxer, let adtsEncoder = adtsEncoder, let annexbEncoder = annexbEncoder {
+                /*
+                fileSink = .init()
                 if let applicationDocumentsDirectory = applicationDocumentsDirectory, let fileSink = fileSink {
                     let params: FileSinkSessionParameters = .init()
                     let file = applicationDocumentsDirectory + "/output.ts"
@@ -619,7 +568,9 @@ open class VCSimpleSession {
                     fileSink.setSessionParameters(params)
                     
                     tsMuxer.setOutput(fileSink)
-                }*/
+                }
+                 */
+                
                 tsMuxer.setOutput(outputSession)
                 
                 adtsEncoder.setOutput(tsMuxer)
@@ -631,59 +582,133 @@ open class VCSimpleSession {
         }
     }
     
-    open func addPixelBufferSource(image: UIImage, rect: CGRect) {
-        guard let cgImage = image.cgImage,
-            let videoMixer = videoMixer else {
-                Logger.debug("unexpected return")
-                return
+    func startSRTSessionInternal(url: String) {
+        let outputSession = SRTSession(uri: url) { [weak self] session, state  in
+            guard let strongSelf = self else { return }
+            
+            Logger.info("ClientState: \(state)")
+            
+            switch state {
+            case .connecting:
+                strongSelf.sessionState = .starting
+            case .connected:
+                strongSelf.graphManagementQueue.async { [weak strongSelf] in
+                    strongSelf?.addEncodersAndPacketizers()
+                }
+                strongSelf.sessionState = .started
+            case .error:
+                strongSelf.sessionState = .error
+                strongSelf.endSession()
+            case .notConnected:
+                strongSelf.sessionState = .ended
+                strongSelf.endSession()
+            case .none:
+                break
+            }
+        }
+        self.outputSession = outputSession
+        
+        let sessionParameters = SRTSessionParameters()
+        
+        sessionParameters.data = (
+            chunk: 0,
+            loglevel: .err,
+            logfa: .general,
+            logfile: "",
+            internal_log: true,
+            autoreconnect: false,
+            quiet: false,
+            fullstats: false,
+            report: 0,
+            stats: 0
+        )
+        
+        outputSession.setSessionParameters(sessionParameters)
+    }
+    
+    func startRtmpSessionInternal(url: String, streamKey: String) {
+        let uri = url + "/" + streamKey
+        
+        let outputSession = RTMPSession(uri: uri) { [weak self] (session, state)  in
+            guard let strongSelf = self else { return }
+            
+            Logger.info("ClientState: \(state)")
+            
+            switch state {
+            case .connected:
+                strongSelf.sessionState = .starting
+            case .sessionStarted:
+                strongSelf.graphManagementQueue.async { [weak strongSelf] in
+                    strongSelf?.addEncodersAndPacketizers()
+                }
+                strongSelf.sessionState = .started
+            case .error:
+                strongSelf.sessionState = .error
+                strongSelf.endSession()
+            case .notConnected:
+                strongSelf.sessionState = .ended
+                strongSelf.endSession()
+            default:
+                break
+            }
+        }
+        self.outputSession = outputSession
+        
+        bpsCeiling = bitrate
+        
+        if useAdaptiveBitrate {
+            bitrate = 500000
         }
         
-        let pixelBufferSource = PixelBufferSource(width: cgImage.width,
-                                              height: cgImage.height,
-                                              pixelFormat: kCVPixelFormatType_32BGRA)
-        self.pixelBufferSource = pixelBufferSource
+        outputSession.setBandwidthCallback {[weak self] vector, predicted, inst in
+            guard let strongSelf = self else { return }
+            
+            strongSelf.estimatedThroughput = Int(predicted)
+            
+            guard let video = strongSelf.vtEncoder, let audio = strongSelf.aacEncoder, strongSelf.useAdaptiveBitrate else { return }
+            
+            strongSelf.delegate.detectedThroughput?(Int(predicted), video.bitrate)
+            
+            guard vector != 0 else { return }
+            
+            let vector = vector < 0 ? -1 : 1
+            
+            let videoBr = video.bitrate
+            
+            switch videoBr {
+            case 500001...:
+                audio.bitrate = 128000
+            case 250001...500000:
+                audio.bitrate = 96000
+            default:
+                audio.bitrate = 80000
+            }
+            
+            switch videoBr {
+            case 1152001...:
+                video.bitrate = min(Int(videoBr / 384000 + vector) * 384000, strongSelf.bpsCeiling)
+            case 512001...:
+                video.bitrate = min(Int(videoBr / 128000 + vector) * 128000, strongSelf.bpsCeiling)
+            case 128001...:
+                video.bitrate = min(Int(videoBr / 64000 + vector) * 64000, strongSelf.bpsCeiling)
+            default:
+                video.bitrate = min(Int(videoBr / 32000 + vector) * 32000, strongSelf.minVideoBitrate)
+            }
+            
+            Logger.info("\n(\(vector) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted)")
+        }
         
-        let width = cgImage.width
-        let height = cgImage.height
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let sessionParameters = RTMPSessionParameters()
         
-        let options: [String: Any] = [
-            kCVPixelBufferCGImageCompatibilityKey as String: true,
-            kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
-        ]
-        
-        var pxBuffer: CVPixelBuffer? = nil
-        
-        CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, options as NSDictionary?, &pxBuffer)
-        
-        CVPixelBufferLockBaseAddress(pxBuffer!, [])
-        
-        let pxdata = CVPixelBufferGetBaseAddress(pxBuffer!)
-        
-        let bytesPerPixel = 4
-        let bytesPerRow = bytesPerPixel * width
-        let bitsPerComponent = 8
-        let context = CGContext(data: pxdata, width: width, height: height,
-                                bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace,
-                                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
-        
-        context?.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        
-        let pbAspect = AspectTransform(boundingWidth: Int(rect.size.width), boundingHeight: Int(rect.size.height), aspectMode: .fit)
-        self.pbAspect = pbAspect
-        
-        let pbPosition = PositionTransform(x: Int(rect.origin.x), y: Int(rect.origin.y),
-                                       width: Int(rect.size.width), height: Int(rect.size.height),
-                                       contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height)
+        sessionParameters.data = (
+            width: Int(videoSize.width),
+            height: Int(videoSize.height),
+            frameDuration: 1 / Double(fps),
+            videoBitrate: bitrate,
+            audioFrequency: Double(audioSampleRate),
+            stereo: audioChannelCount == 2
         )
-        self.pbPosition = pbPosition
         
-        pixelBufferSource.setOutput(pbAspect)
-        pbAspect.setOutput(pbPosition)
-        pbPosition.setOutput(videoMixer)
-        videoMixer.registerSource(pixelBufferSource)
-        pixelBufferSource.pushPixelBuffer(data: pxdata!, size: width * height * 4)
-        
-        CVPixelBufferUnlockBaseAddress(pxBuffer!, [])
+        outputSession.setSessionParameters(sessionParameters)
     }
 }

@@ -18,7 +18,8 @@ public typealias SRTSessionParameters = MetaData<(
     quiet: Bool,
     fullstats: Bool,
     report: UInt32,
-    stats: UInt32)>
+    stats: UInt32
+    )>
 
 public enum SRTClientState: Int {
     case none = 0
