@@ -11,204 +11,57 @@ import GLKit
 import CoreVideo
 import CoreMedia
 
-// Convenience function to dispatch an OpenGL ES job to the created JobQueue
-func perfGL(_ x: @escaping ()->Void, isSync: Bool, glContext: EAGLContext?, jobQueue: JobQueue) {
-    let cl = {
-        let cur = EAGLContext.current()
-        if let glContext = glContext {
-            EAGLContext.setCurrent(glContext)
-        }
-        x()
-        EAGLContext.setCurrent(cur)
-    }
-    if isSync {
-        jobQueue.enqueueSync(cl)
-    } else {
-        jobQueue.enqueue(cl)
-    }
-}
-
-// Dispatch and execute synchronously
-func perfGLSync(_ x: @escaping ()->Void, glContext: EAGLContext?, jobQueue: JobQueue) {
-    perfGL(x, isSync: true, glContext: glContext, jobQueue: jobQueue)
-}
-
-// Dispatch and execute asynchronously
-func perfGLAsync(_ x: @escaping ()->Void, glContext: EAGLContext?, jobQueue: JobQueue) {
-    perfGL(x, isSync: false, glContext: glContext, jobQueue: jobQueue)
-}
-
-class GLESObjCCallback: NSObject {
-    var mixer: GLESVideoMixer?
-    
-    override init() {
-        super.init()
-        NotificationCenter.default.addObserver(self, selector: #selector(type(of: self).notification(notification:)), name: .UIApplicationDidEnterBackground, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(type(of: self).notification(notification:)), name: .UIApplicationWillEnterForeground, object: nil)
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
-    @objc func notification(notification: Notification) {
-        switch notification.name {
-        case .UIApplicationDidEnterBackground:
-            mixer?.mixPaused(true)
-        case .UIApplicationWillEnterForeground:
-            mixer?.mixPaused(false)
-        default:
-            break
-        }
-    }
-}
-
-fileprivate class SourceBuffer {
-    private class Buffer_ {
-        var buffer: PixelBuffer
-        var texture: CVOpenGLESTexture?
-        var time: Date = .init()
-        
-        init(_ buf: PixelBuffer) {
-            buffer = buf
-            
-        }
-        
-        deinit {
-            texture = nil
-        }
-    }
-    
-    fileprivate var currentTexture: CVOpenGLESTexture?
-    fileprivate var currentBuffer: PixelBuffer?
-    fileprivate var blends: Bool = false
-    
-    private var pixelBuffers: [CVPixelBuffer: Buffer_] = .init()
-    
-    fileprivate func setBuffer(_ pb: PixelBuffer, textureCache: CVOpenGLESTextureCache, jobQueue: JobQueue, glContext: EAGLContext) {
-        var flush = false
-        let now = Date()
-        
-        currentBuffer?.state = .available
-        pb.state = .acquired
-        
-        if let it = pixelBuffers[pb.cvBuffer] {
-            
-            currentBuffer = pb
-            currentTexture = it.texture
-            it.time = now
-            
-        } else {
-            perfGLAsync({ [weak self] in
-                guard let strongSelf = self else { return }
-                
-                pb.lock(true)
-                let format = pb.pixelFormat
-                var is32bit = true
-                
-                is32bit = (format != kCVPixelFormatType_16LE565)
-
-                var texture: CVOpenGLESTexture?
-                let ret = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                                       textureCache,
-                                                                       pb.cvBuffer,
-                                                                       nil,
-                                                                       GLenum(GL_TEXTURE_2D),
-                                                                       is32bit ? GL_RGBA : GL_RGB,
-                                                                       GLsizei(pb.width),
-                                                                       GLsizei(pb.height),
-                                                                       GLenum(is32bit ? GL_BGRA : GL_RGB),
-                                                                       GLenum(is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5),
-                                                                       0,
-                                                                       &texture)
-                
-                pb.unlock(true)
-                if ret == noErr, let texture = texture {
-                    glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
-                    glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GL_LINEAR)
-                    glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GL_LINEAR)
-                    glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GL_CLAMP_TO_EDGE)
-                    
-                    let iit = Buffer_(pb)
-                    strongSelf.pixelBuffers[pb.cvBuffer] = iit
-                    iit.texture = texture
-                    
-                    strongSelf.currentBuffer = pb
-                    strongSelf.currentTexture = texture
-                    iit.time = now
-                    
-                } else {
-                    Logger.error("Error creating texture! \(ret)")
-                }
-                
-            }, glContext: glContext, jobQueue: jobQueue)
-            flush = true
-        }
-        
-        perfGLAsync({
-            for (key, it) in self.pixelBuffers {
-                
-                if it.buffer.isTemporary && it.buffer.cvBuffer != self.currentBuffer?.cvBuffer {
-                    // Buffer is temporary, release it.
-                    self.pixelBuffers[key] = nil
-                }
-            }
-            if flush {
-                CVOpenGLESTextureCacheFlush(textureCache, 0)
-            }
-            }, glContext: glContext, jobQueue: jobQueue)
-        
-    }
-}
-
 /*
  *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that has been composited from the various sources.
  *  Sources must output VideoBufferMetadata with their buffers. This compositor uses homogeneous coordinates.
  */
 open class GLESVideoMixer: IVideoMixer {
-    public var filterFactory: FilterFactory = .init()
+    public var filterFactory = FilterFactory()
     
-    private let glJobQueue: JobQueue = .init("com.videocast.composite")
+    private let glJobQueue = JobQueue("com.videocast.composite")
     
     private let bufferDuration: TimeInterval
     
     private weak var output: IOutput?
-    private var sources: [WeakRefISource] = .init()
+    private var sources = [WeakRefISource]()
     
     private var _mixThread: Thread?
-    private let mixThreadCond: NSCondition = .init()
+    private let mixThreadCond = NSCondition()
     
     private let pixelBufferPool: CVPixelBufferPool?
-    private var pixelBuffer: [CVPixelBuffer?] = .init(repeating: nil, count: 2)
+    private var pixelBuffer = [CVPixelBuffer?](repeating: nil, count: 2)
     private var textureCache: CVOpenGLESTextureCache?
-    private var texture: [CVOpenGLESTexture?] = .init(repeating: nil, count: 2)
+    private var texture = [CVOpenGLESTexture?](repeating: nil, count: 2)
     
     private let callbackSession: GLESObjCCallback
     private var glesCtx: EAGLContext?
-    private var vbo: GLuint = 0, vao: GLuint = 0, fbo: [GLuint] = .init(repeating: 0, count: 2), prog: GLuint = 0, uMat: GLuint = 0
+    private var vbo: GLuint = 0
+    private var vao: GLuint = 0
+    private var fbo = [GLuint](repeating: 0, count: 2)
+    private var prog: GLuint = 0
+    private var uMat: GLuint = 0
     
     private let frameW: Int
     private let frameH: Int
     
-    private var zRange: (Int, Int) = (0, 0)
-    private var layerMap: [Int: [Int]] = .init()
+    private var zRange = (0, 0)
+    private var layerMap = [Int: [Int]]()
     
-    private var sourceMats: [Int: GLKMatrix4] = .init()
-    private var sourceFilters: [Int: IVideoFilter] = .init()
-    private var sourceBuffers: [Int: SourceBuffer] = .init()
+    private var sourceMats = [Int: GLKMatrix4]()
+    private var sourceFilters = [Int: IVideoFilter]()
+    private var sourceBuffers = [Int: SourceBuffer]()
     
-    private var syncPoint: Date = .init()
-    private var epoch: Date = .init()
-    private var nextMixTime: Date = .init()
-    private var us25: TimeInterval = .init()
+    private var syncPoint = Date()
+    private var epoch = Date()
+    private var nextMixTime = Date()
+    private var us25 = TimeInterval()
     
-    private var exiting: Atomic<Bool> = .init(false)
-    private var mixing: Atomic<Bool> = .init(false)
-    private var paused: Atomic<Bool> = .init(false)
+    private var exiting = Atomic(false)
+    private var mixing = Atomic(false)
+    private var paused = Atomic<Bool>(false)
     
-    private var shouldSync: Bool = false
-    private let catchingUp: Bool = false
+    private var shouldSync = false
+    private let catchingUp = false
     
     /*! Constructor.
      *
@@ -229,26 +82,25 @@ open class GLESVideoMixer: IVideoMixer {
         frameH = frame_h
         self.pixelBufferPool = pixelBufferPool
 
-        zRange.0 = Int.max
-        zRange.1 = Int.min
+        zRange.0 = .max
+        zRange.1 = .min
         
-        callbackSession = .init()
+        callbackSession = GLESObjCCallback()
         callbackSession.mixer = self
 
-        perfGLSync({
-            
+        perfGLSync(glContext: glesCtx, jobQueue: glJobQueue) {
             self.setupGLES(excludeContext: excludeContext)
-            
-            }, glContext: glesCtx, jobQueue: glJobQueue)
-        
+        }
     }
     
     deinit {
+        Logger.debug("GLESVideoMixer::deinit")
+        
         output = nil
         exiting.value = true
         mixThreadCond.broadcast()
-        Logger.debug("GLESVideoMixer::deinit")
-        perfGLAsync({
+        
+        perfGLAsync(glContext: glesCtx, jobQueue: glJobQueue) {
             glDeleteFramebuffers(2, self.fbo)
             glDeleteBuffers(1, &self.vbo)
             if let texture0 = self.texture[0], let texture1 = self.texture[1] {
@@ -266,10 +118,10 @@ open class GLESVideoMixer: IVideoMixer {
             }
             
             self.glesCtx = nil
-        }, glContext: glesCtx, jobQueue: glJobQueue)
+        }
         
         _mixThread?.cancel()
-
+        
         glJobQueue.markExiting()
         glJobQueue.enqueueSync {}
     }
@@ -278,11 +130,13 @@ open class GLESVideoMixer: IVideoMixer {
     open func registerSource(_ source: ISource, inBufferSize: Int) {
         let shash = hash(source)
         var registered = false
+        
         for it in sources {
             if shash == hash(it) {
                 registered = true
             }
         }
+        
         if !registered {
             sources.append(WeakRefISource(value: source))
         }
@@ -293,27 +147,28 @@ open class GLESVideoMixer: IVideoMixer {
         Logger.debug("GLESVideoMixer::unregisterSource")
         releaseBuffer(WeakRefISource(value: source))
         
-        let h = hash(source)
-        for i in stride(from: sources.count - 1, through: 0, by: -1) {
+        let hashValue = hash(source)
+        for index in stride(from: sources.count - 1, through: 0, by: -1) {
+            let shash = hashWeak(sources[index])
             
-            let shash = hashWeak(sources[i])
-            
-            if h == shash {
-                sources.remove(at: i)
+            if hashValue == shash {
+                sources.remove(at: index)
             }
         }
         
-        if let iit = sourceBuffers.index(forKey: h) {
-            sourceBuffers.remove(at: iit)
+        if let index = sourceBuffers.index(forKey: hashValue) {
+            sourceBuffers.remove(at: index)
         }
-        for i in (zRange.0...zRange.1) {
-            guard let layerMap_i = layerMap[i] else {
+        
+        for layerIndex in zRange.0...zRange.1 {
+            guard let layerMap_i = layerMap[layerIndex] else {
                 Logger.debug("unexpected return")
                 continue
             }
-            for iit in stride(from: layerMap_i.count - 1, through: 0, by: -1) {
-                if layerMap_i[iit] == h {
-                    layerMap[i]?.remove(at: iit)
+            
+            for layerInnerIndex in stride(from: layerMap_i.count - 1, through: 0, by: -1) {
+                if layerMap_i[layerInnerIndex] == hashValue {
+                    layerMap[layerIndex]?.remove(at: layerInnerIndex)
                 }
             }
         }
@@ -321,8 +176,10 @@ open class GLESVideoMixer: IVideoMixer {
     
     /*! IVideoMixer::setSourceFilter */
     open func setSourceFilter(_ source: WeakRefISource, filter: IVideoFilter) {
-        let h = hashWeak(source)
-        sourceFilters[h] = filter
+        guard let hashValue = hashWeak(source) else {
+            return Logger.debug("unexpected return")
+        }
+        sourceFilters[hashValue] = filter
     }
     
     open func sync() {
@@ -337,50 +194,45 @@ open class GLESVideoMixer: IVideoMixer {
     
     /*! IOutput::pushBuffer */
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
-        if paused.value {
+        guard !paused.value else {
             return
         }
         
-        guard let md = metadata as? VideoBufferMetadata,
-            let zIndex = md.data?.zIndex,
-            let metaData = md.data else {
-                Logger.debug("unexpected return")
-                return
+        guard let md = metadata as? VideoBufferMetadata, let zIndex = md.data?.zIndex, let metaData = md.data else {
+            return Logger.debug("unexpected return")
         }
         
         if zIndex < zRange.0 {
             zRange.0 = zIndex
         }
+        
         if zIndex > zRange.1 {
             zRange.1 = zIndex
         }
         
         let source = metaData.source
         
-        let h = hashWeak(source)
-        
-        guard let textureCache = textureCache,
-            let glesCtx = glesCtx
-            else {
-                Logger.debug("unexpected return")
-                return
+        guard let textureCache = textureCache, let glesCtx = glesCtx, let hashValue = hashWeak(source) else {
+            return Logger.debug("unexpected return")
         }
+        
         let inPixelBuffer = data.assumingMemoryBound(to: PixelBuffer.self).pointee
         
-        if sourceBuffers[h] == nil {
-            sourceBuffers[h] = .init()
+        if sourceBuffers[hashValue] == nil {
+            sourceBuffers[hashValue] = .init()
         }
-        sourceBuffers[h]?.setBuffer(inPixelBuffer, textureCache: textureCache, jobQueue: glJobQueue, glContext: glesCtx)
-        sourceBuffers[h]?.blends = metaData.blends
+        sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache, jobQueue: glJobQueue, glContext: glesCtx)
+        sourceBuffers[hashValue]?.blends = metaData.blends
         
         if layerMap[zIndex] == nil {
-            layerMap[zIndex] = .init()
+            layerMap[zIndex] = []
         }
-        let it = layerMap[zIndex]?.index(of: h)
-        if it == nil {
-            layerMap[zIndex]?.append(h)
+        
+        let layerIndex = layerMap[zIndex]?.index(of: hashValue)
+        if layerIndex == nil {
+            layerMap[zIndex]?.append(hashValue)
         }
-        sourceMats[h] = metaData.matrix
+        sourceMats[hashValue] = metaData.matrix
     }
     
     /*! ITransform::setEpoch */
@@ -397,23 +249,141 @@ open class GLESVideoMixer: IVideoMixer {
     open func mixPaused(_ paused: Bool) {
         self.paused.value = paused
     }
+}
+
+private extension GLESVideoMixer {
+    final class GLESObjCCallback: NSObject {
+        var mixer: GLESVideoMixer?
         
+        override init() {
+            super.init()
+            NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: .UIApplicationDidEnterBackground, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(applicationWillEnterForeground), name: .UIApplicationWillEnterForeground, object: nil)
+        }
+        
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+        
+        @objc func applicationDidEnterBackground() {
+            mixer?.mixPaused(true)
+        }
+        
+        @objc func applicationWillEnterForeground() {
+            mixer?.mixPaused(false)
+        }
+    }
+    
+    final class SourceBuffer {
+        private class BufferContainer {
+            var buffer: PixelBuffer
+            var texture: CVOpenGLESTexture?
+            var time = Date()
+            
+            init(_ buf: PixelBuffer) {
+                buffer = buf
+            }
+            
+            deinit {
+                texture = nil
+            }
+        }
+        
+        var currentTexture: CVOpenGLESTexture?
+        var currentBuffer: PixelBuffer?
+        var blends = false
+        
+        private var pixelBuffers: [CVPixelBuffer: BufferContainer] = .init()
+        
+        func setBuffer(_ pixelBuffer: PixelBuffer, textureCache: CVOpenGLESTextureCache, jobQueue: JobQueue, glContext: EAGLContext) {
+            var flush = false
+            let now = Date()
+            
+            currentBuffer?.state = .available
+            pixelBuffer.state = .acquired
+            
+            if let bufferContainer = pixelBuffers[pixelBuffer.cvBuffer] {
+                currentBuffer = pixelBuffer
+                currentTexture = bufferContainer.texture
+                bufferContainer.time = now
+            } else {
+                perfGLAsync(glContext: glContext, jobQueue: jobQueue) { [weak self] in
+                    guard let strongSelf = self else { return }
+                    
+                    pixelBuffer.lock(true)
+                    
+                    let format = pixelBuffer.pixelFormat
+                    let is32bit = format != kCVPixelFormatType_16LE565
+                    
+                    var texture: CVOpenGLESTexture?
+                    let ret = CVOpenGLESTextureCacheCreateTextureFromImage(
+                        kCFAllocatorDefault,
+                        textureCache,
+                        pixelBuffer.cvBuffer,
+                        nil,
+                        GLenum(GL_TEXTURE_2D),
+                        is32bit ? GL_RGBA : GL_RGB,
+                        GLsizei(pixelBuffer.width),
+                        GLsizei(pixelBuffer.height),
+                        GLenum(is32bit ? GL_BGRA : GL_RGB),
+                        GLenum(is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5),
+                        0,
+                        &texture
+                    )
+                    
+                    pixelBuffer.unlock(true)
+                    
+                    if ret == noErr, let texture = texture {
+                        glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
+                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GL_LINEAR)
+                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GL_LINEAR)
+                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GL_CLAMP_TO_EDGE)
+                        
+                        let bufferContainer = BufferContainer(pixelBuffer)
+                        strongSelf.pixelBuffers[pixelBuffer.cvBuffer] = bufferContainer
+                        bufferContainer.texture = texture
+                        
+                        strongSelf.currentBuffer = pixelBuffer
+                        strongSelf.currentTexture = texture
+                        bufferContainer.time = now
+                    } else {
+                        Logger.error("Error creating texture! \(ret)")
+                    }
+                }
+                
+                flush = true
+            }
+            
+            perfGLAsync(glContext: glContext, jobQueue: jobQueue) {
+                for (pixelBuffer, bufferContainer) in self.pixelBuffers
+                    where bufferContainer.buffer.isTemporary && bufferContainer.buffer.cvBuffer != self.currentBuffer?.cvBuffer {
+                        // Buffer is temporary, release it.
+                        self.pixelBuffers[pixelBuffer] = nil
+                }
+                
+                if flush {
+                    CVOpenGLESTextureCacheFlush(textureCache, 0)
+                }
+            }
+        }
+    }
+    
     /*!
      *  Release a currently-retained buffer from a source.
      *
      *  \param source  The source that created the buffer to be released.
      */
-    private func releaseBuffer(_ source: WeakRefISource) {
+    func releaseBuffer(_ source: WeakRefISource) {
         Logger.debug("GLESVideoMixer::releaseBuffer")
-        let h = hashWeak(source)
-        guard let it = sourceBuffers.index(forKey: h) else {
-            Logger.debug("unexpected return")
-            return
+        
+        guard let hashValue = hashWeak(source), let index = sourceBuffers.index(forKey: hashValue) else {
+            return Logger.debug("unexpected return")
         }
-        sourceBuffers.remove(at: it)
+        sourceBuffers.remove(at: index)
     }
     
-    private func hashWeak(_ obj: WeakRefISource) -> Int {
+    func hashWeak(_ obj: WeakRefISource) -> Int? {
         guard let obj = obj.value else {
             Logger.debug("unexpected return")
             return 0
@@ -422,7 +392,7 @@ open class GLESVideoMixer: IVideoMixer {
     }
     
     /*! Start the compositor thread */
-    private func mixThread() {
+    func mixThread() {
         let us = TimeInterval(bufferDuration)
         let us_25 = TimeInterval(bufferDuration * 0.25)
         us25 = us_25
@@ -437,9 +407,8 @@ open class GLESVideoMixer: IVideoMixer {
         
         while !exiting.value {
             mixThreadCond.lock()
-            defer {
-                mixThreadCond.unlock()
-            }
+            defer { mixThreadCond.unlock() }
+            
             let now = Date()
             
             if now >= nextMixTime {
@@ -458,38 +427,41 @@ open class GLESVideoMixer: IVideoMixer {
                 locked[currentFb] = true
                 
                 mixing.value = true
-                perfGLAsync({
+                perfGLAsync(glContext: glesCtx, jobQueue: glJobQueue) {
                     glPushGroupMarkerEXT(0, "Videocast.Mix")
                     glBindFramebuffer(GLenum(GL_FRAMEBUFFER), self.fbo[currentFb])
                     
                     var currentFilter: IVideoFilter?
                     glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
-                    var i = self.zRange.0
-                    while i <= self.zRange.1 {
-                        
-                        guard let layerMap = self.layerMap[i] else {
+                    var layerKey = self.zRange.0
+                    
+                    while layerKey <= self.zRange.1 {
+                        guard let layerMap = self.layerMap[layerKey] else {
                             Logger.debug("unexpected return")
                             continue
                         }
-                        for it in layerMap {
+                        
+                        for key in layerMap {
                             var texture: CVOpenGLESTexture?
-                            let filterit = self.sourceFilters.index(forKey: it)
-                            if filterit == nil {
-                                let filter = self.filterFactory.filter(name: "com.videocast.filters.bgra")
-                                self.sourceFilters[it] = filter as? IVideoFilter
+                            let filter = self.sourceFilters.index(forKey: key)
+                            
+                            if filter == nil {
+                                let newFilter = self.filterFactory.filter(name: "com.videocast.filters.bgra")
+                                self.sourceFilters[key] = newFilter as? IVideoFilter
                             }
-                            if currentFilter !== self.sourceFilters[it] {
+                            
+                            if currentFilter !== self.sourceFilters[key] {
                                 if let currentFilter = currentFilter {
                                     currentFilter.unbind()
                                 }
-                                currentFilter = self.sourceFilters[it]
+                                currentFilter = self.sourceFilters[key]
                                 
                                 if let currentFilter = currentFilter, !currentFilter.initialized {
                                     currentFilter.initialize()
                                 }
                             }
                             
-                            guard let iTex = self.sourceBuffers[it] else {
+                            guard let iTex = self.sourceBuffers[key] else {
                                 Logger.debug("unexpected return")
                                 continue
                             }
@@ -502,7 +474,7 @@ open class GLESVideoMixer: IVideoMixer {
                                 glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
                             }
                             if let texture = texture, let currentFilter = currentFilter {
-                                currentFilter.matrix = self.sourceMats[it] ?? GLKMatrix4Identity
+                                currentFilter.matrix = self.sourceMats[key] ?? GLKMatrix4Identity
                                 currentFilter.bind()
                                 glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
                                 glDrawArrays(GLenum(GL_TRIANGLES), 0, 6)
@@ -513,22 +485,22 @@ open class GLESVideoMixer: IVideoMixer {
                                 glDisable(GLenum(GL_BLEND))
                             }
                         }
-                        i += 1
+                        layerKey += 1
                     }
                     glFlush()
                     glPopGroupMarkerEXT()
                     
                     if let lout = self.output {
-                        
                         let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(self.epoch), preferredTimescale: VC_TIME_BASE))
                         let nextFb = (currentFb + 1) % 2
                         if let _ = self.pixelBuffer[nextFb] {
                             lout.pushBuffer(&self.pixelBuffer[nextFb]!, size: MemoryLayout<CVPixelBuffer>.size, metadata: md)
                         }
                     }
-                    self.mixing.value = false
                     
-                }, glContext: glesCtx, jobQueue: glJobQueue)
+                    self.mixing.value = false
+                }
+                
                 currentFb = (currentFb + 1) % 2
             }
             
@@ -543,14 +515,14 @@ open class GLESVideoMixer: IVideoMixer {
      *                       The parameter of this method will be a pointer to its EAGLContext.  This is useful for
      *                       applications that may be capturing GLES data and do not wish to capture the mixer.
      */
-    private func setupGLES(excludeContext: (()->Void)?) {
+    func setupGLES(excludeContext: (()->Void)?) {
         glesCtx = EAGLContext(api: .openGLES3)
         if glesCtx == nil {
             glesCtx = EAGLContext(api: .openGLES2)
         }
+        
         guard let glesCtx = glesCtx else {
-            Logger.error("Error! Unable to create an OpenGL ES 2.0 or 3.0 Context!")
-            return
+            return Logger.error("Error! Unable to create an OpenGL ES 2.0 or 3.0 Context!")
         }
         EAGLContext.setCurrent(nil)
         EAGLContext.setCurrent(glesCtx)
@@ -572,7 +544,6 @@ open class GLESVideoMixer: IVideoMixer {
         // We may now attach these FBOs as the render target and avoid using the costly glGetPixels.
         
         autoreleasepool {
-            
             if let pixelBufferPool = pixelBufferPool {
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, &pixelBuffer[0])
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, &pixelBuffer[1])
@@ -583,29 +554,45 @@ open class GLESVideoMixer: IVideoMixer {
                     kCVPixelBufferHeightKey as String: frameW,
                     kCVPixelBufferOpenGLESCompatibilityKey as String: true,
                     kCVPixelBufferIOSurfacePropertiesKey as String: [:]
-                    ]
+                ]
                 
                 CVPixelBufferCreate(kCFAllocatorDefault, frameW, frameH, kCVPixelFormatType_32BGRA, pixelBufferOptions as NSDictionary?, &pixelBuffer[0])
                 CVPixelBufferCreate(kCFAllocatorDefault, frameW, frameH, kCVPixelFormatType_32BGRA, pixelBufferOptions as NSDictionary?, &pixelBuffer[1])
             }
         }
         CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, nil, glesCtx, nil, &textureCache)
+        
         guard let textureCache = textureCache else {
-            Logger.debug("unexpected return")
-            return
+            return Logger.debug("unexpected return")
         }
+        
         glGenFramebuffers(2, &fbo)
+        
         for i in (0 ... 1) {
             guard let pixelBuffer = pixelBuffer[i] else {
                 Logger.debug("unexpected return")
                 break
             }
-            CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, textureCache, pixelBuffer, nil, GLenum(GL_TEXTURE_2D), GL_RGBA, GLsizei(frameW), GLsizei(frameH), GLenum(GL_BGRA), GLenum(GL_UNSIGNED_BYTE), 0, &texture[i])
+            
+            CVOpenGLESTextureCacheCreateTextureFromImage(
+                kCFAllocatorDefault,
+                textureCache, pixelBuffer,
+                nil,
+                GLenum(GL_TEXTURE_2D),
+                GL_RGBA,
+                GLsizei(frameW),
+                GLsizei(frameH),
+                GLenum(GL_BGRA),
+                GLenum(GL_UNSIGNED_BYTE),
+                0,
+                &texture[i]
+            )
             
             guard let texture = texture[i] else {
                 Logger.debug("unexpected return")
                 break
             }
+            
             glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
             glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLfloat(GL_LINEAR))
             glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLfloat(GL_LINEAR))
@@ -613,9 +600,7 @@ open class GLESVideoMixer: IVideoMixer {
             glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GLfloat(GL_CLAMP_TO_EDGE))
             glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo[i])
             glFramebufferTexture2D(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture), 0)
-            
         }
-        
         
         glFramebufferStatus()
         
@@ -627,9 +612,34 @@ open class GLESVideoMixer: IVideoMixer {
         glDisable(GLenum(GL_DEPTH_TEST))
         glDisable(GLenum(GL_SCISSOR_TEST))
         glViewport(0, 0, GLsizei(frameW), GLsizei(frameH))
-        glClearColor(0.05, 0.05, 0.07, 1.0)
+        glClearColor(0.05, 0.05, 0.07, 1)
         CVOpenGLESTextureCacheFlush(textureCache, 0)
     }
-    
+}
 
+// Convenience function to dispatch an OpenGL ES job to the created JobQueue
+private func perfGL(isSync: Bool, glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
+    let cl = {
+        let context = EAGLContext.current()
+        if let glContext = glContext {
+            EAGLContext.setCurrent(glContext)
+        }
+        execute()
+        EAGLContext.setCurrent(context)
+    }
+    if isSync {
+        jobQueue.enqueueSync(cl)
+    } else {
+        jobQueue.enqueue(cl)
+    }
+}
+
+// Dispatch and execute synchronously
+private func perfGLSync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
+    perfGL(isSync: true, glContext: glContext, jobQueue: jobQueue, execute: execute)
+}
+
+// Dispatch and execute asynchronously
+private func perfGLAsync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
+    perfGL(isSync: false, glContext: glContext, jobQueue: jobQueue, execute: execute)
 }
