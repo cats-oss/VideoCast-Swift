@@ -147,8 +147,8 @@ open class VCPreviewView: UIView {
             
             let mult = (aspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac
             
-            wfac = width*mult / Float(strongSelf.bounds.width)
-            hfac = height*mult / Float(strongSelf.bounds.height)
+            wfac = width * mult / Float(strongSelf.bounds.width)
+            hfac = height * mult / Float(strongSelf.bounds.height)
             
             let matrix = GLKMatrix4ScaleWithVector3(GLKMatrix4Identity, GLKVector3Make(1 * wfac, -1 * hfac, 1))
             
