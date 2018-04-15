@@ -13,8 +13,8 @@ import AudioUnit
 fileprivate class MixWindow {
     fileprivate var start: Date = .init()
     fileprivate let size: Int
-    fileprivate var next: MixWindow?
-    fileprivate var prev: MixWindow?
+    fileprivate weak var next: MixWindow?
+    fileprivate weak var prev: MixWindow?
     fileprivate var lock: NSLock = .init()
     
     fileprivate var buffer: [UInt8]
@@ -133,9 +133,6 @@ open class AudioMixer: IAudioMixer {
     }
     
     deinit {
-        exiting.value = true
-        mixThreadCond.broadcast()
-        _mixThread?.cancel()
         mixQueue.markExiting()
         mixQueue.enqueueSync {}
         
@@ -308,6 +305,12 @@ open class AudioMixer: IAudioMixer {
         _mixThread = Thread(block: mixThread)
         _mixThread?.name = "com.videocast.audiomixer"
         _mixThread?.start()
+    }
+    
+    open func stop() {
+        exiting.value = true
+        mixThreadCond.broadcast()
+        _mixThread?.cancel()
     }
     
     /*!
