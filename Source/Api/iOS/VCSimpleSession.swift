@@ -283,7 +283,9 @@ open class VCSimpleSession {
     
     deinit {
         endSession()
+        audioMixer?.stop()
         audioMixer = nil
+        videoMixer?.stop()
         videoMixer = nil
         videoSplit = nil
         aspectTransform = nil

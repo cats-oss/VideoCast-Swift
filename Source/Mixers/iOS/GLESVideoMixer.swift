@@ -39,7 +39,7 @@ func perfGLAsync(_ x: @escaping ()->Void, glContext: EAGLContext?, jobQueue: Job
 }
 
 class GLESObjCCallback: NSObject {
-    var mixer: GLESVideoMixer?
+    weak var mixer: GLESVideoMixer?
     
     override init() {
         super.init()
@@ -244,11 +244,8 @@ open class GLESVideoMixer: IVideoMixer {
     }
     
     deinit {
-        output = nil
-        exiting.value = true
-        mixThreadCond.broadcast()
         Logger.debug("GLESVideoMixer::deinit")
-        perfGLAsync({
+        perfGLSync({
             glDeleteFramebuffers(2, self.fbo)
             glDeleteBuffers(1, &self.vbo)
             if let texture0 = self.texture[0], let texture1 = self.texture[1] {
@@ -392,6 +389,12 @@ open class GLESVideoMixer: IVideoMixer {
     open func start() {
         _mixThread = Thread(block: mixThread)
         _mixThread?.start()
+    }
+    
+    open func stop() {
+        output = nil
+        exiting.value = true
+        mixThreadCond.broadcast()
     }
 
     open func mixPaused(_ paused: Bool) {
