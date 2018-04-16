@@ -81,7 +81,7 @@ open class MicSource: ISource {
      *                          applications that may be capturing Audio Unit data and do not wish to capture this source.
      *
      */
-    public init(sampleRate: Double = 44100,
+    public init(sampleRate: Double = 48000,
                 channelCount: Int = 2,
                 excludeAudioUnit: ((AudioUnit)->Void)? = nil) {
         self.sampleRate = sampleRate
