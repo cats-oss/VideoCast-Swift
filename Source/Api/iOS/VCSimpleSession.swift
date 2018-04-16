@@ -94,7 +94,7 @@ open class VCSimpleSession {
     
     private var _torch: Bool = false
     private var _audioChannelCount: Int = 2
-    private var _audioSampleRate: Float = 44100
+    private var _audioSampleRate: Float = 48000
     private var _micGain: Float = 1
     private var _cameraState: VCCameraState
 
@@ -164,7 +164,7 @@ open class VCSimpleSession {
     open var audioSampleRate: Float {
         get { return _audioSampleRate }
         set {
-            _audioSampleRate = ( newValue > 33075 ? 44100 : 22050)  // We can only support 44100 / 22050 with AAC + RTMP
+            _audioSampleRate = newValue
             audioMixer?.setFrequencyInHz(newValue)
         }
     }
