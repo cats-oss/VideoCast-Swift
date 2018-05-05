@@ -31,6 +31,7 @@ public protocol IMixer: ITransform {
     func unregisterSource(_ source: ISource)
     
     func start()
+    func stop()
 }
 
 extension IMixer {

@@ -97,9 +97,6 @@ open class AudioMixer: IAudioMixer {
     }
     
     deinit {
-        exiting.value = true
-        mixThreadCond.broadcast()
-        _mixThread?.cancel()
         mixQueue.markExiting()
         mixQueue.enqueueSync {}
         
@@ -273,6 +270,12 @@ open class AudioMixer: IAudioMixer {
         _mixThread = Thread(block: mixThread)
         _mixThread?.name = "com.videocast.audiomixer"
         _mixThread?.start()
+    }
+
+    open func stop() {
+        exiting.value = true
+        mixThreadCond.broadcast()
+        _mixThread?.cancel()
     }
 }
 

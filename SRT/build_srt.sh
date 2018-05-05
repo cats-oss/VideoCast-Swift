@@ -23,10 +23,6 @@ build_srt() {
     popd
 }
 
-pushd srt
-git checkout dev
-popd
-
 build_srt iPhoneSimulator SIMULATOR64 x86_64
 build_srt iPhoneSimulator SIMULATOR i386
 build_srt iPhoneOS OS armv7

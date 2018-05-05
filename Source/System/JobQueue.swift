@@ -74,8 +74,10 @@ open class JobQueue {
     }
     
     open func enqueueSync(_ job: Job) {
-        queue.sync {
+        if let label = String(validatingUTF8: __dispatch_queue_get_label(nil)), label == queue.label {
             job.exec()
+        } else {
+            queue.sync(execute: job.exec)
         }
     }
 }

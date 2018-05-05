@@ -92,15 +92,11 @@ open class GLESVideoMixer: IVideoMixer {
             self.setupGLES(excludeContext: excludeContext)
         }
     }
-    
+
     deinit {
         Logger.debug("GLESVideoMixer::deinit")
-        
-        output = nil
-        exiting.value = true
-        mixThreadCond.broadcast()
-        
-        perfGLAsync(glContext: glesCtx, jobQueue: glJobQueue) {
+
+        perfGLSync(glContext: glesCtx, jobQueue: glJobQueue) {
             glDeleteFramebuffers(2, self.fbo)
             glDeleteBuffers(1, &self.vbo)
             if let texture0 = self.texture[0], let texture1 = self.texture[1] {
@@ -245,6 +241,12 @@ open class GLESVideoMixer: IVideoMixer {
         _mixThread = Thread(block: mixThread)
         _mixThread?.start()
     }
+    
+    open func stop() {
+        output = nil
+        exiting.value = true
+        mixThreadCond.broadcast()
+    }
 
     open func mixPaused(_ paused: Bool) {
         self.paused.value = paused
@@ -253,7 +255,7 @@ open class GLESVideoMixer: IVideoMixer {
 
 private extension GLESVideoMixer {
     final class GLESObjCCallback: NSObject {
-        var mixer: GLESVideoMixer?
+        weak var mixer: GLESVideoMixer?
         
         override init() {
             super.init()
@@ -273,7 +275,7 @@ private extension GLESVideoMixer {
             mixer?.mixPaused(false)
         }
     }
-    
+
     final class SourceBuffer {
         private class BufferContainer {
             var buffer: PixelBuffer
@@ -293,7 +295,7 @@ private extension GLESVideoMixer {
         var currentBuffer: PixelBuffer?
         var blends = false
         
-        private var pixelBuffers: [CVPixelBuffer: BufferContainer] = .init()
+        private var pixelBuffers = [CVPixelBuffer: BufferContainer]()
         
         func setBuffer(_ pixelBuffer: PixelBuffer, textureCache: CVOpenGLESTextureCache, jobQueue: JobQueue, glContext: EAGLContext) {
             var flush = false
