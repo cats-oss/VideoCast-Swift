@@ -28,7 +28,7 @@ open class AudioMixer: IAudioMixer {
     private var currentWindow: MixWindow
     private var outgoingWindow: MixWindow?
     
-    private var mixQueue: JobQueue = .init("com.videocast.composite")
+    private var mixQueue = JobQueue("com.videocast.composite")
     
     private var epoch = Date()
     private var nextMixTime = Date()
