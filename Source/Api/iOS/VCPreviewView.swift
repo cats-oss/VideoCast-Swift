@@ -18,7 +18,7 @@ open class VCPreviewView: UIView {
     private var matrixPos: GLuint = 0
     
     private var currentBuffer = 1
-    private var paused = false
+    private var paused = Atomic(false)
     
     private var current = [CVPixelBuffer?](repeating: nil, count: 2)
     private var texture = [CVOpenGLESTexture?](repeating: nil, count: 2)
@@ -70,7 +70,7 @@ open class VCPreviewView: UIView {
     }
     
     open func drawFrame(pixelBuffer: CVPixelBuffer) {
-        guard !paused else { return }
+        guard !paused.value else { return }
         
         var updateTexture = false
         
@@ -157,7 +157,7 @@ open class VCPreviewView: UIView {
             glErrors()
             glBindRenderbuffer(GLenum(GL_RENDERBUFFER), strongSelf.renderBuffer)
             
-            if !strongSelf.paused {
+            if !strongSelf.paused.value {
                 strongSelf.context?.presentRenderbuffer(Int(GL_RENDERBUFFER))
             }
             
@@ -189,11 +189,11 @@ private extension VCPreviewView {
     }
     
     @objc func applicationDidEnterBackground() {
-        paused = true
+        paused.value = true
     }
     
     @objc func applicationWillEnterForeground() {
-        paused = false
+        paused.value = false
     }
     
     func setupGLES() {
