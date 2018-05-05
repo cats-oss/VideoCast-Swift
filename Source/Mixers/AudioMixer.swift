@@ -28,7 +28,7 @@ open class AudioMixer: IAudioMixer {
     private var currentWindow: MixWindow
     private var outgoingWindow: MixWindow?
     
-    private var mixQueue = JobQueue("com.videocast.composite")
+    private var mixQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
     
     private var epoch = Date()
     private var nextMixTime = Date()
@@ -268,7 +268,7 @@ open class AudioMixer: IAudioMixer {
     
     open func start() {
         _mixThread = Thread(block: mixThread)
-        _mixThread?.name = "com.videocast.audiomixer"
+        _mixThread?.name = "jp.co.cyberagent.VideoCast.audiomixer"
         _mixThread?.start()
     }
 

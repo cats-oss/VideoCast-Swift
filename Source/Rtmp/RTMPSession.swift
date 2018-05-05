@@ -15,8 +15,8 @@ public typealias RTMPSessionStateCallback = (_ session: RTMPSession, _ state: RT
 
 open class RTMPSession: IOutputSession {
     private let kMaxSendbufferSize = 10 * 1024 * 1024   // 10 MB
-    private let networkQueue: JobQueue = .init("com.videocast.rtmp.network")
-    private let jobQueue: JobQueue = .init("com.videocast.rtmp")
+    private let networkQueue: JobQueue = .init("jp.co.cyberagent.VideoCast.rtmp.network")
+    private let jobQueue: JobQueue = .init("jp.co.cyberagent.VideoCast.rtmp")
     private var sentKeyframe: Date = .init()
     
     private let networkWaitSemaphore: DispatchSemaphore = .init(value: 0)

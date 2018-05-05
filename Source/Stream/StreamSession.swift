@@ -52,7 +52,7 @@ open class StreamSession: IStreamSession {
             inputStream = readStream?.takeRetainedValue()
             outputStream = writeStream?.takeRetainedValue()
             
-            let queue: DispatchQueue = .init(label: "com.videocast.network")
+            let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.network")
             
             if let _ = inputStream, let _ = outputStream {
                 queue.async { [weak self] in

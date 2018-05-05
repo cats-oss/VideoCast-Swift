@@ -18,7 +18,7 @@ import CoreMedia
 open class GLESVideoMixer: IVideoMixer {
     public var filterFactory = FilterFactory()
     
-    private let glJobQueue = JobQueue("com.videocast.composite")
+    private let glJobQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
     
     private let bufferDuration: TimeInterval
     
@@ -399,7 +399,7 @@ private extension GLESVideoMixer {
         let us_25 = TimeInterval(bufferDuration * 0.25)
         us25 = us_25
         
-        Thread.current.name = "com.videocast.compositeloop"
+        Thread.current.name = "jp.co.cyberagent.VideoCast.compositeloop"
         
         var currentFb = 0
         
@@ -448,7 +448,7 @@ private extension GLESVideoMixer {
                             let filter = self.sourceFilters.index(forKey: key)
                             
                             if filter == nil {
-                                let newFilter = self.filterFactory.filter(name: "com.videocast.filters.bgra")
+                                let newFilter = self.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
                                 self.sourceFilters[key] = newFilter as? IVideoFilter
                             }
                             

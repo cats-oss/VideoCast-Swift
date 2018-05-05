@@ -26,11 +26,11 @@ void main(void) {
     }
     
     open override var name: String {
-        return "com.videocast.filters.grayscale"
+        return "jp.co.cyberagent.VideoCast.filters.grayscale"
     }
     
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "com.videocast.filters.grayscale", instantiation: { return GrayscaleVideoFilter() })
+        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.grayscale", instantiation: { return GrayscaleVideoFilter() })
         return true
     }
 }

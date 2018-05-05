@@ -12,7 +12,7 @@ import AVFoundation
 public typealias MP4SessionParameters = MetaData<(filename: String, fps: Int, width: Int, height: Int, videoCodecType: CMVideoCodecType)>
 
 open class MP4Multiplexer: IOutputSession {
-    private let writingQueue: DispatchQueue = .init(label: "com.videocast.mp4multiplexer")
+    private let writingQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.mp4multiplexer")
     
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?

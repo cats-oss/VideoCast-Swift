@@ -15,7 +15,7 @@ open class AACEncode: IEncoder {
     private var inDesc: AudioStreamBasicDescription
     private var outDesc: AudioStreamBasicDescription
     
-    private let converterQueue: DispatchQueue = .init(label: "com.videocast.aacencode")
+    private let converterQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.aacencode")
     private var audioConverter: AudioConverterRef?
     private weak var output: IOutput?
     private var bytesPerSample: UInt32 = 0

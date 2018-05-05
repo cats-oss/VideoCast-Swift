@@ -42,11 +42,11 @@ void main(void) {
     }
     
     open override var name: String {
-        return "com.videocast.filters.glow"
+        return "jp.co.cyberagent.VideoCast.filters.glow"
     }
     
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "com.videocast.filters.glow", instantiation: { return GlowVideoFilter() })
+        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.glow", instantiation: { return GlowVideoFilter() })
         return true
     }
 }

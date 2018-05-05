@@ -12,7 +12,7 @@ import CoreVideo
 import VideoToolbox
 
 open class VTEncode: IEncoder {
-    private let encodeQueue: DispatchQueue = .init(label: "com.videocast.vtencode")
+    private let encodeQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.vtencode")
     private weak var output: IOutput?
     private var compressionSession: VTCompressionSession?
     private let frameW: Int

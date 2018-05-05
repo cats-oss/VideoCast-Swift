@@ -203,17 +203,17 @@ open class VCSimpleSession {
             let filterName: String
             switch filter {
             case .normal:
-                filterName = "com.videocast.filters.bgra"
+                filterName = "jp.co.cyberagent.VideoCast.filters.bgra"
             case .gray:
-                filterName = "com.videocast.filters.grayscale"
+                filterName = "jp.co.cyberagent.VideoCast.filters.grayscale"
             case .invertColors:
-                filterName = "com.videocast.filters.invertColors"
+                filterName = "jp.co.cyberagent.VideoCast.filters.invertColors"
             case .sepia:
-                filterName = "com.videocast.filters.sepia"
+                filterName = "jp.co.cyberagent.VideoCast.filters.sepia"
             case .fisheye:
-                filterName = "com.videocast.filters.fisheye"
+                filterName = "jp.co.cyberagent.VideoCast.filters.fisheye"
             case .glow:
-                filterName = "com.videocast.filters.glow"
+                filterName = "jp.co.cyberagent.VideoCast.filters.glow"
             }
             
             Logger.info("FILTER IS : \(filter)")
@@ -458,7 +458,7 @@ private extension VCSimpleSession {
             
             self.cameraSource?.setOutput(aspectTransform)
             
-            guard let videoMixer = self.videoMixer, let filter = videoMixer.filterFactory.filter(name: "com.videocast.filters.bgra") as? IVideoFilter else {
+            guard let videoMixer = self.videoMixer, let filter = videoMixer.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra") as? IVideoFilter else {
                 return Logger.debug("unexpected return")
             }
             

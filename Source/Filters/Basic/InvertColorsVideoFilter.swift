@@ -25,11 +25,11 @@ open class InvertColorsVideoFilter: BasicVideoFilter {
     }
     
     open override var name: String {
-        return "com.videocast.filters.invertColors"
+        return "jp.co.cyberagent.VideoCast.filters.invertColors"
     }
     
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "com.videocast.filters.invertColors", instantiation: { return InvertColorsVideoFilter() })
+        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.invertColors", instantiation: { return InvertColorsVideoFilter() })
         return true
     }
 }

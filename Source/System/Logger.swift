@@ -44,7 +44,7 @@ class Logger {
     static let asyncDebug   = true && Logger.asyncEnabled
     static let asyncVerbose = true && Logger.asyncEnabled
     
-    static let queue: DispatchQueue = .init(label: "com.videocast.logger", qos: .background)
+    static let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.logger", qos: .background)
     
     class func error<T>(_ message: @autoclosure () -> T, file: String = #file, function: String = #function, line: Int = #line ) {
         Logger.log(synchronous: asyncError, level: levelDef, flag: .error, ctx: 0, file: file, function: function, line: line, message: message)

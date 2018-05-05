@@ -164,7 +164,7 @@ open class CameraSource: ISource {
                                 callbackSession.source = self
                                 strongSelf.callbackSession = callbackSession
                             }
-                            let camQueue: DispatchQueue = .init(label: "com.videocast.camera")
+                            let camQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.camera")
                             
                             output.setSampleBufferDelegate(strongSelf.callbackSession, queue: camQueue)
                             

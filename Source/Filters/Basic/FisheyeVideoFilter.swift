@@ -27,11 +27,11 @@ void main(void) {
     }
     
     open override var name: String {
-        return "com.videocast.filters.fisheye"
+        return "jp.co.cyberagent.VideoCast.filters.fisheye"
     }
     
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "com.videocast.filters.fisheye", instantiation: { return FisheyeVideoFilter() })
+        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.fisheye", instantiation: { return FisheyeVideoFilter() })
         return true
     }
 }

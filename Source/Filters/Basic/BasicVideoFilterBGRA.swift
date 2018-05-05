@@ -13,11 +13,11 @@ open class BasicVideoFilterBGRA: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
     
     open override var name: String {
-        return "com.videocast.filters.bgra"
+        return "jp.co.cyberagent.VideoCast.filters.bgra"
     }
     
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "com.videocast.filters.bgra", instantiation: { return BasicVideoFilterBGRA() })
+        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.bgra", instantiation: { return BasicVideoFilterBGRA() })
         return true
     }
 }

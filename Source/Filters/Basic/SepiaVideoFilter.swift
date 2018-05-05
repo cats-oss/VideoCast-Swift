@@ -29,11 +29,11 @@ void main(void) {
     }
     
     open override var name: String {
-        return "com.videocast.filters.sepia"
+        return "jp.co.cyberagent.VideoCast.filters.sepia"
     }
     
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "com.videocast.filters.sepia", instantiation: { return SepiaVideoFilter() })
+        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.sepia", instantiation: { return SepiaVideoFilter() })
         return true
     }
 }
