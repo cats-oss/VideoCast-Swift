@@ -24,7 +24,7 @@ func createAddrInet(_ name: String, port: UInt16) throws -> sockaddr_in
         // Windows/Linux declare it.
         // See:
         //  http://www.winsocketdotnetworkprogramming.com/winsock2programming/winsock2advancedInternet3b.html
-        guard let he = gethostbyname(name), he.pointee.h_addrtype != AF_INET else {
+        guard let he = gethostbyname(name), he.pointee.h_addrtype == AF_INET else {
             throw SRTError.invalidArgument(message: "SrtSource: host not found: \(name)")
         }
         
