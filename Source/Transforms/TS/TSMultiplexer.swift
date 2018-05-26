@@ -301,7 +301,7 @@ open class TSMultiplexer: ITransform {
     
     private var sentByte: Int64 = 0
     
-    private let jobQueue: JobQueue = .init("com.videocast.tsmux")
+    private let jobQueue: JobQueue = .init("jp.co.cyberagent.VideoCast.tsmux")
 
     public init(_ streams: [Stream], ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
         self.ctsOffset = ctsOffset

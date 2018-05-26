@@ -38,11 +38,11 @@ void main(void) {
     
     open var program: GLuint = 0
     
-    open var matrix: GLKMatrix4 = GLKMatrix4Identity
+    open var matrix = GLKMatrix4Identity
     
-    open var dimensions: CGSize = .init()
+    open var dimensions = CGSize.zero
     
-    open var initialized: Bool = false
+    open var initialized = false
     
     open var name: String {
         return ""
@@ -50,7 +50,7 @@ void main(void) {
     
     private var vao: GLuint = 0
     private var uMatrix: Int32 = 0
-    private var bound: Bool = false
+    private var bound = false
     
     public init() {
         
@@ -68,6 +68,7 @@ void main(void) {
                 Logger.debug("unexpected return")
                 break
             }
+            
             program = buildProgram(vertex: vertexKernel, fragment: pixelKernel)
             glGenVertexArraysOES(1, &vao)
             glBindVertexArrayOES(vao)

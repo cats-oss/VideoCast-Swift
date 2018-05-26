@@ -18,7 +18,8 @@ public typealias SRTSessionParameters = MetaData<(
     quiet: Bool,
     fullstats: Bool,
     report: UInt32,
-    stats: UInt32)>
+    stats: UInt32
+    )>
 
 public enum SRTClientState: Int {
     case none = 0
@@ -152,7 +153,7 @@ open class SRTSession: IOutputSession {
         loglevel.setLogLevel()
         logfa.setLogFA()
         
-        Thread.current.name = "com.videocast.srt.transmission"
+        Thread.current.name = "jp.co.cyberagent.VideoCast.srt.transmission"
         
         if internal_log {
             var NAME = "SRTLIB".cString(using: String.Encoding.utf8)!

@@ -77,9 +77,7 @@ open class JobQueue {
         if let label = String(validatingUTF8: __dispatch_queue_get_label(nil)), label == queue.label {
             job.exec()
         } else {
-            queue.sync {
-                job.exec()
-            }
+            queue.sync(execute: job.exec)
         }
     }
 }

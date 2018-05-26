@@ -10,10 +10,7 @@ import Foundation
 import GLKit
 
 func kernel(language: FilterLanguage, target: FilterLanguage, kernelstr: String) -> String? {
-    if language == target {
-        return kernelstr
-    }
-    return nil
+    return language == target ? kernelstr : nil
 }
 
 public enum FilterLanguage {

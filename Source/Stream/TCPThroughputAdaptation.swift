@@ -20,8 +20,8 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
     
     private var thread: Thread? = nil
     private let cond: NSCondition = .init()
-    private let buffQueue: DispatchQueue = .init(label: "com.videocast.tcp.adaptation.buff")
-    private let durQueue: DispatchQueue = .init(label: "com.videocast.tcp.adaptation.dur")
+    private let buffQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.tcp.adaptation.buff")
+    private let durQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.tcp.adaptation.dur")
     
     private var sentSamples: [Int] = .init()
     private var bufferSizeSamples: [Int] = .init()
@@ -123,7 +123,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
     private func sampleThread() {
         var prev: Date = .init()
         
-        Thread.current.name = "com.videocast.tcp.adaptation"
+        Thread.current.name = "jp.co.cyberagent.VideoCast.tcp.adaptation"
         while !exiting.value {
             cond.lock()
             defer {
