@@ -208,19 +208,18 @@ open class AudioMixer: IAudioMixer {
                 _window.lock.lock()
                 defer { _window.lock.unlock() }
                 
-                _window.buffer.withUnsafeMutableBytes { bufferPointer in
-                    if let winMix = bufferPointer.baseAddress?.bindMemory(to: Int16.self, capacity: count) {
-                        for i in 0..<count {
-                            winMix[i] = strongSelf.TPMixSamples(winMix[i], Int16(Float(mix[i])*mult))
-                        }
-                        
-                        p += toCopy
-                        bytesLeft -= toCopy
-                        
-                        if bytesLeft > 0 {
-                            window = _window.next
-                            so = 0
-                        }
+                let ptr = _window.buffer.withUnsafeMutableBytes { $0.baseAddress }
+                if let winMix = ptr?.bindMemory(to: Int16.self, capacity: count) {
+                    for i in 0..<count {
+                        winMix[i] = strongSelf.TPMixSamples(winMix[i], Int16(Float(mix[i])*mult))
+                    }
+                    
+                    p += toCopy
+                    bytesLeft -= toCopy
+                    
+                    if bytesLeft > 0 {
+                        window = window?.next
+                        so = 0
                     }
                 }
             }
