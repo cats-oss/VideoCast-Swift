@@ -200,10 +200,13 @@ open class SRTSession: IOutputSession {
                     cond.wait(until: Date.init(timeIntervalSinceNow: kPollDelay))
                 }
                 guard !ending.value else {
+                    if let tar = tar {
+                        tar.close()
+                    }
                     break
                 }
 
-                if (tar == nil)
+                if tar == nil
                 {
                     tar = try SrtTarget.create(uri, pollid: pollid)
                     guard tar != nil else {
