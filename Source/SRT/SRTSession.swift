@@ -51,6 +51,8 @@ open class SRTSession: IOutputSession {
     
     private var tar: SrtTarget?
     
+    private var sendBuf: Buffer?
+    
     private var wroteBytes: Int = 0
     private var lostBytes: Int = 0
     private var lastReportedtLostBytes: Int = 0
@@ -105,41 +107,53 @@ open class SRTSession: IOutputSession {
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending.value else { return }
         
-        // make the lamdba capture the data
-        let buf = Buffer(size)
-        buf.put(data, size: size)
-        
-        jobQueue.enqueue {
-            if !self.ending.value {
-                do {
-                    guard let tar = self.tar else { return }
-                    
-                    var ptr: UnsafePointer<UInt8>?
-                    buf.read(&ptr, size: buf.size)
-                    guard let p = UnsafeRawPointer(ptr) else {
-                        Logger.debug("unexpected return")
-                        return
-                    }
-                    
-                    let data = p.assumingMemoryBound(to: Int8.self)
-                    if try !tar.isOpen || !tar.write(data, size: buf.size) {
-                        self.lostBytes += buf.size
+        var bufReady: Buffer?
+        if let buf = sendBuf, size + buf.size <= buf.total {
+            buf.append(data, size: size)
+            if buf.size == buf.total {
+                bufReady = buf
+                sendBuf = nil
+            }
+        } else {
+            bufReady = sendBuf
+            let newBuf = Buffer(Int(SrtConf.transmit_chunk_size))
+            newBuf.put(data, size: size)
+            sendBuf = newBuf
+        }
+        if let buf = bufReady {
+            // make the lamdba capture the data
+            jobQueue.enqueue {
+                if !self.ending.value {
+                    do {
+                        guard let tar = self.tar else { return }
                         
-                    } else {
-                        self.wroteBytes += buf.size
-                    }
-                    
-                    if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes)
-                    {
-                        let now: Date = .init()
-                        if now.timeIntervalSince(self.writeErrorLogTimer) >= 5 {
-                            Logger.debug("\(self.lostBytes) bytes lost, \(self.wroteBytes) bytes sent")
-                            self.writeErrorLogTimer = now
-                            self.lastReportedtLostBytes = self.lostBytes
+                        var ptr: UnsafePointer<UInt8>?
+                        buf.read(&ptr, size: buf.size)
+                        guard let p = UnsafeRawPointer(ptr) else {
+                            Logger.debug("unexpected return")
+                            return
                         }
+                        
+                        let data = p.assumingMemoryBound(to: Int8.self)
+                        if try !tar.isOpen || !tar.write(data, size: buf.size) {
+                            self.lostBytes += buf.size
+                            
+                        } else {
+                            self.wroteBytes += buf.size
+                        }
+                        
+                        if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes)
+                        {
+                            let now: Date = .init()
+                            if now.timeIntervalSince(self.writeErrorLogTimer) >= 5 {
+                                Logger.debug("\(self.lostBytes) bytes lost, \(self.wroteBytes) bytes sent")
+                                self.writeErrorLogTimer = now
+                                self.lastReportedtLostBytes = self.lostBytes
+                            }
+                        }
+                    } catch {
+                        Logger.error("ERROR: \(error)")
                     }
-                } catch {
-                    Logger.error("ERROR: \(error)")
                 }
             }
         }

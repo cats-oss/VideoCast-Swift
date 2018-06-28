@@ -613,7 +613,7 @@ private extension VCSimpleSession {
         let sessionParameters = SRTSessionParameters()
         
         sessionParameters.data = (
-            chunk: 0,
+            chunk: SRT_LIVE_DEF_PLSIZE,
             loglevel: .err,
             logfa: .general,
             logfile: "",

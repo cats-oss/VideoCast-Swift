@@ -195,35 +195,25 @@ func put_named_bool(_ data: inout [UInt8], name: String, val: Bool) {
 class Buffer {
     private var buffer: [UInt8]
     var size: Int
+    var total: Int
     
     init(_ size: Int = 0) {
-        buffer = [UInt8](repeating: 0, count: size)
-        self.size = size
+        total = size
+        self.size = 0
+        buffer = [UInt8]()
+        resize(size)
     }
     
     @discardableResult
     func resize(_ size: Int) -> Int {
-        buffer = [UInt8](repeating: 0, count: size)
-        self.size = size
-        return size
-    }
-    
-    @discardableResult
-    func put(_ data: Data, size: Int) -> Int {
-        let size = size > self.size ? self.size : size
+        if size > 0 {
+            buffer = [UInt8](repeating: 0, count: size)
+        } else {
+            buffer = [UInt8]()
+        }
+        total = size
+        self.size = 0
         
-        data.copyBytes(to: &buffer, count: size)
-        return size
-    }
-    
-    @discardableResult
-    func put(_ buf: UnsafeRawPointer, size: Int) -> Int {
-        let size = size > self.size ? self.size : size
-
-        let p = buf.assumingMemoryBound(to: UInt8.self)
-        let arr = Array(UnsafeBufferPointer(start: p, count: size))
-        buffer[..<size] = arr.prefix(size)
-        self.size = size
         return size
     }
     
@@ -233,6 +223,37 @@ class Buffer {
     
     func getMutable() -> UnsafeMutablePointer<UInt8> {
         return buffer.withUnsafeMutableBufferPointer { $0.baseAddress! }
+    }
+    
+    @discardableResult
+    func put(_ data: Data, size: Int) -> Int {
+        let size = size > self.total ? self.total : size
+        
+        data.copyBytes(to: &buffer, count: size)
+        self.size = size
+        return size
+    }
+    
+    @discardableResult
+    func put(_ buf: UnsafeRawPointer, size: Int) -> Int {
+        let size = size > self.total ? self.total : size
+
+        let p = buf.assumingMemoryBound(to: UInt8.self)
+        let arr = Array(UnsafeBufferPointer(start: p, count: size))
+        buffer[..<size] = arr.prefix(size)
+        self.size = size
+        return size
+    }
+    
+    @discardableResult
+    func append(_ buf: UnsafeRawPointer, size: Int) -> Int {
+        let size = size + self.size > self.total ? self.total - self.size : size
+        
+        let p = buf.assumingMemoryBound(to: UInt8.self)
+        let arr = Array(UnsafeBufferPointer(start: p, count: size))
+        buffer[self.size..<size + self.size] = arr.prefix(size)
+        self.size += size
+        return size
     }
     
     @discardableResult
