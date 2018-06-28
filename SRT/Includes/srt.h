@@ -70,12 +70,23 @@ written by
 // You can use these constants with SRTO_MINVERSION option.
 #define SRT_VERSION_FEAT_HSv5 0x010300
 
-#ifdef __GNUG__
+// When compiling in C++17 mode, use the standard C++17 attributes
+// (out of these, only [[deprecated]] is supported in C++14, so
+// for all lesser standard use compiler-specific attributes).
+#if defined(__cplusplus) && __cplusplus > 201406
+#define SRT_ATR_UNUSED [[maybe_unused]]
+#define SRT_ATR_DEPRECATED [[deprecated]]
+#define SRT_ATR_NODISCARD [[nodiscard]]
+
+// GNUG is GNU C++; this syntax is also supported by Clang
+#elif defined( __GNUG__)
 #define SRT_ATR_UNUSED __attribute__((unused))
 #define SRT_ATR_DEPRECATED __attribute__((deprecated))
+#define SRT_ATR_NODISCARD __attribute__((warn_unused_result))
 #else
 #define SRT_ATR_UNUSED
 #define SRT_ATR_DEPRECATED
+#define SRT_ATR_NODISCARD
 #endif
 
 #ifdef __cplusplus
@@ -165,7 +176,9 @@ typedef enum SRT_SOCKOPT {
     SRTO_SMOOTHER,         // Smoother selection (congestion control algorithm)
     SRTO_MESSAGEAPI,
     SRTO_PAYLOADSIZE,
-    SRTO_TRANSTYPE         // Transmission type (set of options required for given transmission type)
+    SRTO_TRANSTYPE,         // Transmission type (set of options required for given transmission type)
+    SRTO_KMREFRESHRATE,
+    SRTO_KMPREANNOUNCE
 } SRT_SOCKOPT;
 
 // DEPRECATED OPTIONS:
@@ -448,6 +461,7 @@ static const SRT_ERRNO SRT_EISDGRAM  SRT_ATR_DEPRECATED = (SRT_ERRNO) MN(NOTSUP,
 #define SRT_LOGFA_DATA 3
 #define SRT_LOGFA_TSBPD 4
 #define SRT_LOGFA_REXMIT 5
+#define SRT_LOGFA_HAICRYPT 6
 
 // To make a typical int32_t size, although still use std::bitset.
 // C API will carry it over.
@@ -464,6 +478,7 @@ enum SRT_KM_STATE
 
 enum SRT_EPOLL_OPT
 {
+   SRT_EPOLL_OPT_NONE = 0, // fallback
    // this values are defined same as linux epoll.h
    // so that if system values are used by mistake, they should have the same effect
    SRT_EPOLL_IN = 0x1,
@@ -477,6 +492,14 @@ enum SRT_EPOLL_OPT
 inline SRT_EPOLL_OPT operator|(SRT_EPOLL_OPT a1, SRT_EPOLL_OPT a2)
 {
     return SRT_EPOLL_OPT( (int)a1 | (int)a2 );
+}
+
+inline bool operator&(int flags, SRT_EPOLL_OPT eflg)
+{
+    // Using an enum prevents treating int automatically as enum,
+    // requires explicit enum to be passed here, and minimizes the
+    // risk that the right side value will contain multiple flags.
+    return flags & int(eflg);
 }
 #endif
 

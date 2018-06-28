@@ -55,8 +55,9 @@ public struct SRTLogFAs: OptionSet {
     public static let data      = SRTLogFAs(rawValue: 1 << 2)
     public static let tsbpd     = SRTLogFAs(rawValue: 1 << 3)
     public static let rexmit    = SRTLogFAs(rawValue: 1 << 4)
+    public static let haicrypt  = SRTLogFAs(rawValue: 1 << 5)
     
-    public static let all: SRTLogFAs = [.bstats, .control, .data, .tsbpd, .rexmit]
+    public static let all: SRTLogFAs = [.bstats, .control, .data, .tsbpd, .rexmit, .haicrypt]
     
     public func setLogFA() {
         if self.contains(.bstats) {
@@ -73,6 +74,9 @@ public struct SRTLogFAs: OptionSet {
         }
         if self.contains(.rexmit) {
             srt_addlogfa(SRT_LOGFA_REXMIT)
+        }
+        if self.contains(.haicrypt) {
+            srt_addlogfa(SRT_LOGFA_HAICRYPT)
         }
     }
 }

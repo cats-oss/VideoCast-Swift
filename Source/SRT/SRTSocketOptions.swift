@@ -134,7 +134,9 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "smoother",     symbol: SRTO_SMOOTHER,      binding: .pre,  type: .string,  valmap: nil),
     .init(name: "messageapi",   symbol: SRTO_MESSAGEAPI,    binding: .pre,  type: .bool,    valmap: nil),
     .init(name: "payloadsize",  symbol: SRTO_PAYLOADSIZE,   binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "transtype",    symbol: SRTO_TRANSTYPE,     binding: .pre,  type: .enumeration, valmap: enummap_transtype)
+    .init(name: "transtype",    symbol: SRTO_TRANSTYPE,     binding: .pre,  type: .enumeration, valmap: enummap_transtype),
+    .init(name: "kmrefreshrate",symbol: SRTO_KMREFRESHRATE, binding: .pre,  type: .int,     valmap: nil),
+    .init(name: "kmpreannounce",symbol: SRTO_KMPREANNOUNCE, binding: .pre,  type: .int,     valmap: nil)
 ]
 
 func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String:String], failures: inout [String]) -> SRTOptionMode {

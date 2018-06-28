@@ -7,7 +7,7 @@
 #  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 
 export IPHONEOS_DEPLOYMENT_TARGET=10.0
-SDKVERSION=11.2
+SDKVERSION=11.4
 
 build_srt() {
     PLATFORM=$1
