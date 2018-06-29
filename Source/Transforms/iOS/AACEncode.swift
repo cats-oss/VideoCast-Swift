@@ -251,7 +251,7 @@ open class AACEncode: IEncoder {
             
             var output_packet_desc: UnsafeMutablePointer<AudioStreamPacketDescription>? = .allocate(capacity: Int(num_packets))
             defer {
-                output_packet_desc?.deallocate(capacity: Int(num_packets))
+                output_packet_desc?.deallocate()
             }
             converterQueue.sync {
                 _ = AudioConverterFillComplexBuffer(audioConverter, ioProc, &ud, &num_packets, &l, output_packet_desc)

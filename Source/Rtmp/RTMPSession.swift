@@ -307,10 +307,9 @@ open class RTMPSession: IOutputSession {
                     }
                 case .handshake1s1:
                     if streamInBuffer.availableBytes >= kRTMPSignatureSize {
-                        let data = Data(bytes: streamInBuffer.readBuffer, count: kRTMPSignatureSize)
                         streamInBuffer.didRead(kRTMPSignatureSize)
                         s1.resize(kRTMPSignatureSize)
-                        s1.put(data, size: kRTMPSignatureSize)
+                        s1.put(streamInBuffer.readBuffer, size: kRTMPSignatureSize)
                         handshake()
                     } else {
                         Logger.debug("Not enough s1 size")

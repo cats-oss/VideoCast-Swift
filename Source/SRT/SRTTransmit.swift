@@ -219,8 +219,9 @@ class SrtCommon {
             try error(udtGetLastError(), src: "ConfigurePre")
         }
         
-        var sa = try createAddrInet(host, port: UInt16(port))
-        stat = withUnsafePointer(to: &sa) { ptr -> Int32 in
+        let sa = try createAddrInet(host, port: UInt16(port))
+        var sa_copy = sa
+        stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
             if ( SrtConf.transmit_verbose )
             {
@@ -437,8 +438,9 @@ class SrtCommon {
     }
     
     fileprivate func setupAdapter(_ host: String, port: Int) throws {
-        var localsa = try createAddrInet(host, port: UInt16(port))
-        let stat = withUnsafePointer(to: &localsa) { ptr -> Int32 in
+        let localsa = try createAddrInet(host, port: UInt16(port))
+        var sa = localsa
+        let stat = withUnsafePointer(to: &sa) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
             return srt_bind(sock, psa, Int32(MemoryLayout.size(ofValue: localsa)))
         }
@@ -448,8 +450,9 @@ class SrtCommon {
     }
     
     fileprivate func connectClient(_ host: String, port: Int) throws {
-        var sa = try createAddrInet(host, port: UInt16(port))
-        var stat = withUnsafePointer(to: &sa) { ptr -> Int32 in
+        let sa = try createAddrInet(host, port: UInt16(port))
+        var sa_copy = sa
+        var stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
             if SrtConf.transmit_verbose {
                 Logger.debug("Connecting to \(host):\(port) ...")
@@ -495,8 +498,9 @@ class SrtCommon {
             try error(udtGetLastError(), src: "ConfigurePre")
         }
         
-        var localsa = try createAddrInet(host, port: UInt16(port))
-        stat = withUnsafePointer(to: &localsa) { ptr -> Int32 in
+        let localsa = try createAddrInet(host, port: UInt16(port))
+        var sa_copy = localsa
+        stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let plsa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
             if SrtConf.transmit_verbose {
                 Logger.debug("Binding a server on \(adapter):\(port) ...")
@@ -509,8 +513,9 @@ class SrtCommon {
             try error(udtGetLastError(), src: "srt_bind")
         }
         
-        var sa = try createAddrInet(host, port: UInt16(port))
-        stat = withUnsafePointer(to: &sa) { ptr -> Int32 in
+        let sa = try createAddrInet(host, port: UInt16(port))
+        sa_copy = sa
+        stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
             if SrtConf.transmit_verbose {
                 Logger.debug("Connecting to \(host):\(port) ...")

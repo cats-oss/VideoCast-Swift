@@ -226,15 +226,6 @@ class Buffer {
     }
     
     @discardableResult
-    func put(_ data: Data, size: Int) -> Int {
-        let size = size > self.total ? self.total : size
-        
-        data.copyBytes(to: &buffer, count: size)
-        self.size = size
-        return size
-    }
-    
-    @discardableResult
     func put(_ buf: UnsafeRawPointer, size: Int) -> Int {
         let size = size > self.total ? self.total : size
 

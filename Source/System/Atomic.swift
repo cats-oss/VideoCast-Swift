@@ -7,6 +7,100 @@
 //
 
 import Foundation
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+import MachO
+#endif
+
+/// A simple, generic lock-free finite state machine.
+///
+/// - warning: `deinitialize` must be called to dispose of the consumed memory.
+internal struct UnsafeAtomicState<State: RawRepresentable> where State.RawValue == Int32 {
+    internal typealias Transition = (expected: State, next: State)
+    #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+    private let value: UnsafeMutablePointer<Int32>
+    
+    /// Create a finite state machine with the specified initial state.
+    ///
+    /// - parameters:
+    ///   - initial: The desired initial state.
+    internal init(_ initial: State) {
+        value = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
+        value.initialize(to: initial.rawValue)
+    }
+    
+    /// Deinitialize the finite state machine.
+    internal func deinitialize() {
+        value.deinitialize(count: 1)
+        value.deallocate()
+    }
+    
+    /// Compare the current state with the specified state.
+    ///
+    /// - parameters:
+    ///   - expected: The expected state.
+    ///
+    /// - returns: `true` if the current state matches the expected state.
+    ///            `false` otherwise.
+    internal func `is`(_ expected: State) -> Bool {
+        return expected.rawValue == value.pointee
+    }
+    
+    /// Try to transition from the expected current state to the specified next
+    /// state.
+    ///
+    /// - parameters:
+    ///   - expected: The expected state.
+    ///   - next: The state to transition to.
+    ///
+    /// - returns: `true` if the transition succeeds. `false` otherwise.
+    internal func tryTransition(from expected: State, to next: State) -> Bool {
+        return OSAtomicCompareAndSwap32Barrier(expected.rawValue,
+                                               next.rawValue,
+                                               value)
+    }
+    #else
+    private let value: Atomic<Int32>
+    
+    /// Create a finite state machine with the specified initial state.
+    ///
+    /// - parameters:
+    ///   - initial: The desired initial state.
+    internal init(_ initial: State) {
+        value = Atomic(initial.rawValue)
+    }
+    
+    /// Deinitialize the finite state machine.
+    internal func deinitialize() {}
+    
+    /// Compare the current state with the specified state.
+    ///
+    /// - parameters:
+    ///   - expected: The expected state.
+    ///
+    /// - returns: `true` if the current state matches the expected state.
+    ///            `false` otherwise.
+    internal func `is`(_ expected: State) -> Bool {
+        return value.value == expected.rawValue
+    }
+    
+    /// Try to transition from the expected current state to the specified next
+    /// state.
+    ///
+    /// - parameters:
+    ///   - expected: The expected state.
+    ///
+    /// - returns: `true` if the transition succeeds. `false` otherwise.
+    internal func tryTransition(from expected: State, to next: State) -> Bool {
+        return value.modify { value in
+            if value == expected.rawValue {
+                value = next.rawValue
+                return true
+            }
+            return false
+        }
+    }
+    #endif
+}
 
 /// `Lock` exposes `os_unfair_lock` on supported platforms, with pthread mutex as the
 // fallback.
@@ -38,8 +132,8 @@ internal class Lock {
         }
         
         deinit {
-            _lock.deinitialize()
-            _lock.deallocate(capacity: 1)
+            _lock.deinitialize(count: 1)
+            _lock.deallocate()
         }
     }
     #endif
@@ -57,16 +151,16 @@ internal class Lock {
             
             defer {
                 pthread_mutexattr_destroy(attr)
-                attr.deinitialize()
-                attr.deallocate(capacity: 1)
+                attr.deinitialize(count: 1)
+                attr.deallocate()
             }
             
             // Darwin pthread for 32-bit ARM somehow returns `EAGAIN` when
             // using `trylock` on a `PTHREAD_MUTEX_ERRORCHECK` mutex.
             #if DEBUG && !arch(arm)
-                pthread_mutexattr_settype(attr, Int32(recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_ERRORCHECK))
+            pthread_mutexattr_settype(attr, Int32(recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_ERRORCHECK))
             #else
-                pthread_mutexattr_settype(attr, Int32(recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_NORMAL))
+            pthread_mutexattr_settype(attr, Int32(recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_NORMAL))
             #endif
             
             let status = pthread_mutex_init(_lock, attr)
@@ -102,16 +196,16 @@ internal class Lock {
             let status = pthread_mutex_destroy(_lock)
             assert(status == 0, "Unexpected pthread mutex error code: \(status)")
             
-            _lock.deinitialize()
-            _lock.deallocate(capacity: 1)
+            _lock.deinitialize(count: 1)
+            _lock.deallocate()
         }
     }
     
     static func make() -> Lock {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
-            if #available(*, iOS 10.0, macOS 10.12, tvOS 10.0, watchOS 3.0) {
-                return UnfairLock()
-            }
+        if #available(*, iOS 10.0, macOS 10.12, tvOS 10.0, watchOS 3.0) {
+            return UnfairLock()
+        }
         #endif
         
         return PthreadLock()

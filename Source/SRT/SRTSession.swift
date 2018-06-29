@@ -108,17 +108,22 @@ open class SRTSession: IOutputSession {
         guard !ending.value else { return }
         
         var bufReady: Buffer?
-        if let buf = sendBuf, size + buf.size <= buf.total {
-            buf.append(data, size: size)
-            if buf.size == buf.total {
-                bufReady = buf
-                sendBuf = nil
-            }
-        } else {
+        if size == 0 {
             bufReady = sendBuf
-            let newBuf = Buffer(Int(SrtConf.transmit_chunk_size))
-            newBuf.put(data, size: size)
-            sendBuf = newBuf
+            sendBuf = nil
+        } else {
+            if let buf = sendBuf, size + buf.size <= buf.total {
+                buf.append(data, size: size)
+                if buf.size == buf.total {
+                    bufReady = buf
+                    sendBuf = nil
+                }
+            } else {
+                bufReady = sendBuf
+                let newBuf = Buffer(Int(SrtConf.transmit_chunk_size))
+                newBuf.put(data, size: size)
+                sendBuf = newBuf
+            }
         }
         if let buf = bufReady {
             // make the lamdba capture the data

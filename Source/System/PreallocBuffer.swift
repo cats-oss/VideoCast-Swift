@@ -38,7 +38,7 @@ open class PreallocBuffer {
     }
     
     deinit {
-        preBuffer.deallocate(capacity: preBufferSize)
+        preBuffer.deallocate()
     }
     
     open func ensureCapacityForWrite(_ capBytes: Int) {

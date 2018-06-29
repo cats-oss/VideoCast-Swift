@@ -561,6 +561,14 @@ private extension VCSimpleSession {
             tsMuxer = TSMultiplexer(streams, ctsOffset: ctsOffset)
             
             if let tsMuxer = tsMuxer, let adtsEncoder = adtsEncoder, let annexbEncoder = annexbEncoder {
+                tsMuxer.setOutput(outputSession)
+                
+                adtsEncoder.setOutput(tsMuxer)
+                annexbEncoder.setOutput(tsMuxer)
+                
+                aacSplit.setOutput(adtsEncoder)
+                vtSplit.setOutput(annexbEncoder)
+                
                 /*
                 fileSink = .init()
                 if let applicationDocumentsDirectory = applicationDocumentsDirectory, let fileSink = fileSink {
@@ -570,16 +578,8 @@ private extension VCSimpleSession {
                     fileSink.setSessionParameters(params)
                     
                     tsMuxer.setOutput(fileSink)
-                }
-                 */
-                
-                tsMuxer.setOutput(outputSession)
-                
-                adtsEncoder.setOutput(tsMuxer)
-                annexbEncoder.setOutput(tsMuxer)
-                
-                aacSplit.setOutput(adtsEncoder)
-                vtSplit.setOutput(annexbEncoder)
+                }*/
+
             }
         }
     }

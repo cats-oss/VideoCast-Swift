@@ -902,6 +902,7 @@ open class TSMultiplexer: ITransform {
             write(buf, size: TS_PACKET_SIZE)
         }
         ts_st.prev_payload_key = key
+        write(buf, size: 0)
     }
     
     private func write_flush() {
@@ -919,9 +920,6 @@ open class TSMultiplexer: ITransform {
     
     private func write(_ buf: UnsafeRawPointer, size: Int) {
         let outMeta: TSMetadata = .init()
-        guard size == TS_PACKET_SIZE && buf.assumingMemoryBound(to: UInt8.self).pointee == 0x47 else {
-            return
-        }
         output?.pushBuffer(buf, size: size, metadata: outMeta)
         sentByte += Int64(size)
     }

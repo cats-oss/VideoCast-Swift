@@ -173,7 +173,7 @@ open class MP4Multiplexer: IOutputSession {
             }
         } else {
             var bufferOut: CMBlockBuffer?
-            let memoryBlock = UnsafeMutableRawPointer.allocate(bytes: size, alignedTo: MemoryLayout<UInt8>.alignment)
+            let memoryBlock = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: MemoryLayout<UInt8>.alignment)
             memoryBlock.initializeMemory(as: UInt8.self, from: data, count: size)
             CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, memoryBlock, size, kCFAllocatorDefault, nil, 0, size, kCMBlockBufferAssureMemoryNowFlag, &bufferOut)
             guard let buffer = bufferOut else {
@@ -221,7 +221,7 @@ open class MP4Multiplexer: IOutputSession {
                 return
             }
             var bufferOut: CMBlockBuffer?
-            let memoryBlock = UnsafeMutableRawPointer.allocate(bytes: size, alignedTo: MemoryLayout<UInt8>.alignment)
+            let memoryBlock = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: MemoryLayout<UInt8>.alignment)
             memoryBlock.initializeMemory(as: UInt8.self, from: data, count: size)
             CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, memoryBlock, size, kCFAllocatorDefault, nil, 0, size, kCMBlockBufferAssureMemoryNowFlag, &bufferOut)
             guard let buffer = bufferOut else {
