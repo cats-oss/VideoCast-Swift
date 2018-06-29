@@ -137,7 +137,7 @@ open class AudioMixer: IAudioMixer {
         let cMixTime = Date()
         let currentWindow = self.currentWindow
         
-        guard let lSource = inSource.value else { return }
+        guard inSource.value != nil else { return }
         
         let resampledBuffer = resample(data, size: size, metadata: inMeta)
         
@@ -207,9 +207,6 @@ open class AudioMixer: IAudioMixer {
                 let count = toCopy / MemoryLayout<Int16>.size
 
                 let mix = rawp.bindMemory(to: Int16.self, capacity: count)
-                
-                /*_window.lock.lock()
-                defer { _window.lock.unlock() }*/
                 
                 if let ptr = _window.buffer.withUnsafeMutableBytes({ $0.baseAddress }) {
                     let winMix = (ptr + so).bindMemory(to: Int16.self, capacity: count)
