@@ -24,7 +24,7 @@ open class AudioMixer: IAudioMixer {
     
     private let kE: Float = 2.7182818284590
     
-    private let windows: [MixWindow]
+    private var windows: [MixWindow]
     private var currentWindow: MixWindow
     private var outgoingWindow: MixWindow?
     
@@ -80,7 +80,10 @@ open class AudioMixer: IAudioMixer {
         
         self.bytesPerSample = outChannelCount * outBitsPerChannel / 8
         
-        windows = [MixWindow](repeating: MixWindow(size: Int(Double(bytesPerSample) * frameDuration * Double(outFrequencyInHz))), count: kMixWindowCount)
+        windows = [MixWindow]()
+        for _ in 0 ..< kMixWindowCount {
+            windows.append(MixWindow(size: Int(Double(bytesPerSample) * frameDuration * Double(outFrequencyInHz))))
+        }
         
         for i in 0 ..< kMixWindowCount-1 {
             windows[i].next = windows[i + 1]
@@ -134,6 +137,8 @@ open class AudioMixer: IAudioMixer {
         let cMixTime = Date()
         let currentWindow = self.currentWindow
         
+        guard let lSource = inSource.value else { return }
+        
         let resampledBuffer = resample(data, size: size, metadata: inMeta)
         
         if resampledBuffer.size == 0 {
@@ -148,9 +153,7 @@ open class AudioMixer: IAudioMixer {
             
             let g: Float = 0.70710678118  // 1 / sqrt(2)
             
-            guard let lSource = inSource.value else {
-                return Logger.debug("unexpected return")
-            }
+            guard let lSource = inSource.value else { return }
             
             let h = hash(lSource)
             
@@ -205,13 +208,13 @@ open class AudioMixer: IAudioMixer {
 
                 let mix = rawp.bindMemory(to: Int16.self, capacity: count)
                 
-                _window.lock.lock()
-                defer { _window.lock.unlock() }
+                /*_window.lock.lock()
+                defer { _window.lock.unlock() }*/
                 
-                let ptr = _window.buffer.withUnsafeMutableBytes { $0.baseAddress }
-                if let winMix = ptr?.bindMemory(to: Int16.self, capacity: count) {
+                if let ptr = _window.buffer.withUnsafeMutableBytes({ $0.baseAddress }) {
+                    let winMix = (ptr + so).bindMemory(to: Int16.self, capacity: count)
                     for i in 0..<count {
-                        winMix[i] = strongSelf.TPMixSamples(winMix[i], Int16(Float(mix[i])*mult))
+                        winMix[i] = AudioMixer.TPMixSamples(winMix[i], Int16(Float(mix[i])*mult))
                     }
                     
                     p += toCopy
@@ -222,6 +225,7 @@ open class AudioMixer: IAudioMixer {
                         so = 0
                     }
                 }
+
             }
             
             strongSelf.lastSampleTime[h] = mixTime + sampleDuration
@@ -284,7 +288,6 @@ private extension AudioMixer {
         let size: Int
         var next: MixWindow?
         var prev: MixWindow?
-        var lock = Lock.make()
         var buffer: [UInt8]
         
         init(size: Int) {
@@ -293,9 +296,7 @@ private extension AudioMixer {
         }
         
         func clear() {
-            lock.lock()
-            buffer = [UInt8](repeating: 0, count: buffer.count)
-            lock.unlock()
+            _ = (0 ..< size).map {buffer[$0] = 0}
         }
     }
     
@@ -512,7 +513,7 @@ private extension AudioMixer {
                 
                 let currentWindow = self.currentWindow
                 
-                nextWindow.start = currentWindow.start
+                nextWindow.start = currentWindow.start + duration
                 nextWindow.next?.start = nextWindow.start + duration
                 
                 nextMixTime = currentWindow.start
@@ -529,7 +530,7 @@ private extension AudioMixer {
                 self.currentWindow = nextWindow
             }
             
-            if !exiting.value, let start = currentWindow.next?.start {
+            if !exiting.value, let start = self.currentWindow.next?.start {
                 mixThreadCond.wait(until: start)
             }
         }
@@ -537,23 +538,7 @@ private extension AudioMixer {
         Logger.debug("Exiting audio mixer...")
     }
     
-    private func deinterleaveDefloat(inBuff: UnsafePointer<Float>, outBuff: UnsafeMutablePointer<Int16>, sampleCount: UInt, channelCount: UInt) {
-        let offset = Int(sampleCount)
-        let mult: Float = 0x7FFF
-        
-        if channelCount == 2 {
-            for i in stride(from: 0, to: Int(sampleCount), by: 2) {
-                outBuff[i] = Int16(inBuff[i] * mult)
-                outBuff[i+1] = Int16(inBuff[i+offset] * mult)
-            }
-        } else {
-            for i in 0..<Int(sampleCount) {
-                outBuff[i] = Int16(min(1,max(-1,inBuff[i])) * mult)
-            }
-        }
-    }
-    
-    private func TPMixSamples(_ a: Int16, _ b: Int16) -> Int16 {
+    private static func TPMixSamples(_ a: Int16, _ b: Int16) -> Int16 {
         let sum = (Int(a) + Int(b))
         let mul = (Int(a) * Int(b))
         
@@ -567,28 +552,5 @@ private extension AudioMixer {
             // If samples are on opposite sides of the 0-crossing, mixed signal should reflect that samples cancel each other out somewhat
             return a + b
         }
-    }
-    
-    private func b8_to_b16(_ v: UnsafeRawPointer) -> Int16 {
-        let val = v.bindMemory(to: Int16.self, capacity: 1).pointee
-        return val * 0xFF
-    }
-    
-    private func b16_to_b16(_ v: UnsafeRawPointer) -> Int16 {
-        return v.bindMemory(to: Int16.self, capacity: 1).pointee
-    }
-    
-    private func b32_to_b16(_ v: UnsafeRawPointer) -> Int16 {
-        let val = Int16(v.bindMemory(to: Int32.self, capacity: 1).pointee / 0xFFFF)
-        return val
-    }
-    
-    private func b24_to_b16(_ v: UnsafeRawPointer) -> Int16 {
-        let m: Int32 = 1 << 23
-        let p = v.bindMemory(to: UInt8.self, capacity: 1)
-        let inarr: [UInt8] = [p[0], p[1], p[2], 0]
-        let x = UnsafeRawPointer(inarr).bindMemory(to: Int32.self, capacity: 1).pointee
-        var r = (x ^ m) - m
-        return b32_to_b16(&r)
     }
 }
