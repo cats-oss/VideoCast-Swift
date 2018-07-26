@@ -11,11 +11,11 @@ import GLKit
 
 open class BasicVideoFilterBGRA: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
-    
+
     open override var name: String {
         return "jp.co.cyberagent.VideoCast.filters.bgra"
     }
-    
+
     private static func registerFilter() -> Bool {
         FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.bgra", instantiation: { return BasicVideoFilterBGRA() })
         return true

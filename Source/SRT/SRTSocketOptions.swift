@@ -16,7 +16,7 @@ struct SRTOptionValue {
     }
     var size: Int { return data.count }
     private let data: Data
-    
+
     init(_ data: Data) {
         self.data = data
     }
@@ -42,7 +42,7 @@ enum SRTOptionMode: Int {
     case rendezvous = 2
 }
 
-let enummap_transtype: [String:Any] = [
+let enummap_transtype: [String: Any] = [
     "live": SRTT_LIVE,
     "file": SRTT_FILE
 ]
@@ -52,11 +52,11 @@ struct SRTSocketOption {
     var symbol: SRT_SOCKOPT
     var binding: SRTOptionBinding
     var type: SRTOptionType
-    var valmap: [String:Any]?
-    
+    var valmap: [String: Any]?
+
     static let true_names: Set = ["1", "yes", "on", "true"]
     static let false_names: Set = ["0", "no", "off", "false"]
-    
+
     func apply(_ socket: SRTSOCKET, value: String) -> Bool {
         var oo: SRTOptionValue?
         extract(type, value: value, o: &oo)
@@ -64,11 +64,11 @@ struct SRTSocketOption {
         let result = setso(socket, data: o.value, size: Int32(o.size))
         return result != -1
     }
-    
+
     private func setso(_ socket: SRTSOCKET, data: UnsafeRawPointer, size: Int32) -> Int32 {
         return srt_setsockopt(socket, 0, symbol, data, size)
     }
-    
+
     private func extract(_ type: SRTOptionType, value: String, o: inout SRTOptionValue?) {
         switch type {
         case .string:
@@ -99,7 +99,7 @@ struct SRTSocketOption {
                     break
                 }
             }
-            
+
             // Fallback: try interpreting it as integer.
             if var v = Int32(value) {
                 o = .init(Data(bytes: &v, count: MemoryLayout.size(ofValue: v)))
@@ -109,52 +109,52 @@ struct SRTSocketOption {
 }
 
 let srtOptions: [SRTSocketOption] = [
-    .init(name: "maxbw",        symbol: SRTO_MAXBW,         binding: .pre,  type: .int64,   valmap: nil),
-    .init(name: "pbkeylen",     symbol: SRTO_PBKEYLEN,      binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "passphrase",   symbol: SRTO_PASSPHRASE,    binding: .pre,  type: .string,  valmap: nil),
-    
-    .init(name: "mss",          symbol: SRTO_MSS,           binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "fc",           symbol: SRTO_FC,            binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "sndbuf",       symbol: SRTO_SNDBUF,        binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "rcvbuf",       symbol: SRTO_RCVBUF,        binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "ipttl",        symbol: SRTO_IPTTL,         binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "iptos",        symbol: SRTO_IPTOS,         binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "inputbw",      symbol: SRTO_INPUTBW,       binding: .post, type: .int64,   valmap: nil),
-    .init(name: "oheadbw",      symbol: SRTO_OHEADBW,       binding: .post, type: .int,     valmap: nil),
-    .init(name: "latency",      symbol: SRTO_LATENCY,       binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "tsbpddelay",   symbol: SRTO_TSBPDDELAY,    binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "tlpktdrop",    symbol: SRTO_TLPKTDROP,     binding: .pre,  type: .bool,    valmap: nil),
-    .init(name: "nakreport",    symbol: SRTO_NAKREPORT,     binding: .pre,  type: .bool,    valmap: nil),
-    .init(name: "conntimeo",    symbol: SRTO_CONNTIMEO,     binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "lossmaxttl",   symbol: SRTO_LOSSMAXTTL,    binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "rcvlatency",   symbol: SRTO_RCVLATENCY,    binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "peerlatency",  symbol: SRTO_PEERLATENCY,   binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "minversion",   symbol: SRTO_MINVERSION,    binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "streamid",     symbol: SRTO_STREAMID,      binding: .pre,  type: .string,  valmap: nil),
-    .init(name: "smoother",     symbol: SRTO_SMOOTHER,      binding: .pre,  type: .string,  valmap: nil),
-    .init(name: "messageapi",   symbol: SRTO_MESSAGEAPI,    binding: .pre,  type: .bool,    valmap: nil),
-    .init(name: "payloadsize",  symbol: SRTO_PAYLOADSIZE,   binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "transtype",    symbol: SRTO_TRANSTYPE,     binding: .pre,  type: .enumeration, valmap: enummap_transtype),
-    .init(name: "kmrefreshrate",symbol: SRTO_KMREFRESHRATE, binding: .pre,  type: .int,     valmap: nil),
-    .init(name: "kmpreannounce",symbol: SRTO_KMPREANNOUNCE, binding: .pre,  type: .int,     valmap: nil)
+    .init(name: "maxbw", symbol: SRTO_MAXBW, binding: .pre, type: .int64, valmap: nil),
+    .init(name: "pbkeylen", symbol: SRTO_PBKEYLEN, binding: .pre, type: .int, valmap: nil),
+    .init(name: "passphrase", symbol: SRTO_PASSPHRASE, binding: .pre, type: .string, valmap: nil),
+
+    .init(name: "mss", symbol: SRTO_MSS, binding: .pre, type: .int, valmap: nil),
+    .init(name: "fc", symbol: SRTO_FC, binding: .pre, type: .int, valmap: nil),
+    .init(name: "sndbuf", symbol: SRTO_SNDBUF, binding: .pre, type: .int, valmap: nil),
+    .init(name: "rcvbuf", symbol: SRTO_RCVBUF, binding: .pre, type: .int, valmap: nil),
+    .init(name: "ipttl", symbol: SRTO_IPTTL, binding: .pre, type: .int, valmap: nil),
+    .init(name: "iptos", symbol: SRTO_IPTOS, binding: .pre, type: .int, valmap: nil),
+    .init(name: "inputbw", symbol: SRTO_INPUTBW, binding: .post, type: .int64, valmap: nil),
+    .init(name: "oheadbw", symbol: SRTO_OHEADBW, binding: .post, type: .int, valmap: nil),
+    .init(name: "latency", symbol: SRTO_LATENCY, binding: .pre, type: .int, valmap: nil),
+    .init(name: "tsbpddelay", symbol: SRTO_TSBPDDELAY, binding: .pre, type: .int, valmap: nil),
+    .init(name: "tlpktdrop", symbol: SRTO_TLPKTDROP, binding: .pre, type: .bool, valmap: nil),
+    .init(name: "nakreport", symbol: SRTO_NAKREPORT, binding: .pre, type: .bool, valmap: nil),
+    .init(name: "conntimeo", symbol: SRTO_CONNTIMEO, binding: .pre, type: .int, valmap: nil),
+    .init(name: "lossmaxttl", symbol: SRTO_LOSSMAXTTL, binding: .pre, type: .int, valmap: nil),
+    .init(name: "rcvlatency", symbol: SRTO_RCVLATENCY, binding: .pre, type: .int, valmap: nil),
+    .init(name: "peerlatency", symbol: SRTO_PEERLATENCY, binding: .pre, type: .int, valmap: nil),
+    .init(name: "minversion", symbol: SRTO_MINVERSION, binding: .pre, type: .int, valmap: nil),
+    .init(name: "streamid", symbol: SRTO_STREAMID, binding: .pre, type: .string, valmap: nil),
+    .init(name: "smoother", symbol: SRTO_SMOOTHER, binding: .pre, type: .string, valmap: nil),
+    .init(name: "messageapi", symbol: SRTO_MESSAGEAPI, binding: .pre, type: .bool, valmap: nil),
+    .init(name: "payloadsize", symbol: SRTO_PAYLOADSIZE, binding: .pre, type: .int, valmap: nil),
+    .init(name: "transtype", symbol: SRTO_TRANSTYPE, binding: .pre, type: .enumeration, valmap: enummap_transtype),
+    .init(name: "kmrefreshrate", symbol: SRTO_KMREFRESHRATE, binding: .pre, type: .int, valmap: nil),
+    .init(name: "kmpreannounce", symbol: SRTO_KMPREANNOUNCE, binding: .pre, type: .int, valmap: nil)
 ]
 
-func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String:String], failures: inout [String]) -> SRTOptionMode {
-    
+func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String: String], failures: inout [String]) -> SRTOptionMode {
+
     if options["passphrase"] != nil {
         // Insert default
         if options["pbkeylen"] == nil {
             options["pbkeylen"] = "16"
         }
     }
-    
+
     let mode: SRTOptionMode
     var modestr: String = "default"
-    
+
     if let m = options["mode"] {
         modestr = m
     }
-    
+
     if modestr == "client" || modestr == "caller" {
         mode = .caller
     } else if modestr == "server" || modestr == "listener" {
@@ -169,17 +169,15 @@ func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String:S
             // Host is given, so check also "adapter"
             if options["adapter"] != nil {
                 mode = .rendezvous
-            }else {
+            } else {
                 mode = .caller
             }
         }
-    }
-    else
-    {
+    } else {
         mode = .failure
         failures.append("mode")
     }
-    
+
     var all_clear: Bool = true
     for o in srtOptions {
         guard o.binding == .pre else { continue }
@@ -191,11 +189,11 @@ func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String:S
             }
         }
     }
-    
+
     return all_clear ? mode : .failure
 }
 
-func srtConfigurePost(_ socket: SRTSOCKET, options: [String:String], failures: inout [String]) {
+func srtConfigurePost(_ socket: SRTSOCKET, options: [String: String], failures: inout [String]) {
     for o in srtOptions {
         guard o.binding == .post else { continue }
         if let value = options[o.name] {
@@ -206,4 +204,3 @@ func srtConfigurePost(_ socket: SRTSOCKET, options: [String:String], failures: i
         }
     }
 }
-

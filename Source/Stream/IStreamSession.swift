@@ -10,7 +10,7 @@ import Foundation
 
 public struct StreamStatus: OptionSet {
     public let rawValue: Int
-    
+
     public init(rawValue: Int) {
         self.rawValue = rawValue
     }
@@ -26,7 +26,7 @@ public typealias StreamSessionCallback = (IStreamSession, StreamStatus) -> Void
 
 public protocol IStreamSession {
     var status: StreamStatus { get }
-    
+
     func connect(host: String, port: Int, sscb callback: @escaping StreamSessionCallback)
     func disconnect()
     func write(_ buffer: UnsafePointer<UInt8>, size: Int) -> Int

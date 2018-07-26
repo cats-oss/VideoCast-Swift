@@ -12,7 +12,7 @@ import GLKit
 
 class sbCallback: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     weak var source: CameraSource?
-    
+
     func captureOutput(_ output: AVCaptureOutput,
                        didOutput sampleBuffer: CMSampleBuffer,
                        from connection: AVCaptureConnection) {
@@ -22,12 +22,12 @@ class sbCallback: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         source?.bufferCaptured(pixelBuffer: pixelBuffer)
     }
-    
+
     func captureOutput(_ output: AVCaptureOutput,
                        didDrop sampleBuffer: CMSampleBuffer,
                        from connection: AVCaptureConnection) {
     }
-    
+
     @objc func orientationChanged(notification: Notification) {
         guard let source = source, !source.orientationLocked else { return }
         DispatchQueue.global().async { [weak self] in
@@ -40,11 +40,11 @@ open class CameraSource: ISource {
     open var hashValue: Int {
         return ObjectIdentifier(self).hashValue
     }
-    
+
     open static func ==(lhs: CameraSource, rhs: CameraSource) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
-    
+
     open var filter: IFilter?
     /*!
      * If the orientation is locked, we ignore device / interface
@@ -53,24 +53,24 @@ open class CameraSource: ISource {
      * \return `true` is returned if the orientation is locked
      */
     open var orientationLocked: Bool = false
-    
+
     private var matrix: GLKMatrix4 = GLKMatrix4Identity
-    
+
     private weak var output: IOutput?
-    
+
     private var captureSession: AVCaptureSession?
     private var captureDevice: AVCaptureDevice?
     private var callbackSession: sbCallback?
     private var previewLayer: AVCaptureVideoPreviewLayer?
-    
+
     private var fps: Int = 0
     private var torchOn: Bool = false
     private var useInterfaceOrientation: Bool = false
-    
+
     public init() {
-        
+
     }
-    
+
     deinit {
         captureSession?.stopRunning()
         captureSession = nil
@@ -80,7 +80,7 @@ open class CameraSource: ISource {
         }
         previewLayer = nil
     }
-    
+
     /*!
      *  Get the AVCaptureVideoPreviewLayer associated with the camera output.
      *
@@ -104,12 +104,12 @@ open class CameraSource: ISource {
         }
         outAVCaptureVideoPreviewLayer = previewLayer
     }
-    
+
     /*! ISource::setOutput */
     open func setOutput(_ output: IOutput) {
         self.output = output
     }
-    
+
     /*!
      *  Setup camera properties
      *
@@ -119,18 +119,18 @@ open class CameraSource: ISource {
      *  \param sessionPreset name of the preset to use for the capture session
      *  \param callbackBlock block to be called after everything is set
      */
-    open func setupCamera(fps: Int = 15, useFront: Bool = true, useInterfaceOrientation: Bool = false, sessionPreset: AVCaptureSession.Preset? = nil, callback: (()->())? = nil) {
+    open func setupCamera(fps: Int = 15, useFront: Bool = true, useInterfaceOrientation: Bool = false, sessionPreset: AVCaptureSession.Preset? = nil, callback: (() -> Void)? = nil) {
         self.fps = fps
         self.useInterfaceOrientation = useInterfaceOrientation
-        
+
         let permissions = { [weak self] (granted: Bool) in
             guard let strongSelf = self else { return }
-            
+
             autoreleasepool {
                 if granted {
-                    
+
                     let position: AVCaptureDevice.Position = useFront ? .front : .back
-                    
+
                     if let d = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: position) {
                         strongSelf.captureDevice = d
                         do {
@@ -151,11 +151,11 @@ open class CameraSource: ISource {
 
                         do {
                             let input = try AVCaptureDeviceInput(device: d)
-                            
+
                             let output = AVCaptureVideoDataOutput()
-                            
+
                             output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-                            
+
                             let callbackSession: sbCallback
                             if let cs = strongSelf.callbackSession {
                                 callbackSession = cs
@@ -165,20 +165,20 @@ open class CameraSource: ISource {
                                 strongSelf.callbackSession = callbackSession
                             }
                             let camQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.camera")
-                            
+
                             output.setSampleBufferDelegate(strongSelf.callbackSession, queue: camQueue)
-                            
+
                             if session.canAddInput(input) {
                                 session.addInput(input)
                             }
                             if session.canAddOutput(output) {
                                 session.addOutput(output)
                             }
-                            
+
                             strongSelf.reorientCamera()
                             session.commitConfiguration()
                             session.startRunning()
-                            
+
                             if strongSelf.orientationLocked {
                                 if strongSelf.useInterfaceOrientation {
                                     NotificationCenter.default.addObserver(callbackSession, selector: #selector(type(of: callbackSession).orientationChanged(notification:)), name: .UIApplicationDidChangeStatusBarOrientation, object: nil)
@@ -198,7 +198,7 @@ open class CameraSource: ISource {
         }
         autoreleasepool {
             let auth = AVCaptureDevice.authorizationStatus(for: .video)
-            
+
             if auth == .authorized {
                 permissions(true)
             } else if auth == .notDetermined {
@@ -206,50 +206,50 @@ open class CameraSource: ISource {
             }
         }
     }
-    
+
     /*!
      *  Toggle the camera between front and back-facing cameras.
      */
     open func toggleCamera() {
-        
+
         guard let session = captureSession else {
             Logger.debug("unexpected return")
             return
         }
-        
+
         session.beginConfiguration()
         do {
             try captureDevice?.lockForConfiguration()
-            
+
             if session.inputs.count > 0 {
                 guard let currentCameraInput = session.inputs[0] as? AVCaptureDeviceInput else {
                     Logger.debug("unexpected return")
                     return
                 }
-                
+
                 session.removeInput(currentCameraInput)
                 captureDevice?.unlockForConfiguration()
-                
+
                 guard let newCamera = cameraWithPosition( currentCameraInput.device.position == .back ? .front : .back) else {
                     Logger.debug("unexpected return")
                     return
                 }
-                
+
                 let newVideoInput = try AVCaptureDeviceInput(device: newCamera)
                 try newCamera.lockForConfiguration()
                 session.addInput(newVideoInput)
-                
+
                 captureDevice = newCamera
                 newCamera.unlockForConfiguration()
                 session.commitConfiguration()
             }
-            
+
             reorientCamera()
         } catch {
             Logger.error("Error while locking device for toggle camera: \(error)")
         }
     }
-    
+
     /*!
      *  Attempt to turn the torch mode on or off.
      *
@@ -264,15 +264,15 @@ open class CameraSource: ISource {
             Logger.debug("unexpected return")
             return ret
         }
-        
+
         session.beginConfiguration()
-        
+
         if session.inputs.count > 0 {
             guard let currentCameraInput = session.inputs[0] as? AVCaptureDeviceInput else {
                 Logger.debug("unexpected return")
                 return ret
             }
-                
+
             if currentCameraInput.device.isTorchAvailable {
                 do {
                     try currentCameraInput.device.lockForConfiguration()
@@ -286,14 +286,14 @@ open class CameraSource: ISource {
             } else {
                 Logger.error("Torch not available in current camera input")
             }
-            
+
         }
-        
+
         session.commitConfiguration()
         self.torchOn = ret
         return ret
     }
-    
+
     /*!
      *  Attempt to set the POI for focus.
      *  (0,0) represents top left, (1,1) represents bottom right.
@@ -306,9 +306,9 @@ open class CameraSource: ISource {
             Logger.debug("unexpected return")
             return false
         }
-        
+
         var ret = device.isFocusPointOfInterestSupported
-        
+
         if ret {
             do {
                 try device.lockForConfiguration()
@@ -324,10 +324,10 @@ open class CameraSource: ISource {
         } else {
             Logger.info("Focus POI not supported")
         }
-        
+
         return ret
     }
-    
+
     @discardableResult
     open func setContinuousAutofocus(_ wantsContinuous: Bool) -> Bool {
         guard let device = captureDevice else {
@@ -336,7 +336,7 @@ open class CameraSource: ISource {
         }
         let newMode: AVCaptureDevice.FocusMode = wantsContinuous ? .continuousAutoFocus : .autoFocus
         var ret = device.isFocusModeSupported(newMode)
-        
+
         if ret {
             do {
                 try device.lockForConfiguration()
@@ -349,19 +349,19 @@ open class CameraSource: ISource {
         } else {
             Logger.info("Focus mode not supported: \(wantsContinuous ? AVCaptureDevice.FocusMode.continuousAutoFocus : AVCaptureDevice.FocusMode.autoFocus)")
         }
-        
+
         return ret
     }
-    
+
     @discardableResult
     open func setExposurePointOfInterest(x: Float, y: Float) -> Bool {
         guard let device = captureDevice else {
             Logger.debug("unexpected return")
             return false
         }
-        
+
         var ret = device.isExposurePointOfInterestSupported
-        
+
         if ret {
             do {
                 try device.lockForConfiguration()
@@ -374,10 +374,10 @@ open class CameraSource: ISource {
         } else {
             Logger.info("Exposure POI not supported")
         }
-        
+
         return ret
     }
-    
+
     @discardableResult
     open func setContinuousExposure(_ wantsContinuous: Bool) -> Bool {
         guard let device = captureDevice else {
@@ -386,7 +386,7 @@ open class CameraSource: ISource {
         }
         let newMode: AVCaptureDevice.ExposureMode = wantsContinuous ? .continuousAutoExposure : .autoExpose
         var ret = device.isExposureModeSupported(newMode)
-        
+
         if ret {
             do {
                 try device.lockForConfiguration()
@@ -399,32 +399,32 @@ open class CameraSource: ISource {
         } else {
             Logger.info("Exposure mode not supported: \(wantsContinuous ? AVCaptureDevice.ExposureMode.continuousAutoExposure : AVCaptureDevice.ExposureMode.autoExpose)")
         }
-        
+
         return ret
     }
-    
+
     /*! Used by Objective-C Capture Session */
     open func bufferCaptured(pixelBuffer: CVPixelBuffer) {
         guard let output = output else { return }
-        
+
         let md = VideoBufferMetadata(ts: .init(value: 1, timescale: Int32(fps)))
-        
+
         md.data = (1, matrix, false, WeakRefISource(value: self))
-        
+
         var pb: IPixelBuffer = PixelBuffer(pixelBuffer, temporary: true)
-        
+
         pb.state = .enqueued
         output.pushBuffer(&pb, size: MemoryLayout<PixelBuffer>.size, metadata: md)
-        
+
     }
-    
+
     /*! Used by Objective-C Device/Interface Orientation Notifications */
     open func reorientCamera() {
         guard let session = captureSession else {
             Logger.debug("unexpected return")
             return
         }
-        
+
         let orientation: UIInterfaceOrientation
         if useInterfaceOrientation {
             orientation = UIApplication.shared.statusBarOrientation
@@ -442,10 +442,10 @@ open class CameraSource: ISource {
                 orientation = UIApplication.shared.statusBarOrientation
             }
         }
-        
+
         for output in session.outputs {
             for av in output.connections {
-                
+
                 switch orientation {
                 case .portraitUpsideDown:
                     if av.videoOrientation != .portraitUpsideDown {
@@ -468,12 +468,12 @@ open class CameraSource: ISource {
                 }
             }
         }
-        
+
         if torchOn {
             setTorch(torchOn)
         }
     }
-    
+
     /*!
      * Get a camera with a specified position
      *

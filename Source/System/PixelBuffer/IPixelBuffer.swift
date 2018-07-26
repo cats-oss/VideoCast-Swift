@@ -20,11 +20,11 @@ public enum PixelBufferState {
 public protocol IPixelBuffer {
     var width: Int { get }
     var height: Int { get }
-    
+
     var pixelFormat: PixelBufferFormatType { get }
-    
+
     var baseAddress: UnsafeMutableRawPointer? { get }
-    
+
     var state: PixelBufferState { get set }
     var isTemporary: Bool { get set }
 
@@ -38,7 +38,7 @@ extension IPixelBuffer {
     public func lock() {
         lock(false)
     }
-    
+
     public func unlock() {
         unlock(false)
     }

@@ -23,9 +23,9 @@ public typealias VideoBufferMetadata = MetaData<(
 /*! IVideoMixer interface.  Defines the required interface methods for Video mixers (compositors). */
 public protocol IVideoMixer: IMixer {
     var filterFactory: FilterFactory { get }
-    
+
     func setSourceFilter(_ source: WeakRefISource, filter: IVideoFilter)
     func sync()
-    
+
     func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData)
 }

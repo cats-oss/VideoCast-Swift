@@ -11,7 +11,7 @@ import GLKit
 
 open class BasicVideoFilterBGRAinYUVAout: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
-    
+
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
 precision mediump float;
@@ -26,11 +26,11 @@ void main(void) {
 }
 """)
     }
-    
+
     open override var name: String {
         return "jp.co.cyberagent.VideoCast.filters.bgra2yuva"
     }
-    
+
     private static func registerFilter() -> Bool {
         FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.bgra2yuva", instantiation: { return BasicVideoFilterBGRAinYUVAout() })
         return true

@@ -11,7 +11,7 @@ import GLKit
 
 open class InvertColorsVideoFilter: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
-    
+
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
                precision mediump float;
@@ -23,11 +23,11 @@ open class InvertColorsVideoFilter: BasicVideoFilter {
                }
 """)
     }
-    
+
     open override var name: String {
         return "jp.co.cyberagent.VideoCast.filters.invertColors"
     }
-    
+
     private static func registerFilter() -> Bool {
         FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.invertColors", instantiation: { return InvertColorsVideoFilter() })
         return true

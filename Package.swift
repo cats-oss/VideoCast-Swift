@@ -8,4 +8,4 @@
 
 import PackageDescription
 
-let package = Package(name: "VideoCast", dependencies : [], exclude: ["Tests"])
+let package = Package(name: "VideoCast", dependencies: [], exclude: ["Tests"])

@@ -22,14 +22,14 @@ public protocol IMixer: ITransform {
      */
     func registerSource(_ source: ISource, inBufferSize: Int)
     func registerSource(_ source: ISource)
-    
+
     /*!
      *  Unregister a source with the mixer.
      *
      *  \param source  A smart pointer to the source being unregistered.
      */
     func unregisterSource(_ source: ISource)
-    
+
     func start()
     func stop()
 }

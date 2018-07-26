@@ -209,22 +209,22 @@ public enum FlvSoundType: UInt8 {
 
 public struct FlvFlags: OptionSet {
     public let rawValue: UInt8
-    
+
     public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
-    
+
     public static let mono   = FlvFlags(rawValue: 0)
     public static let stereo = FlvFlags(rawValue: 1)
-    
+
     public static let samplesize8bit    = FlvFlags(rawValue: 0)
     public static let samplesize16bit   = FlvFlags(rawValue: 1 << FLV_AUDIO_SAMPLESSIZE_OFFSET)
-    
+
     public static let samplerateSpecial  = FlvFlags(rawValue: 0)  /**< signifies 5512Hz and 8000Hz in the case of NELLYMOSER */
     public static let samplerate11025hz = FlvFlags(rawValue: 1 << FLV_AUDIO_SAMPLERATE_OFFSET)
     public static let samplerate22050hz = FlvFlags(rawValue: 2 << FLV_AUDIO_SAMPLERATE_OFFSET)
     public static let samplerate44100hz = FlvFlags(rawValue: 3 << FLV_AUDIO_SAMPLERATE_OFFSET)
-    
+
     public static let codecIdPcm                  = FlvFlags(rawValue: 0)
     public static let codecIdAdpcm                = FlvFlags(rawValue: 1 << FLV_AUDIO_CODECID_OFFSET)
     public static let codecIdMp3                  = FlvFlags(rawValue: 2 << FLV_AUDIO_CODECID_OFFSET)
@@ -233,14 +233,14 @@ public struct FlvFlags: OptionSet {
     public static let codecIdNellymoser           = FlvFlags(rawValue: 6 << FLV_AUDIO_CODECID_OFFSET)
     public static let codecIdAac                  = FlvFlags(rawValue: 10 << FLV_AUDIO_CODECID_OFFSET)
     public static let codecIdSpeex                = FlvFlags(rawValue: 11 << FLV_AUDIO_CODECID_OFFSET)
-    
+
     public static let codecIdH263                 = FlvFlags(rawValue: 2)
     public static let codecIdScreen               = FlvFlags(rawValue: 3)
     public static let codecIdVp6                  = FlvFlags(rawValue: 4)
     public static let codecIdVp6a                 = FlvFlags(rawValue: 5)
     public static let codecIdScreen2              = FlvFlags(rawValue: 6)
     public static let codecIdH264                 = FlvFlags(rawValue: 7)
-    
+
     public static let frameKey          = FlvFlags(rawValue: 1 << FLV_VIDEO_FRAMETYPE_OFFSET)
     public static let frameInter        = FlvFlags(rawValue: 2 << FLV_VIDEO_FRAMETYPE_OFFSET)
     public static let frameDispInter    = FlvFlags(rawValue: 3 << FLV_VIDEO_FRAMETYPE_OFFSET)

@@ -17,7 +17,7 @@ public enum SRTLogLevel: Int {
     case info
     case notice
     case warning
-    
+
     func setLogLevel() {
         let logLevel: Int32
         switch self {
@@ -44,11 +44,11 @@ public enum SRTLogLevel: Int {
 
 public struct SRTLogFAs: OptionSet {
     public let rawValue: Int32
-    
+
     public init(rawValue: Int32) {
         self.rawValue = rawValue
     }
-    
+
     public static let general   = SRTLogFAs(rawValue: 0)
     public static let bstats    = SRTLogFAs(rawValue: 1 << 0)
     public static let control   = SRTLogFAs(rawValue: 1 << 1)
@@ -56,9 +56,9 @@ public struct SRTLogFAs: OptionSet {
     public static let tsbpd     = SRTLogFAs(rawValue: 1 << 3)
     public static let rexmit    = SRTLogFAs(rawValue: 1 << 4)
     public static let haicrypt  = SRTLogFAs(rawValue: 1 << 5)
-    
+
     public static let all: SRTLogFAs = [.bstats, .control, .data, .tsbpd, .rexmit, .haicrypt]
-    
+
     public func setLogFA() {
         if self.contains(.bstats) {
             srt_addlogfa(SRT_LOGFA_BSTATS)
@@ -80,4 +80,3 @@ public struct SRTLogFAs: OptionSet {
         }
     }
 }
-

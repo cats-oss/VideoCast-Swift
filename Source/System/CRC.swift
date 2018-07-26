@@ -21,9 +21,9 @@ enum CRC_ID: Int {
 
 class CRC {
     static let shared = CRC()
-    
+
     var table: [[UInt32]] = .init()
-    
+
     private init() {
         for _ in 0..<CRC_ID.crcMax.rawValue {
             table.append([UInt32](repeating: 0, count: 1024))
@@ -36,14 +36,14 @@ class CRC {
         crcInit(&table[CRC_ID.crc32IEEE_LE.rawValue], le: false, bits: 32, poly: 0xEDB88320, ctxSize: 1024)
         crcInit(&table[CRC_ID.crc16ANSI_LE.rawValue], le: false, bits: 16, poly: 0xA001, ctxSize: 1024)
     }
-    
+
     @discardableResult
     private func crcInit(_ ctx: inout [UInt32], le: Bool, bits: Int, poly: UInt32, ctxSize: Int) -> Bool {
         if bits < 8 || bits > 32 || poly >= (1 << bits) {
             return false
         }
         var c: Int32 = 0
-        
+
         for i in 0 ..< 256 {
             if le {
                 c = Int32(i)
@@ -56,10 +56,10 @@ class CRC {
                 for _ in 0 ..< 8 {
                     c = (c << 1) ^ (Int32(truncatingIfNeeded: poly << (32 - bits)) & (Int32(c) >> 31))
                 }
-                ctx[i] = CFSwapInt32(UInt32(truncatingIfNeeded: c));
+                ctx[i] = CFSwapInt32(UInt32(truncatingIfNeeded: c))
             }
         }
-        ctx[256] = 1;
+        ctx[256] = 1
         if ctxSize >= MemoryLayout<UInt32>.size * 1024 {
             for i in 0 ..< 256 {
                 for j: Int in 0 ..< 3 {
@@ -71,21 +71,21 @@ class CRC {
         }
         return true
     }
-    
+
     func calculate(_ crcId: CRC_ID, crc: UInt32,
                    buffer: [UInt8], length: Int) -> UInt32 {
-        
+
         let ctx = table[crcId.rawValue]
         var crc = crc
         var buffer = buffer.withUnsafeBufferPointer { $0.baseAddress! }
         let end = buffer + length
-        
+
         if ctx[256] == 0 {
             while ((Int(bitPattern: buffer) & 3) != 0 && buffer < end) {
                 crc = ctx[Int(UInt8(crc) ^ buffer.pointee)] ^ (crc >> 8)
                 buffer += 1
             }
-            
+
             while (buffer < end - 3) {
                 crc ^= CFSwapInt32LittleToHost(UnsafeRawPointer(buffer).load(as: UInt32.self))
                 buffer += 4
@@ -96,12 +96,12 @@ class CRC {
                 crc = c1 ^ c2 ^ c3 ^ c4
             }
         }
-        
+
         while (buffer < end) {
             crc = ctx[Int(UInt8(crc & 0xff) ^ buffer.pointee)] ^ (crc >> 8)
             buffer += 1
         }
-        
-        return crc;
+
+        return crc
     }
 }

@@ -15,7 +15,7 @@ class PutBits {
     var buf_ptr: UnsafeMutableRawPointer
     var buf_end: UnsafeMutableRawPointer
     var size_in_bits: Int
-    
+
     init(_ buffer: UnsafeMutableRawPointer, buffer_size: Int) {
         size_in_bits = 8 * buffer_size
         buf = buffer
@@ -24,13 +24,13 @@ class PutBits {
         bit_left = 32
         bit_buf = 0
     }
-    
+
     func put_bits(_ n: Int, value: UInt32) {
         assert(n <= 31 && value < (1 << n))
-        
+
         var bit_buf = self.bit_buf
         var bit_left = self.bit_left
-        
+
         if n < bit_left {
             bit_buf = (bit_buf << n) | value
             bit_left -= n
@@ -47,11 +47,11 @@ class PutBits {
             bit_left += 32 - n
             bit_buf = value
         }
-        
+
         self.bit_buf = bit_buf
         self.bit_left = bit_left
     }
-    
+
     func flush_put_bits() {
         if bit_left < 32 {
             bit_buf <<= bit_left
@@ -67,4 +67,3 @@ class PutBits {
         bit_buf = 0
     }
 }
-

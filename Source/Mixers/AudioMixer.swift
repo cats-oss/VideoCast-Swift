@@ -21,44 +21,44 @@ import AudioUnit
  */
 open class AudioMixer: IAudioMixer {
     private let kMixWindowCount = 10
-    
+
     private let kE: Float = 2.7182818284590
-    
+
     private var windows: [MixWindow]
     private var currentWindow: MixWindow
     private var outgoingWindow: MixWindow?
-    
+
     private var mixQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
-    
+
     private var epoch = Date()
     private var nextMixTime = Date()
     private var lastMixTime = Date()
-    
+
     private var frameDuration: TimeInterval
     private var bufferDuration: TimeInterval
-    
+
     private var _mixThread: Thread?
     private var mixThreadCond = NSCondition()
-    
+
     private weak var output: IOutput?
-    
+
     private var inGain = [Int: Float]()
     private var lastSampleTime = [Int: Date]()
-    
+
     private var outChannelCount: Int
     private var outFrequencyInHz: Int
     private var outBitsPerChannel = 16
     private var bytesPerSample: Int
-    
+
     private var exiting = Atomic(false)
-    
+
     private var catchingUp = false
-    
+
     private static var s_samplingRateConverterComplexity = kAudioConverterSampleRateConverterComplexity_Normal
     private static var s_samplingRateConverterQuality = kAudioConverterQuality_Medium
-    
+
     private var converters = [UInt64: ConverterInst]()
-    
+
     /*!
      *  Constructor.
      *
@@ -77,32 +77,31 @@ open class AudioMixer: IAudioMixer {
         self.frameDuration = frameDuration
         self.outChannelCount = outChannelCount
         self.outFrequencyInHz = outFrequencyInHz
-        
+
         self.bytesPerSample = outChannelCount * outBitsPerChannel / 8
-        
+
         windows = [MixWindow]()
         for _ in 0 ..< kMixWindowCount {
             windows.append(MixWindow(size: Int(Double(bytesPerSample) * frameDuration * Double(outFrequencyInHz))))
         }
-        
+
         for i in 0 ..< kMixWindowCount-1 {
             windows[i].next = windows[i + 1]
             windows[i + 1].prev = windows[i + 1]
         }
-        
+
         windows[kMixWindowCount - 1].next = windows[0]
         windows[0].prev = windows[kMixWindowCount - 1]
-        
+
         currentWindow = windows[0]
         currentWindow.start = Date()
-        
-        
+
     }
-    
+
     deinit {
         mixQueue.markExiting()
         mixQueue.enqueueSync {}
-        
+
         for converterInst in converters {
             if let converter = converterInst.value.converter {
                 AudioConverterDispose(converter)
@@ -111,12 +110,12 @@ open class AudioMixer: IAudioMixer {
             }
         }
     }
-    
+
     /*! IMixer::registerSource */
     open func registerSource(_ source: ISource, inBufferSize: Int) {
         inGain[hash(source)] = 1
     }
-    
+
     /*! IMixer::unregisterSource */
     open func unregisterSource(_ source: ISource) {
         mixQueue.enqueue { [weak self] in
@@ -131,92 +130,92 @@ open class AudioMixer: IAudioMixer {
         guard let inMeta = metadata as? AudioBufferMetadata, let metaData = inMeta.data else {
             return Logger.debug("unexpected return")
         }
-        
+
         let data = data.assumingMemoryBound(to: UInt8.self)
         let inSource = metaData.source
         let cMixTime = Date()
         let currentWindow = self.currentWindow
-        
+
         guard inSource.value != nil else { return }
-        
+
         let resampledBuffer = resample(data, size: size, metadata: inMeta)
-        
+
         if resampledBuffer.size == 0 {
             resampledBuffer.resize(size)
             resampledBuffer.put(data, size: size)
         }
-        
+
         mixQueue.enqueue { [weak self] in
             guard let strongSelf = self else { return }
-            
+
             var mixTime = cMixTime
-            
+
             let g: Float = 0.70710678118  // 1 / sqrt(2)
-            
+
             guard let lSource = inSource.value else { return }
-            
+
             let h = hash(lSource)
-            
+
             if let time = strongSelf.lastSampleTime[h], mixTime.timeIntervalSince(time) < strongSelf.frameDuration * 0.25 {
                 mixTime = time
             }
-            
+
             var startOffset = 0
-            
+
             var window: MixWindow? = currentWindow
 
             let diff = mixTime.timeIntervalSince(currentWindow.start)
-            
+
             if diff > 0 {
                 startOffset = Int(diff * Double(strongSelf.outFrequencyInHz) * Double(strongSelf.bytesPerSample)) & ~(strongSelf.bytesPerSample-1)
-            
+
                 while let size = window?.size, startOffset >= size {
                     startOffset = (startOffset - size)
                     window = window?.next
-                    
+
                 }
             } else {
                 startOffset = 0
             }
-            
+
             let sampleDuration = Double(resampledBuffer.size) / Double(strongSelf.bytesPerSample * strongSelf.outFrequencyInHz)
-            
+
             let mult = strongSelf.inGain[h].map { $0 * g } ?? 0
-            
+
             var ptr: UnsafePointer<UInt8>?
             resampledBuffer.read(&ptr, size: resampledBuffer.size)
-            
+
             guard var p = ptr else {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             var bytesLeft = resampledBuffer.size
-            
+
             var so = startOffset
-            
+
             while bytesLeft > 0 {
                 guard let _window = window else {
                     Logger.debug("unexpected return")
                     break
                 }
-                
+
                 let rawp = UnsafeRawPointer(p)
                 let toCopy = min(size - so, bytesLeft)
-                
+
                 let count = toCopy / MemoryLayout<Int16>.size
 
                 let mix = rawp.bindMemory(to: Int16.self, capacity: count)
-                
+
                 if let ptr = _window.buffer.withUnsafeMutableBytes({ $0.baseAddress }) {
                     let winMix = (ptr + so).bindMemory(to: Int16.self, capacity: count)
                     for i in 0..<count {
                         winMix[i] = AudioMixer.TPMixSamples(winMix[i], Int16(Float(mix[i])*mult))
                     }
-                    
+
                     p += toCopy
                     bytesLeft -= toCopy
-                    
+
                     if bytesLeft > 0 {
                         window = window?.next
                         so = 0
@@ -224,11 +223,11 @@ open class AudioMixer: IAudioMixer {
                 }
 
             }
-            
+
             strongSelf.lastSampleTime[h] = mixTime + sampleDuration
         }
     }
-    
+
     /*! ITransform::setOutput */
     open func setOutput(_ output: IOutput) {
         self.output = output
@@ -238,34 +237,34 @@ open class AudioMixer: IAudioMixer {
     open func setSourceGain(_ source: WeakRefISource, gain: Float) {
         if let s = source.value {
             let h = hash(s)
-            
+
             var gain = max(0, min(1, gain))
             gain = powf(gain, kE)
             inGain[h] = gain
         }
     }
-    
+
     /*! IAudioMixer::setChannelCount */
     open func setChannelCount(_ channelCount: Int) {
         outChannelCount = channelCount
     }
-    
+
     /*! IAudioMixer::setFrequencyInHz */
     open func setFrequencyInHz(_ frequencyInHz: Float) {
         outFrequencyInHz = Int(frequencyInHz)
     }
-    
+
     /*! IAudioMixer::setMinimumBufferDuration */
     open func setMinimumBufferDuration(_ duraiton: Double) {
         bufferDuration = duraiton
     }
-    
+
     /*! ITransform::setEpoch */
     open func setEpoch(_ epoch: Date) {
         self.epoch = epoch
         nextMixTime = epoch
     }
-    
+
     open func start() {
         _mixThread = Thread(block: mixThread)
         _mixThread?.name = "jp.co.cyberagent.VideoCast.audiomixer"
@@ -286,17 +285,17 @@ private extension AudioMixer {
         var next: MixWindow?
         var prev: MixWindow?
         var buffer: [UInt8]
-        
+
         init(size: Int) {
             buffer = [UInt8](repeating: 0, count: size)
             self.size = size
         }
-        
+
         func clear() {
             _ = (0 ..< size).map {buffer[$0] = 0}
         }
     }
-    
+
     struct UserData {
         var data: UnsafeMutableRawPointer
         var p: Int
@@ -308,13 +307,13 @@ private extension AudioMixer {
         var isInterleaved: Bool
         var usesOSStruct: Bool
     }
-    
+
     struct ConverterInst {
         var asbdIn: AudioStreamBasicDescription
         var asbdOut: AudioStreamBasicDescription
         var converter: AudioConverterRef?
     }
-    
+
     /*!
      *  Called to resample a buffer of audio samples.
      *
@@ -329,7 +328,7 @@ private extension AudioMixer {
             Logger.debug("unexpected return")
             return Buffer()
         }
-        
+
         let inFrequncyInHz = metaData.frequencyInHz
         let inBitsPerChannel = metaData.bitsPerChannel
         let inChannelCount = metaData.channelCount
@@ -337,7 +336,7 @@ private extension AudioMixer {
         let inBytesPerFrame = metaData.bytesPerFrame
         let inNumberFrames = metaData.numberFrames
         let inUsesOSStruct = metaData.usesOSStruct
-        
+
         guard outFrequencyInHz != inFrequncyInHz ||
             outBitsPerChannel != inBitsPerChannel ||
             outChannelCount != inChannelCount ||
@@ -346,22 +345,22 @@ private extension AudioMixer {
                 // No resampling necessary
                 return Buffer()
         }
-        
+
         let b1 = UInt64(inBytesPerFrame&0xFF) << 56
         let b2 = UInt64(inFlags&0xFF) << 48
         let b3 = UInt64(inChannelCount) << 40
         let b4 = UInt64(inBitsPerChannel&0xFF) << 32
         let b5 = UInt64(inFrequncyInHz)
         let hash = b1 | b2 | b3 | b4 | b5
-        
+
         let converterInst: ConverterInst
-        
+
         if let _converterInst = converters[hash] {
             converterInst = _converterInst
         } else {
             var asbdIn = AudioStreamBasicDescription()
             var asbdOut = AudioStreamBasicDescription()
-            
+
             asbdIn.mFormatID = kAudioFormatLinearPCM
             asbdIn.mFormatFlags = inFlags
             asbdIn.mChannelsPerFrame = UInt32(inChannelCount)
@@ -370,7 +369,7 @@ private extension AudioMixer {
             asbdIn.mBytesPerFrame = UInt32(inBytesPerFrame)
             asbdIn.mFramesPerPacket = 1
             asbdIn.mBytesPerPacket = asbdIn.mBytesPerFrame * asbdIn.mFramesPerPacket
-            
+
             asbdOut.mFormatID = kAudioFormatLinearPCM
             asbdOut.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked
             asbdOut.mChannelsPerFrame = UInt32(outChannelCount)
@@ -379,44 +378,44 @@ private extension AudioMixer {
             asbdOut.mBytesPerFrame = (asbdOut.mBitsPerChannel * asbdOut.mChannelsPerFrame) / 8
             asbdOut.mFramesPerPacket = 1
             asbdOut.mBytesPerPacket = asbdOut.mBytesPerFrame * asbdOut.mFramesPerPacket
-            
+
             var _converterInst = ConverterInst(asbdIn: asbdIn, asbdOut: asbdOut, converter: nil)
             let status = AudioConverterNew(&asbdIn, &asbdOut, &_converterInst.converter)
             converterInst = _converterInst
-            
+
             if let converter = converterInst.converter {
                 AudioConverterSetProperty(converter, kAudioConverterSampleRateConverterComplexity, UInt32(MemoryLayout<UInt32>.size), &AudioMixer.s_samplingRateConverterComplexity)
-                
+
                 AudioConverterSetProperty(converter, kAudioConverterSampleRateConverterQuality, UInt32(MemoryLayout<UInt32>.size), &AudioMixer.s_samplingRateConverterQuality)
-                
+
                 var prime = kConverterPrimeMethod_None
-                
+
                 AudioConverterSetProperty(converter, kAudioConverterPrimeMethod, UInt32(MemoryLayout<UInt32>.size), &prime)
             }
-            
+
             converters[hash] = converterInst
-            
+
             if status != noErr {
-                Logger.error("converterInst = \(converterInst) (\(String(format:"%x", status))")
+                Logger.error("converterInst = \(converterInst) (\(String(format: "%x", status))")
             }
         }
-        
+
         guard let inConverter = converterInst.converter else {
             Logger.debug("unexpected return")
             return Buffer()
         }
-        
+
         let asbdIn = converterInst.asbdIn
         let asbdOut = converterInst.asbdOut
-        
+
         let inSampleCount = inNumberFrames
         let ratio = Double(inFrequncyInHz) / Double(outFrequencyInHz)
-        
+
         let outBufferSampleCount: Double = round(Double(inSampleCount) / ratio)
-        
+
         let outBufferSize = Int(Double(asbdOut.mBytesPerPacket) * outBufferSampleCount)
         let outBuffer = Buffer(outBufferSize)
-        
+
         var userData = UserData(
             data: UnsafeMutableRawPointer(mutating: buffer),
             p: 0,
@@ -428,9 +427,9 @@ private extension AudioMixer {
             isInterleaved: (inFlags & kAudioFormatFlagIsNonInterleaved) == 0,
             usesOSStruct: inUsesOSStruct
         )
-        
+
         let mData = outBuffer.getMutable()
-        
+
         var outBufferList = AudioBufferList(
             mNumberBuffers: 1,
             mBuffers: AudioBuffer(
@@ -438,7 +437,7 @@ private extension AudioMixer {
                 mDataByteSize: UInt32(outBufferSize),
                 mData: mData
         ))
-        
+
         var sampleCount = UInt32(outBufferSampleCount)
         let status = AudioConverterFillComplexBuffer(inConverter,  /* AudioConverterRef inAudioConverter */
             AudioMixer.ioProc,    /* AudioConverterComplexInputDataProc inInputDataProc */
@@ -448,18 +447,18 @@ private extension AudioMixer {
             nil   /* AudioStreamPacketDescription *outPacketDescription */
         )
         if status != noErr {
-            Logger.error("status = \(status) (\(String(format:"%x", status))")
+            Logger.error("status = \(status) (\(String(format: "%x", status))")
         }
-        
+
         outBuffer.size = Int(outBufferList.mBuffers.mDataByteSize)
         return outBuffer
     }
-    
+
     private static let ioProc: AudioConverterComplexInputDataProc = { audioConverter, ioNumDataPackets, ioData, ioPacketDesc, inUserData in
         var err: OSStatus = noErr
         let userData = inUserData!.assumingMemoryBound(to: UserData.self)
         let numPackets = min(ioNumDataPackets.pointee, userData.pointee.numberPackets)
-        
+
         ioNumDataPackets.pointee = numPackets
         let ioDataPtr = UnsafeMutableAudioBufferListPointer(ioData)
         if !userData.pointee.usesOSStruct {
@@ -470,7 +469,7 @@ private extension AudioMixer {
             let ab = userData.pointee.data.assumingMemoryBound(to: AudioBufferList.self)
             ioData[0].mNumberBuffers = ab.pointee.mNumberBuffers
             let p = userData.pointee.p
-            
+
             for i in 0..<Int(ab.pointee.mNumberBuffers) {
                 let abPtr = UnsafeMutableAudioBufferListPointer(ab)
                 guard let data = abPtr[i].mData else {
@@ -481,64 +480,64 @@ private extension AudioMixer {
                 ioDataPtr[i].mDataByteSize = numPackets * UInt32(userData.pointee.packetSize)
                 ioDataPtr[i].mNumberChannels = abPtr[i].mNumberChannels
             }
-            
+
             userData.pointee.p += Int(numPackets) * userData.pointee.packetSize
         }
-        
+
         return err
     }
-    
+
     /*!
      *  Start the mixer thread.
      */
     private func mixThread() {
         let duration = frameDuration
         let start = epoch
-        
+
         nextMixTime = start
         currentWindow.start = start
         currentWindow.next?.start = start + duration
-        
+
         while !exiting.value {
             mixThreadCond.lock()
             defer { mixThreadCond.unlock() }
-            
+
             let now = Date()
-            
+
             if let nextWindow = currentWindow.next, now >= nextWindow.start {
                 let currentTime = nextMixTime
-                
+
                 let currentWindow = self.currentWindow
-                
+
                 nextWindow.start = currentWindow.start + duration
                 nextWindow.next?.start = nextWindow.start + duration
-                
+
                 nextMixTime = currentWindow.start
-                
+
                 let md = AudioBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(epoch), preferredTimescale: VC_TIME_BASE))
-                
+
                 md.data = (outFrequencyInHz, outBitsPerChannel, outChannelCount, AudioFormatFlags(0), 0, currentWindow.size, false, false, WeakRefISource(value: nil))
                 if let out = output, let outgoingWindow = outgoingWindow {
                     out.pushBuffer(outgoingWindow.buffer, size: outgoingWindow.size, metadata: md)
                     outgoingWindow.clear()
                 }
                 outgoingWindow = currentWindow
-                
+
                 self.currentWindow = nextWindow
             }
-            
+
             if !exiting.value, let start = self.currentWindow.next?.start {
                 mixThreadCond.wait(until: start)
             }
         }
-        
+
         Logger.debug("Exiting audio mixer...")
     }
-    
+
     private static func TPMixSamples(_ a: Int16, _ b: Int16) -> Int16 {
         let sum = (Int(a) + Int(b))
         let mul = (Int(a) * Int(b))
-        
+
         if a < 0 && b < 0 {
             // If both samples are negative, mixed signal must have an amplitude between the lesser of A and B, and the minimum permissible negative amplitude
             return Int16(sum - (mul/Int(Int16.min)))

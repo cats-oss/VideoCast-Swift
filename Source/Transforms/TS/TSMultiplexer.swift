@@ -12,54 +12,54 @@ import AVFoundation
 
 public typealias TSMetadata = MetaData<()>
 
-fileprivate let TS_PACKET_SIZE: Int = 188
+private let TS_PACKET_SIZE: Int = 188
 
 /* pids */
-fileprivate let PAT_PID: Int = 0x0000
-fileprivate let SDT_PID: Int = 0x0011
+private let PAT_PID: Int = 0x0000
+private let SDT_PID: Int = 0x0011
 
 /* table ids */
-fileprivate let PAT_TID: Int = 0x00
-fileprivate let PMT_TID: Int = 0x02
-fileprivate let M4OD_TID: Int = 0x05
-fileprivate let SDT_TID: Int = 0x42
+private let PAT_TID: Int = 0x00
+private let PMT_TID: Int = 0x02
+private let M4OD_TID: Int = 0x05
+private let SDT_TID: Int = 0x42
 
-fileprivate let STREAM_TYPE_PRIVATE_DATA:   Int = 0x06
-fileprivate let STREAM_TYPE_AUDIO_AAC:      Int = 0x0f
-fileprivate let STREAM_TYPE_VIDEO_H264:     Int = 0x1b
-fileprivate let STREAM_TYPE_VIDEO_HEVC:     Int = 0x24
+private let STREAM_TYPE_PRIVATE_DATA: Int = 0x06
+private let STREAM_TYPE_AUDIO_AAC: Int = 0x0f
+private let STREAM_TYPE_VIDEO_H264: Int = 0x1b
+private let STREAM_TYPE_VIDEO_HEVC: Int = 0x24
 
-fileprivate let PCR_TIME_BASE: Int32 = 27000000
+private let PCR_TIME_BASE: Int32 = 27000000
 
 /* write DVB SI sections */
-fileprivate let DVB_PRIVATE_NETWORK_START: Int = 0xff01
+private let DVB_PRIVATE_NETWORK_START: Int = 0xff01
 
-fileprivate let DEFAULT_PES_HEADER_FREQ: Int = 16
-fileprivate let DEFAULT_PES_PAYLOAD_SIZE: Int = ((DEFAULT_PES_HEADER_FREQ - 1) * 184 + 170)
+private let DEFAULT_PES_HEADER_FREQ: Int = 16
+private let DEFAULT_PES_PAYLOAD_SIZE: Int = ((DEFAULT_PES_HEADER_FREQ - 1) * 184 + 170)
 
 /* The section length is 12 bits. The first 2 are set to 0, the remaining
  * 10 bits should not exceed 1021. */
-fileprivate let SECTION_LENGTH: Int = 1020
+private let SECTION_LENGTH: Int = 1020
 
 /* mpegts writer */
 
-fileprivate let DEFAULT_PROVIDER_NAME: String = "VideoCast"
-fileprivate let DEFAULT_SERVICE_NAME: String = "Service01"
+private let DEFAULT_PROVIDER_NAME: String = "VideoCast"
+private let DEFAULT_SERVICE_NAME: String = "Service01"
 
 /* we retransmit the SI info at this rate */
-fileprivate let SDT_RETRANS_TIME: CMTime = .init(value: 500, timescale: 1000)
-fileprivate let PAT_RETRANS_TIME: CMTime = .init(value: 100, timescale: 1000)
-fileprivate let PCR_RETRANS_TIME: CMTime = .init(value: 20, timescale: 1000)
+private let SDT_RETRANS_TIME: CMTime = .init(value: 500, timescale: 1000)
+private let PAT_RETRANS_TIME: CMTime = .init(value: 100, timescale: 1000)
+private let PCR_RETRANS_TIME: CMTime = .init(value: 20, timescale: 1000)
 
-fileprivate let NO_PTS: CMTime = .init(value: Int64.min, timescale: 90000)
+private let NO_PTS: CMTime = .init(value: Int64.min, timescale: 90000)
 
-fileprivate func put16(_ q_ptr: inout [UInt8], val: Int) {
+private func put16(_ q_ptr: inout [UInt8], val: Int) {
     q_ptr.append(UInt8((val >> 8) & 0xff))
     q_ptr.append(UInt8(val & 0xff))
 }
 
 open class TSMultiplexer: ITransform {
-    
+
     /*********************************************/
     /* mpegts section writer */
     class MpegTSSection {
@@ -67,11 +67,10 @@ open class TSMultiplexer: ITransform {
         var cc: Int = 0
         var discontinuity: Bool = false
         var parent: TSMultiplexer?
-        
+
         init() {
         }
-        
-        
+
         func write_section(_ buf: inout [UInt8]) {
             var packet: [UInt8] = .init()
             packet.reserveCapacity(TS_PACKET_SIZE)
@@ -79,12 +78,12 @@ open class TSMultiplexer: ITransform {
             var first: Bool
             var b: UInt8
             var len1: Int
-            
+
             buf.append(UInt8((crc >> 24) & 0xff))
             buf.append(UInt8((crc >> 16) & 0xff))
             buf.append(UInt8((crc >>  8) & 0xff))
             buf.append(UInt8(crc & 0xff))
-            
+
             var len = buf.count
 
             /* send each packet */
@@ -120,14 +119,14 @@ open class TSMultiplexer: ITransform {
                 if left > 0 {
                     packet.append(contentsOf: [UInt8](repeating: 0xFF, count: left))
                 }
-                
+
                 write_packet(packet)
-                
+
                 bi += len1
                 len -= len1
             }
         }
-        
+
         @discardableResult
         func write_section1(_ tid: Int, id: Int,
                             version: Int, sec_num: Int, last_sec_num: Int,
@@ -136,14 +135,14 @@ open class TSMultiplexer: ITransform {
             section.reserveCapacity(1024)
             /* reserved_future_use field must be set to 1 for SDT */
             let flags: Int = (tid == SDT_TID) ? 0xf000 : 0xb000
-            
+
             let tot_len = 3 + 5 + len + 4
             /* check if not too big */
             guard tot_len <= 1024 else {
                 Logger.error("invalid data")
                 return false
             }
-            
+
             section.append(UInt8(tid))
             put16(&section, val: flags | len + 5 + 4)    /* 5 byte header + 4 byte CRC */
             put16(&section, val: id)
@@ -151,17 +150,17 @@ open class TSMultiplexer: ITransform {
             section.append(UInt8(sec_num))
             section.append(UInt8(last_sec_num))
             section.append(contentsOf: buf[..<len])
-            
+
             write_section(&section)
             return true
         }
-        
+
         func write_packet(_ packet: [UInt8]) {
             parent?.prefix_m2ts_header()
             parent?.write(packet, size: TS_PACKET_SIZE)
         }
     }
-    
+
     class MpegTSService {
         var pmt: MpegTSSection = .init()  /* MPEG-2 PMT table context */
         var sid: Int = 0
@@ -170,11 +169,11 @@ open class TSMultiplexer: ITransform {
         var pcr_pid: Int = 0x1fff
         var pcr_packet_count: Int = 0
         var pcr_packet_period: Int = 0
-        
+
         init() {
         }
     }
-    
+
     // service_type values as defined in ETSI 300 468
     enum MpegTSServiceType: Int {
         case digital_tv                     = 0x01  // Digital Television
@@ -186,21 +185,21 @@ open class TSMultiplexer: ITransform {
         case advanced_codec_digital_hdtv    = 0x19  // Advanced Codec Digital HDTV
         case hevc_digital_hdtv              = 0x1f  // HEVC Digital Television Service
     }
-    
+
     struct MpegTSFlags: OptionSet {
         let rawValue: UInt8
-        
+
         init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
-        
+
         static let resend_headers           = MpegTSFlags(rawValue: 0x01)   // Reemit PAT/PMT before writing the next packet
         static let latm                     = MpegTSFlags(rawValue: 0x02)   // Use LATM packetization for AAC
         static let pat_pmt_at_frames        = MpegTSFlags(rawValue: 0x04)   // Reemit PAT and PMT at each video frame
         static let system_b                 = MpegTSFlags(rawValue: 0x08)   // Conform to System B (DVB) instead of System A (ATSC)
         static let initial_discontinuity    = MpegTSFlags(rawValue: 0x10)   // Mark initial packets as discontinuous
     }
-    
+
     class MpegTSWrite {
         var pat: MpegTSSection = .init()  /* MPEG-2 PAT table */
         var sdt: MpegTSSection = .init()  /* MPEG-2 SDT table context */
@@ -214,51 +213,51 @@ open class TSMultiplexer: ITransform {
         var first_pcr: CMTime = .init(value: 0, timescale: PCR_TIME_BASE)
         var mux_rate: Int = 1   ///< set to 1 when VBR
         var pes_payload_size: Int = DEFAULT_PES_PAYLOAD_SIZE   // Minimum PES packet payload in bytes
-        
+
         var transport_stream_id: Int = 0x0001
         var original_network_id: Int = DVB_PRIVATE_NETWORK_START
         var service_id: Int = 0x0001
         var service_type: MpegTSServiceType = .digital_tv
-        
+
         var pmt_start_pid: Int  = 0x1000    // the first pid of the PMT
         var start_pid: Int = 0x0100 // the first pid
         var m2ts_mode: Bool = false // Enable m2ts mode
-        
+
         var pcr_period: CMTime = PCR_RETRANS_TIME  // PCR retransmission time in milliseconds
         var flags: MpegTSFlags = []
         var copyts: Bool = false    // don't offset dts/pts
         var tables_version: Int = 0 //  PAT, PMT and SDT version
         var pat_period: CMTime = .init(value: CMTimeValue(Int32.max), timescale: 1)    // PAT/PMT retransmission time limit in seconds
         var sdt_period: CMTime = .init(value: CMTimeValue(Int32.max), timescale: 1)    // SDT retransmission time limit in seconds
-        var last_pat_ts: CMTime? = nil
-        var last_sdt_ts: CMTime? = nil
-        
+        var last_pat_ts: CMTime?
+        var last_sdt_ts: CMTime?
+
         var omit_video_pes_length: Bool = true  // Omit the PES packet length for video packets
-        
+
         init() {
-            
+
         }
-        
+
         func add_service(_ sid: Int, provider_name: String, name: String) -> MpegTSService {
             let service = MpegTSService()
-            
+
             service.pmt.pid = pmt_start_pid + services.count
             service.sid = sid
             service.pcr_pid = 0x1fff
             service.provider_name = provider_name
             service.name = name
-            
+
             services.append(service)
-            
+
             return service
         }
-        
+
         func get_pcr(_ sentByte: Int64) -> CMTime {
             let curTime: CMTime = .init(value: sentByte * 8, timescale: Int32(mux_rate))
             return curTime.convertScale(PCR_TIME_BASE, method: .default) + first_pcr
         }
     }
-    
+
     class MpegTSWriteStream {
         var service: MpegTSService?
         var pid: Int = 0    /* stream associated pid */
@@ -266,23 +265,23 @@ open class TSMultiplexer: ITransform {
         var discontinuity: Bool = false
         var first_pts_check: Bool = true   ///< first pts check needed
         var prev_payload_key: Bool = false
-        var payload_pts: CMTime? = nil
-        var payload_dts: CMTime? = nil
+        var payload_pts: CMTime?
+        var payload_dts: CMTime?
         var key: Bool = false
         var payload: [UInt8] = .init()
         var user_tb: CMTime = .init()
-        
+
         init() {
         }
     }
-    
+
     public class Stream {
         let id: Int
         let mediaType: AVMediaType
         let videoCodecType: CMVideoCodecType?
         let timeBase: CMTime
         var data: MpegTSWriteStream?
-        
+
         init(id: Int, mediaType: AVMediaType, videoCodecType: CMVideoCodecType?, timeBase: CMTime) {
             self.id = id
             self.mediaType = mediaType
@@ -290,71 +289,71 @@ open class TSMultiplexer: ITransform {
             self.timeBase = timeBase
         }
     }
-    
+
     private weak var output: IOutput?
 
     private let ctsOffset: CMTime
-    
+
     private let ts: MpegTSWrite = .init()
     private let streams: [Stream]
     private let max_delay: CMTime = .init(value: 0, timescale: VC_TIME_BASE)  // maximum muxing or demuxing delay
-    
+
     private var sentByte: Int64 = 0
-    
+
     private let jobQueue: JobQueue = .init("jp.co.cyberagent.VideoCast.tsmux")
 
     public init(_ streams: [Stream], ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
         self.ctsOffset = ctsOffset
         self.streams = streams
-        
+
         var pcr_st: Stream? = nil
-        
+
         self.ts.pes_payload_size = (ts.pes_payload_size + 14 + 183) / 184 * 184 - 14
-        
+
         ts.tsid = ts.transport_stream_id
         ts.onid = ts.original_network_id
-        
+
         /* allocate a single DVB service */
         let service_name = DEFAULT_SERVICE_NAME
         let provider_name = DEFAULT_PROVIDER_NAME
         let service = ts.add_service(ts.service_id,
                                      provider_name: provider_name, name: service_name)
-        
+
         service.pmt.parent = self
         service.pmt.cc = 15
         service.pmt.discontinuity = ts.flags.contains(.initial_discontinuity)
-        
+
         ts.pat.pid = PAT_PID
         /* Initialize at 15 so that it wraps and is equal to 0 for the
          * first packet we write. */
         ts.pat.cc = 15
         ts.pat.discontinuity = ts.flags.contains(.initial_discontinuity)
         ts.pat.parent = self
-        
+
         ts.sdt.pid = SDT_PID
         ts.sdt.cc = 15
         ts.sdt.discontinuity = ts.flags.contains(.initial_discontinuity)
         ts.sdt.parent = self
-        
+
         var pids = [Int](repeating: 0, count: streams.count)
-        
+
         /* assign pids to each stream */
         for i in 0..<streams.count {
             let st = streams[i]
             let ts_st = MpegTSWriteStream()
             st.data = ts_st
-            
+
             ts_st.user_tb = st.timeBase
-            
+
             ts_st.payload = [UInt8](repeating: 0x00, count: ts.pes_payload_size)
-            
+
             ts_st.service = service
             /* MPEG pid values < 16 are reserved. Applications which set st->id in
              * this range are assigned a calculated pid. */
             if st.id < 16 {
                 ts_st.pid = ts.start_pid + i
             } else if (st.id < 0x1FFF) {
-                ts_st.pid = st.id;
+                ts_st.pid = st.id
             } else {
                 Logger.error("Invalid stream id \(st.id), must be less than 8191")
                 return
@@ -382,9 +381,9 @@ open class TSMultiplexer: ITransform {
                 pcr_st = st
             }
         }
-        
+
         let ts_st_tmp: MpegTSWriteStream?
-        
+
         /* if no video stream, use the first stream as PCR */
         if service.pcr_pid == 0x1fff && streams.count > 0 {
             pcr_st = streams[0]
@@ -392,14 +391,14 @@ open class TSMultiplexer: ITransform {
         } else {
             ts_st_tmp = pcr_st?.data
         }
-        
+
         guard let ts_st = ts_st_tmp else { return }
-        
+
         if ts.mux_rate > 1 {
             service.pcr_packet_period = Int(CMTimeMultiplyByRatio(ts.pcr_period, Int32(ts.mux_rate), Int32(TS_PACKET_SIZE * 8)).seconds)
             ts.sdt_packet_period = Int(CMTimeMultiplyByRatio(SDT_RETRANS_TIME, Int32(ts.mux_rate), Int32(TS_PACKET_SIZE * 8)).seconds)
             ts.pat_packet_period = Int(CMTimeMultiplyByRatio(PAT_RETRANS_TIME, Int32(ts.mux_rate), Int32(TS_PACKET_SIZE * 8)).seconds)
-            
+
             if !ts.copyts {
                 ts.first_pcr = max_delay.convertScale(PCR_TIME_BASE, method: .default)
             }
@@ -420,7 +419,7 @@ open class TSMultiplexer: ITransform {
                 service.pcr_packet_period = 1
             }
         }
-        
+
         ts.last_pat_ts = nil
         ts.last_sdt_ts = nil
         // The user specified a period, use only it
@@ -430,12 +429,12 @@ open class TSMultiplexer: ITransform {
         if ts.sdt_period.seconds < Double(Int32.max/2) {
             ts.sdt_packet_period = Int.max
         }
-        
+
         // output a PCR as soon as possible
         service.pcr_packet_count = service.pcr_packet_period
         ts.pat_packet_count = ts.pat_packet_period - 1
         ts.sdt_packet_count = ts.sdt_packet_period - 1
-        
+
         if ts.mux_rate == 1 {
             Logger.verbose("muxrate VBR, ")
         } else {
@@ -443,18 +442,18 @@ open class TSMultiplexer: ITransform {
         }
         Logger.verbose("pcr every \(service.pcr_packet_period) pkts, sdt every \(ts.sdt_packet_period), pat/pmt every \(ts.pat_packet_period) pkts")
     }
-    
+
     deinit {
         Logger.debug("TSMultiplexer::deinit")
-        
+
         jobQueue.markExiting()
         jobQueue.enqueueSync {}
     }
-    
+
     private func write_pat() {
         var data: [UInt8] = .init()
         data.reserveCapacity(SECTION_LENGTH)
-        
+
         for service in ts.services {
             put16(&data, val: service.sid)
             put16(&data, val: 0xe000 | service.pmt.pid)
@@ -462,7 +461,7 @@ open class TSMultiplexer: ITransform {
         ts.pat.write_section1(PAT_TID, id: ts.tsid, version: ts.tables_version, sec_num: 0, last_sec_num: 0,
                               buf: data, len: data.count)
     }
-    
+
     private func putstr8(_ q_ptr: inout [UInt8], str: String, write_len: Int) {
         let len = str.count
         if (write_len > 0) {
@@ -470,22 +469,22 @@ open class TSMultiplexer: ITransform {
         }
         q_ptr.append(contentsOf: str.utf8)
     }
-    
+
     private func write_pmt(_ service: MpegTSService) {
         var data: [UInt8] = .init()
         data.reserveCapacity(SECTION_LENGTH)
         var val: Int, stream_type: Int, err: Bool = false
         var i: Int = 0
-        
-        put16(&data, val: 0xe000 | service.pcr_pid);
-        
+
+        put16(&data, val: 0xe000 | service.pcr_pid)
+
         val = 0xf000
         data.append(UInt8((val >> 8) & 0xff))
         data.append(UInt8(val & 0xff))
-        
+
         for st in streams {
             guard let ts_st = st.data else { continue }
-            
+
             if data.count > SECTION_LENGTH - 32 {
                 err = true
                 break
@@ -504,36 +503,36 @@ open class TSMultiplexer: ITransform {
             default:
                 stream_type = STREAM_TYPE_PRIVATE_DATA
             }
-            
+
             data.append(UInt8(stream_type))
             put16(&data, val: 0xe000 | ts_st.pid)
-            
+
             val = 0xf000
             data.append(UInt8((val >> 8) & 0xff))
             data.append(UInt8(val & 0xff))
-            
+
             i += 1
         }
-        
+
         if err {
             Logger.error("""
                 The PMT section cannot fit stream \(i) and all following streams.
                 Try reducing the number of languages in the audio streams or the total number of streams.
                 """)
         }
-        
+
         service.pmt.write_section1(PMT_TID, id: service.sid, version: ts.tables_version, sec_num: 0, last_sec_num: 0,
-                                   buf: data, len: data.count);
+                                   buf: data, len: data.count)
     }
-    
+
     private func write_sdt() {
         var data: [UInt8] = .init()
         data.reserveCapacity(SECTION_LENGTH)
         var desc_list_len_index: Int
         var desc_len_index: Int
         var running_status: Int, free_ca_mode: Int, val: Int
-        
-        put16(&data, val: ts.onid);
+
+        put16(&data, val: ts.onid)
         data.append(0xff)
         for service in ts.services {
             put16(&data, val: service.sid)
@@ -541,17 +540,17 @@ open class TSMultiplexer: ITransform {
             desc_list_len_index = data.count
             data.append(contentsOf: [UInt8](repeating: 0x00, count: 2))
             running_status    = 4; /* running */
-            free_ca_mode      = 0;
-            
+            free_ca_mode      = 0
+
             /* write only one descriptor for the service name and provider */
             data.append(0x48)
             desc_len_index = data.count
             data.append(0x00)
             data.append(UInt8(ts.service_type.rawValue))
-            putstr8(&data, str: service.provider_name, write_len: 1);
-            putstr8(&data, str: service.name, write_len: 1);
+            putstr8(&data, str: service.provider_name, write_len: 1)
+            putstr8(&data, str: service.name, write_len: 1)
             data[desc_len_index] = UInt8(data.count - desc_len_index - 1)
-            
+
             /* fill descriptor length */
             val = (running_status << 13) | (free_ca_mode << 12) |
                 (data.count - desc_list_len_index - 2)
@@ -561,7 +560,7 @@ open class TSMultiplexer: ITransform {
         ts.sdt.write_section1(SDT_TID, id: ts.tsid, version: ts.tables_version, sec_num: 0, last_sec_num: 0,
                               buf: data, len: data.count)
     }
-    
+
     private func prefix_m2ts_header() {
         if ts.m2ts_mode {
             let pcr = ts.get_pcr(sentByte)
@@ -570,7 +569,7 @@ open class TSMultiplexer: ITransform {
             write(&tp_extra_header, size: MemoryLayout<UInt32>.size)
         }
     }
-    
+
     /* send SDT, PAT and PMT tables regularly */
     private func retransmit_si_info(_ force_pat: Bool, dts: CMTime?) {
         ts.sdt_packet_count += 1
@@ -600,39 +599,39 @@ open class TSMultiplexer: ITransform {
                     ts.last_pat_ts = dts
                 }
             }
-            write_pat();
+            write_pat()
             for i in 0..<ts.services.count {
-                write_pmt(ts.services[i]);
+                write_pmt(ts.services[i])
             }
         }
     }
-    
+
     private func isTimeSinceLastOverPeriod(_ dts: CMTime?, last_ts: CMTime?, period: CMTime) -> Bool {
         guard let dts = dts, let last_ts = last_ts else { return false }
         return dts - last_ts > period
     }
-    
+
     @discardableResult
     private func write_pcr_bits(_ buf: inout [UInt8], pcr: CMTime) -> Int {
         assert(pcr.timescale == PCR_TIME_BASE)
         let pcr_low: Int64 = pcr.value % 300
-        let pcr_high: Int64 = pcr.value / 300;
-        
+        let pcr_high: Int64 = pcr.value / 300
+
         buf.append(UInt8((pcr_high >> 25) & 0xff))
         buf.append(UInt8((pcr_high >> 17) & 0xff))
         buf.append(UInt8((pcr_high >>  9) & 0xff))
         buf.append(UInt8((pcr_high >>  1) & 0xff))
         buf.append(UInt8((pcr_high <<  7 | pcr_low >> 8 | 0x7e) & 0xff))
         buf.append(UInt8(pcr_low & 0xff))
-        
+
         return 6
     }
-    
+
     /* Write a single null transport stream packet */
     private func insert_null_packet() {
         var buf: [UInt8] = .init()
         buf.reserveCapacity(TS_PACKET_SIZE)
-        
+
         buf.append(0x47)
         buf.append(0x00 | 0x1f)
         buf.append(0xff)
@@ -641,7 +640,7 @@ open class TSMultiplexer: ITransform {
         prefix_m2ts_header()
         write(buf, size: TS_PACKET_SIZE)
     }
-    
+
     /* Write a single transport stream packet with a PCR and no payload */
     private func insert_pcr_only(_ st: Stream) {
         guard let ts_st = st.data else { return }
@@ -659,20 +658,20 @@ open class TSMultiplexer: ITransform {
             buf[buf.count - 2] |= 0x80
             ts_st.discontinuity = false
         }
-        
+
         /* PCR coded into 6 bytes */
         write_pcr_bits(&buf, pcr: ts.get_pcr(sentByte))
-        
+
         /* stuffing bytes */
         buf.append(contentsOf: [UInt8](repeating: 0xFF, count: TS_PACKET_SIZE - buf.count))
         prefix_m2ts_header()
         write(buf, size: TS_PACKET_SIZE)
     }
-    
+
     private func write_pts(_ q: inout [UInt8], fourbits: Int, pts: CMTime) {
         let pts = pts.convertScale(90000, method: .default)
-        
-        var val  = fourbits << 4 | Int(((pts.value >> 30) & 0x07) << 1) | 1;
+
+        var val  = fourbits << 4 | Int(((pts.value >> 30) & 0x07) << 1) | 1
         q.append(UInt8(val))
         val  = Int(((pts.value >> 15) & 0x7fff) << 1) | 1
         q.append(UInt8((val >> 8) & 0xff))
@@ -681,12 +680,12 @@ open class TSMultiplexer: ITransform {
         q.append(UInt8((val >> 8) & 0xff))
         q.append(UInt8(val & 0xff))
     }
-    
+
     /* Set an adaptation field flag in an MPEG-TS packet*/
     private func set_af_flag(_ pkt: inout [UInt8], flag: UInt8) {
         // expect at least one flag to set
         assert(flag != 0)
-        
+
         if (pkt[3] & 0x20) == 0 {
             // no AF yet, set adaptation field flag
             pkt[3] |= 0x20
@@ -696,14 +695,14 @@ open class TSMultiplexer: ITransform {
         }
         pkt[5] |= flag
     }
-    
+
     /* Extend the adaptation field by size bytes */
     private func extend_af(_ pkt: inout [UInt8], size: UInt8) {
         // expect already existing adaptation field
         assert((pkt[3] & 0x20) != 0)
         pkt[4] += size
     }
-    
+
     /* Get a pointer to MPEG-TS payload (right after TS packet header) */
     private func get_ts_payload_start(_ pkt: inout [UInt8]) {
         let startAt: Int
@@ -718,7 +717,7 @@ open class TSMultiplexer: ITransform {
             pkt.append(contentsOf: [UInt8](repeating: 0x00, count: startAt - pkt.count))
         }
     }
-    
+
     /* Add a PES header to the front of the payload, and segment into an integer
      * number of TS packets. The final TS packet is padded using an oversized
      * adaptation header to exactly fill the last TS packet.
@@ -730,23 +729,23 @@ open class TSMultiplexer: ITransform {
         var payload_size = payload_size
         var buf: [UInt8] = .init()
         buf.reserveCapacity(TS_PACKET_SIZE)
-        
+
         var val: Int, is_start: Bool, len: Int, header_len: Int, write_pcr: Bool, flags: Int
         var afc_len: Int, stuffing_len: Int
         var pcr: CMTime /* avoid warning */
         let delay: CMTime = max_delay.convertScale(90000, method: .default)
         var force_pat: Bool = st.mediaType == .video && key && !ts_st.prev_payload_key
-        
+
         //assert(ts_st.payload != buf || st.mediaType != .video)
         if ts.flags.contains(.pat_pmt_at_frames) && st.mediaType == .video {
             force_pat = true
         }
-        
+
         is_start = true
         while payload_size > 0 {
             retransmit_si_info(force_pat, dts: dts)
             force_pat = false
-            
+
             write_pcr = false
             if ts_st.pid == service.pcr_pid {
                 if ts.mux_rate > 1 || is_start { // VBR pcr period is based on frames
@@ -758,7 +757,7 @@ open class TSMultiplexer: ITransform {
                     write_pcr = true
                 }
             }
-            
+
             if ts.mux_rate > 1, let dts = dts,
                 dts - ts.get_pcr(sentByte) > delay {
                 /* pcr insert gets priority over null packet insert */
@@ -770,7 +769,7 @@ open class TSMultiplexer: ITransform {
                 /* recalculate write_pcr and possibly retransmit si_info */
                 continue
             }
-            
+
             /* prepare packet header */
             buf.removeAll(keepingCapacity: true)
             buf.append(0x47)
@@ -782,10 +781,10 @@ open class TSMultiplexer: ITransform {
             buf.append(UInt8(ts_st.pid & 0xff))
             ts_st.cc = (ts_st.cc + 1) & 0xf
             buf.append(UInt8(0x10 | ts_st.cc)) // payload indicator + CC
-            
+
             // For writing af flag
             buf.append(contentsOf: [UInt8](repeating: 0x00, count: 3))
-            
+
             if ts_st.discontinuity {
                 set_af_flag(&buf, flag: 0x80)
                 ts_st.discontinuity = false
@@ -815,7 +814,7 @@ open class TSMultiplexer: ITransform {
                 }
                 extend_af(&buf, size: UInt8(write_pcr_bits(&buf, pcr: pcr)))
             }
-            
+
             get_ts_payload_start(&buf)
             if (is_start) {
                 /* write PES header */
@@ -839,7 +838,7 @@ open class TSMultiplexer: ITransform {
                     header_len += 5
                     flags      |= 0x40
                 }
-                len = payload_size + header_len + 3;
+                len = payload_size + header_len + 3
                 if len > 0xffff {
                     len = 0
                 }
@@ -848,7 +847,7 @@ open class TSMultiplexer: ITransform {
                 }
                 buf.append(UInt8((len >> 8) & 0xff))
                 buf.append(UInt8(len & 0xff))
-                val  = 0x80;
+                val  = 0x80
                 buf.append(UInt8(val))
                 buf.append(UInt8(flags))
                 buf.append(UInt8(header_len))
@@ -858,7 +857,7 @@ open class TSMultiplexer: ITransform {
                 if let dts = dts, let pts = pts, dts != pts {
                     write_pts(&buf, fourbits: 1, pts: dts)
                 }
-                
+
                 is_start = false
             }
             /* header size */
@@ -868,7 +867,7 @@ open class TSMultiplexer: ITransform {
             if len > payload_size {
                 len = payload_size
             }
-            stuffing_len = TS_PACKET_SIZE - header_len - len;
+            stuffing_len = TS_PACKET_SIZE - header_len - len
             if (stuffing_len > 0) {
                 /* add stuffing with AFC */
                 if (buf[3] & 0x20) != 0 {
@@ -882,20 +881,20 @@ open class TSMultiplexer: ITransform {
                     buf[3] |= 0x20
                     buf[4]  = UInt8(stuffing_len - 1)
                     if (stuffing_len >= 2) {
-                        buf[5] = 0x00;
+                        buf[5] = 0x00
                     }
                 }
             }
-            
+
             let expectedBufCount = TS_PACKET_SIZE - len
             if buf.count > expectedBufCount {
                 buf.removeLast(buf.count - expectedBufCount)
             } else if buf.count < expectedBufCount {
                 buf.append(contentsOf: [UInt8](repeating: 0x00, count: expectedBufCount - buf.count))
             }
-            
+
             buf.append(contentsOf: UnsafeBufferPointer<UInt8>(start: payload, count: len))
-            
+
             payload += len
             payload_size -= len
             prefix_m2ts_header()
@@ -904,7 +903,7 @@ open class TSMultiplexer: ITransform {
         ts_st.prev_payload_key = key
         write(buf, size: 0)
     }
-    
+
     private func write_flush() {
         /* flush current packets */
         for st in streams {
@@ -917,24 +916,24 @@ open class TSMultiplexer: ITransform {
             }
         }
     }
-    
+
     private func write(_ buf: UnsafeRawPointer, size: Int) {
         let outMeta: TSMetadata = .init()
         output?.pushBuffer(buf, size: size, metadata: outMeta)
         sentByte += Int64(size)
     }
-    
+
     public func setOutput(_ output: IOutput) {
         self.output = output
     }
-    
+
     public func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         var pts = metadata.pts
         var dts = metadata.dts
-        
+
         let buf = Buffer(size)
         buf.put(data, size: size)
-        
+
         jobQueue.enqueue {
             var ptr: UnsafePointer<UInt8>?
             buf.read(&ptr, size: buf.size)
@@ -947,17 +946,17 @@ open class TSMultiplexer: ITransform {
             guard let ts_st = st.data else { return }
             let delay: CMTime = self.max_delay.convertScale(90000, method: .default)
             let stream_id = -1
-            
+
             // correct for pts < dts which some players (ffmpeg) don't like
             pts = pts + self.ctsOffset
             dts = dts.isNumeric ? dts : (st.mediaType == .video ? pts - self.ctsOffset : pts)
-            
+
             if self.ts.flags.contains(.resend_headers) {
                 self.ts.pat_packet_count = self.ts.pat_packet_period - 1
                 self.ts.sdt_packet_count = self.ts.sdt_packet_period - 1
                 self.ts.flags.remove(.resend_headers)
             }
-            
+
             if !self.ts.copyts {
                 if pts.isNumeric {
                     pts = pts + delay
@@ -966,18 +965,18 @@ open class TSMultiplexer: ITransform {
                     dts = dts + delay
                 }
             }
-            
+
             guard !ts_st.first_pts_check || pts.isNumeric else {
                 Logger.error("first pts value must be set")
                 return
             }
             ts_st.first_pts_check = false
-            
+
             let cond = { (dts: CMTime?, payload_dts: CMTime?, delay: CMTime) -> Bool in
                 guard let dts = dts, let payload_dts = payload_dts else { return false }
                 return dts - payload_dts > delay
             }
-            
+
             if dts.isNumeric {
                 for st2 in self.streams {
                     guard let ts_st2 = st2.data else { continue }
@@ -988,27 +987,27 @@ open class TSMultiplexer: ITransform {
                     }
                 }
             }
-            
+
             if ts_st.payload.count > 0 && (ts_st.payload.count + size > self.ts.pes_payload_size ||
                 (dts.isNumeric && ts_st.payload_dts != nil &&
                     cond(dts, ts_st.payload_dts, self.max_delay))) {
                 self.write_pes(st, payload: ts_st.payload, payload_size: ts_st.payload.count, pts: ts_st.payload_pts, dts: ts_st.payload_dts, key: ts_st.key, steram_id: stream_id)
                 ts_st.payload.removeAll(keepingCapacity: true)
             }
-            
+
             if st.mediaType != .audio || size > self.ts.pes_payload_size {
                 assert(ts_st.payload.count == 0)
                 // for video and subtitle, write a single pes packet
                 self.write_pes(st, payload: p, payload_size: size, pts: pts, dts: dts, key: metadata.isKey, steram_id: stream_id)
                 return
             }
-            
+
             if ts_st.payload.count == 0 {
                 ts_st.payload_pts = pts
                 ts_st.payload_dts = dts
                 ts_st.key = metadata.isKey
             }
-            
+
             ts_st.payload.append(contentsOf: UnsafeBufferPointer<UInt8>(start: p, count: size))
         }
     }

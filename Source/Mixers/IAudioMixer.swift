@@ -33,21 +33,21 @@ public protocol IAudioMixer: IMixer {
      *  \param gain    A value between 0 and 1 representing the desired gain.
      */
     func setSourceGain(_ source: WeakRefISource, gain: Float)
-    
+
     /*!
      *  Set the channel count.
      *
      *  \param channelCount  The number of audio channels.
      */
     func setChannelCount(_ channelCount: Int)
-    
+
     /*!
      *  Set the channel count.
      *
      *  \param frequencyInHz  The audio sample frequency in Hz.
      */
     func setFrequencyInHz(_ frequencyInHz: Float)
-    
+
     /*!
      *  Set the amount of time to buffer before emitting mixed samples.
      *

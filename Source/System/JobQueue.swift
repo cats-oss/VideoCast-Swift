@@ -18,13 +18,13 @@ open class Job {
     public var done: Bool = false
     public var isSynchronous: Bool = false
 
-    private var job: ()->Void
+    private var job: () -> Void
     private var dispatchDate: Date = Date()
 
-    public init(_ job: @escaping ()->Void) {
+    public init(_ job: @escaping () -> Void) {
         self.job = job
     }
-    
+
     open func exec() {
         job()
         done = true
@@ -34,7 +34,7 @@ open class Job {
 open class JobQueue {
     private let queue: DispatchQueue
     private var exiting: Atomic<Bool> = .init(false)
-    
+
     public init(_ name: String = "", priority: JobQueuePriority = .default) {
         let qos: DispatchQoS
         switch priority {
@@ -47,19 +47,19 @@ open class JobQueue {
         }
         queue = .init(label: name, qos: qos)
     }
-    
+
     deinit {
         markExiting()
     }
-    
+
     open func markExiting() {
         exiting.value = true
     }
-    
-    open func enqueue(_ job: @escaping ()->Void) {
+
+    open func enqueue(_ job: @escaping () -> Void) {
         enqueue(Job(job))
     }
-    
+
     open func enqueue(_ job: Job) {
         queue.async { [weak self] in
             guard let strongSelf = self else { return }
@@ -68,11 +68,11 @@ open class JobQueue {
             }
         }
     }
-    
-    open func enqueueSync(_ job: @escaping ()->Void) {
+
+    open func enqueueSync(_ job: @escaping () -> Void) {
         enqueueSync(Job(job))
     }
-    
+
     open func enqueueSync(_ job: Job) {
         if let label = String(validatingUTF8: __dispatch_queue_get_label(nil)), label == queue.label {
             job.exec()

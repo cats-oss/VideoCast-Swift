@@ -22,10 +22,10 @@ public enum FilterLanguage {
 public protocol IVideoFilter: IFilter {
     var vertexKernel: String? { get }
     var pixelKernel: String? { get }
-    
+
     var filterLanguage: FilterLanguage { get set }
     var program: GLuint { get set }
-    
+
     var matrix: GLKMatrix4 { get set }
     var dimensions: CGSize { get set }
 }

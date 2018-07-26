@@ -14,7 +14,7 @@ public protocol IMetaData {
     var dts: CMTime { get }
     var streamIndex: Int { get set }
     var isKey: Bool { get set }
-    
+
     init()
     init(ts: CMTime)
     init(pts: CMTime, dts: CMTime)
@@ -25,17 +25,17 @@ open class MetaData<Types>: IMetaData {
     open var dts: CMTime
     open var streamIndex: Int = 0
     open var isKey: Bool = false
-    
+
     open var data: Types!
-    
+
     convenience public required init() {
         self.init(pts: kCMTimeZero, dts: kCMTimeZero)
     }
-    
+
     convenience public required init(ts: CMTime) {
         self.init(pts: ts, dts: ts)
     }
-    
+
     public required init(pts: CMTime, dts: CMTime) {
         self.pts = pts
         self.dts = dts

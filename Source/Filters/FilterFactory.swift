@@ -10,11 +10,11 @@ import Foundation
 
 open class FilterFactory {
     public typealias InstantiateFilter = () -> IFilter
-    
+
     private var filters: [String: IFilter] = [:]
-    
+
     private static var registration: [String: InstantiateFilter] = [:]
-    
+
     public init() {
         _ = BasicVideoFilterBGRA.isRegistered
         _ = BasicVideoFilterBGRAinYUVAout.isRegistered
@@ -24,7 +24,7 @@ open class FilterFactory {
         _ = InvertColorsVideoFilter.isRegistered
         _ = SepiaVideoFilter.isRegistered
     }
-    
+
     open func filter(name: String) -> IFilter? {
         if let it = filters[name] {
             return it
@@ -34,7 +34,7 @@ open class FilterFactory {
         }
         return nil
     }
-    
+
     open static func register(name: String, instantiation: @escaping InstantiateFilter) {
         registration[name] = instantiation
     }

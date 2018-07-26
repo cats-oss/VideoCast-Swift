@@ -12,18 +12,18 @@ import GLKit
 
 open class PixelBufferSource: ISource {
     open var filter: IFilter?
-    
+
     private weak var output: IOutput?
     private var pixelBuffer: CVPixelBuffer?
     private let width: Int
     private let height: Int
     private let pixelFormat: OSType
-    
+
     public init(width: Int, height: Int, pixelFormat: OSType) {
         self.width = width
         self.height = height
         self.pixelFormat = pixelFormat
-        
+
         var pb: CVPixelBuffer? = nil
         var ret: CVReturn = kCVReturnSuccess
         autoreleasepool {
@@ -33,7 +33,7 @@ open class PixelBufferSource: ISource {
                 kCVPixelBufferOpenGLESCompatibilityKey as String: true,
                 kCVPixelBufferIOSurfacePropertiesKey as String: [:]
             ]
-            
+
             ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat, pixelBufferOptions as NSDictionary, &pb)
         }
         if ret != 0 {
@@ -42,15 +42,15 @@ open class PixelBufferSource: ISource {
             fatalError("PixelBuffer creation failed")
         }
     }
-    
+
     deinit {
         pixelBuffer = nil
     }
-    
+
     open func setOutput(_ output: IOutput) {
         self.output = output
     }
-    
+
     open func pushPixelBuffer(data: UnsafeMutableRawPointer, size: Int) {
         guard let outp = output, let pixelBuffer = pixelBuffer else {
             Logger.debug("unexpected return")
@@ -60,7 +60,7 @@ open class PixelBufferSource: ISource {
         let loc = CVPixelBufferGetBaseAddress(pixelBuffer)
         memcpy(loc, data, size)
         CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
-        
+
         let mat = GLKMatrix4Identity
         let md = VideoBufferMetadata()
         md.data = (4, mat, true, WeakRefISource(value: self))

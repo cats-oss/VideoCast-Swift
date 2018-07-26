@@ -11,55 +11,55 @@ import Foundation
 open class TCPThroughputAdaptation: IThroughputAdaptation {
     private let kWeight: Float = 0.75
     private let kPivotSamples: Int = 5
-    private let kMeasurementDelay:  TimeInterval = 2    // seconds - represents the time between measurements when increasing or decreasing bitrate
-    private let kSettlementDelay:   TimeInterval = 30   // seconds - represents time to wait after a bitrate decrease before attempting to increase again
-    private let kIncreaseDelta:     TimeInterval = 10   // seconds - number of seconds to wait between increase vectors (after initial ramp up)
-    
+    private let kMeasurementDelay: TimeInterval = 2    // seconds - represents the time between measurements when increasing or decreasing bitrate
+    private let kSettlementDelay: TimeInterval = 30   // seconds - represents time to wait after a bitrate decrease before attempting to increase again
+    private let kIncreaseDelta: TimeInterval = 10   // seconds - number of seconds to wait between increase vectors (after initial ramp up)
+
     private var previousTurndown: Date = .init()
     private var previousIncrease: Date = .init()
-    
-    private var thread: Thread? = nil
+
+    private var thread: Thread?
     private let cond: NSCondition = .init()
     private let buffQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.tcp.adaptation.buff")
     private let durQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.tcp.adaptation.dur")
-    
+
     private var sentSamples: [Int] = .init()
     private var bufferSizeSamples: [Int] = .init()
     private var bufferDurationSamples: [Int64] = .init()
-    
+
     private var bwSamples: [Float] = .init()
     private var buffGrowth: [Int] = .init()
     private var turnSamples: [Float] = .init()
     private var bwWeights: [Float] = .init()
-    
-    private var callback: ThroughputCallback? = nil
-    
+
+    private var callback: ThroughputCallback?
+
     private let bwSampleCount: Int = 30
     private let negSampleCount: Int = 0
-    
+
     private var previousVector: Float = 0
-    
+
     private var started: Bool = false
     private var exiting: Atomic<Bool> = .init(false)
     private var hasFirstTurndown: Bool = false
-    
+
     public init() {
         let v = (1 - powf(kWeight, Float(bwSampleCount))) / (1 - kWeight)
         for i in 0..<bwSampleCount {
             bwWeights.append(powf(kWeight, Float(i)) / v)
         }
     }
-    
+
     deinit {
         stop()
     }
-    
+
     private static func mode<T: Equatable>(array: [T]) -> T {
         var number: T = array[0]
         var mode: T = number
         var count = 1
         var countMode = 1
-        
+
         for i in 1..<array.count {
             if array[i] == number {
                 // count occurrences of the current number
@@ -76,33 +76,33 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
         }
         return mode
     }
-    
+
     open func setThroughputCallback(_ callback: @escaping ThroughputCallback) {
         self.callback = callback
     }
-    
+
     open func addSentBytesSample(_ bytesSent: Int) {
         buffQueue.async { [weak self] in
             self?.sentSamples.append(bytesSent)
         }
     }
-    
+
     open func addBufferSizeSample(_ bufferSize: Int) {
         buffQueue.async { [weak self] in
             self?.bufferSizeSamples.append(bufferSize)
         }
     }
-    
+
     open func addBufferDurationSample(_ bufferDuration: Int64) {
         durQueue.async { [weak self] in
             self?.bufferDurationSamples.append(bufferDuration)
         }
     }
-    
+
     open func reset() {
         bufferSizeSamples.removeAll()
     }
-    
+
     open func start() {
         if !started {
             started = true
@@ -110,7 +110,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
             thread?.start()
         }
     }
-    
+
     open func stop() {
         exiting.value = true
         cond.broadcast()
@@ -119,62 +119,62 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
             started = false
         }
     }
-    
+
     private func sampleThread() {
         var prev: Date = .init()
-        
+
         Thread.current.name = "jp.co.cyberagent.VideoCast.tcp.adaptation"
         while !exiting.value {
             cond.lock()
             defer {
                 cond.unlock()
             }
-            
+
             if !exiting.value {
                 cond.wait(until: Date.init(timeIntervalSinceNow: kMeasurementDelay))
             }
             guard !exiting.value else {
                 break
             }
-            
+
             let now = Date()
             let diff = now.timeIntervalSince(prev)
             let previousTurndownDiff = now.timeIntervalSince(previousTurndown)
             let previousIncreaseDiff = now.timeIntervalSince(previousIncrease)
             prev = now
-            
+
             var vec: Float = 0
             var detectedBytesPerSec: Float = 0
             var turnAvg: Float = 0
-            
+
             buffQueue.sync {
                 var totalSent = 0
-                
+
                 for samp in sentSamples {
                     totalSent += Int(samp)
                 }
-                
+
                 let timeDelta = diff
                 detectedBytesPerSec = Float(Double(totalSent) / timeDelta)
-                
+
                 bwSamples.insert(detectedBytesPerSec, at: 0)
                 if bwSamples.count > bwSampleCount {
                     bwSamples.removeLast()
                 }
-                
+
                 if let bufferSizeSample = bufferSizeSamples.last {
                     buffGrowth.insert(Int(bufferSizeSample), at: 0)
                     if buffGrowth.count > 3 {
                         buffGrowth.removeLast()
                     }
-                    
+
                     var buffGrowthAvg = 0
                     var prevValue = 0
                     for it in buffGrowth {
                         buffGrowthAvg += (it > prevValue) ? -1 : (it < prevValue ? 1 : 0)
                         prevValue = it
                     }
-                    
+
                     if buffGrowthAvg <= 0 && (!hasFirstTurndown || (previousTurndownDiff > kSettlementDelay && previousIncreaseDiff > kIncreaseDelta)) {
                         vec = 1
                     } else if buffGrowthAvg > 0 {
@@ -192,38 +192,38 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
                             }
                         }
                     }
-                    
+
                     if turnSamples.count > 0 {
-                        
+
                         for turnSample in turnSamples {
                             turnAvg += turnSample
                         }
                         turnAvg /= Float(turnSamples.count)
-                        
+
                     }
-                    
+
                     if detectedBytesPerSec > turnAvg {
                         turnSamples.insert(detectedBytesPerSec, at: 0)
                         if turnSamples.count > kPivotSamples {
                             turnSamples.removeLast()
                         }
                     }
-                    
+
                     previousVector = vec
-                    
+
                 }
                 sentSamples.removeAll()
                 bufferSizeSamples.removeAll()
                 bufferDurationSamples.removeAll()
             }
-            
+
             if let callback = callback {
                 if vec > 0 {
                     previousIncrease = now
                 }
                 callback(vec, turnAvg, Int(detectedBytesPerSec))
             }
-            
+
         }
     }
 }

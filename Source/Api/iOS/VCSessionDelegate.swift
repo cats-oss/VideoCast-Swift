@@ -12,7 +12,7 @@ open class VCSessionDelegate: NSObject {
     open var connectionStatusChanged: ((_ sessionState: VCSessionState) -> Void)?
     open var didAddCameraSource: ((_ session: VCSimpleSession) -> Void)?
     open var detectedThroughput: ((_ throughputInBytesPerSecond: Int, _ rate: Int) -> Void)?
-    
+
     public override init() {
         super.init()
     }

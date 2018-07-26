@@ -22,7 +22,7 @@ void main(void) {
 }
 """)
     }
-    
+
     open var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
 precision mediump float;
@@ -33,34 +33,34 @@ void main(void) {
 }
 """)
     }
-    
+
     open var filterLanguage: FilterLanguage = .GL_ES2_3
-    
+
     open var program: GLuint = 0
-    
+
     open var matrix = GLKMatrix4Identity
-    
+
     open var dimensions = CGSize.zero
-    
+
     open var initialized = false
-    
+
     open var name: String {
         return ""
     }
-    
+
     private var vao: GLuint = 0
     private var uMatrix: Int32 = 0
     private var bound = false
-    
+
     public init() {
-        
+
     }
-    
+
     deinit {
         glDeleteProgram(program)
         glDeleteVertexArraysOES(1, &vao)
     }
-    
+
     open func initialize() {
         switch filterLanguage {
         case .GL_ES2_3, .GL_2:
@@ -68,7 +68,7 @@ void main(void) {
                 Logger.debug("unexpected return")
                 break
             }
-            
+
             program = buildProgram(vertex: vertexKernel, fragment: pixelKernel)
             glGenVertexArraysOES(1, &vao)
             glBindVertexArrayOES(vao)
@@ -86,7 +86,7 @@ void main(void) {
             break
         }
     }
-    
+
     open func bind() {
         switch filterLanguage {
         case .GL_ES2_3, .GL_2:
@@ -102,7 +102,7 @@ void main(void) {
             break
         }
     }
-    
+
     open func unbind() {
         bound = false
     }

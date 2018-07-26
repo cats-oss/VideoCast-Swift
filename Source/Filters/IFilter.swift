@@ -11,9 +11,9 @@ import Foundation
 public protocol IFilter: class {
     var initialized: Bool { get }
     var name: String { get }
-    
+
     func initialize()
-    
+
     func bind()
     func unbind()
 }

@@ -39,7 +39,7 @@ let BUFFER_STRIDE = MemoryLayout<Float>.size * 4
             }
         } while ( true )
     }
-    
+
     func glFramebufferStatus(file: String = #file, line: Int = #line) {
         let status = glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER))
         switch status {
@@ -57,22 +57,22 @@ let BUFFER_STRIDE = MemoryLayout<Float>.size * 4
     }
 #else
     func glErrors(file: String = #file, line: Int = #line) {
-        
+
     }
-    
+
     func glFramebufferStatus(file: String = #file, line: Int = #line) {
-        
+
     }
 #endif
 
 let s_vbo: [GLfloat] = [
-    -1, -1,       0, 0, // 0
-    1, -1,        1, 0, // 1
-    -1, 1,        0, 1, // 2
-    
-    1, -1,        1, 0, // 1
-    1, 1,         1, 1, // 3
-    -1, 1,        0, 1  // 2
+    -1, -1, 0, 0, // 0
+    1, -1, 1, 0, // 1
+    -1, 1, 0, 1, // 2
+
+    1, -1, 1, 0, // 1
+    1, 1, 1, 1, // 3
+    -1, 1, 0, 1  // 2
 ]
 
 let s_vs = """
@@ -108,7 +108,7 @@ gl_FragData[0] = texture2D(uTex0, vCoord);
 func compileShader(type: GLuint, source: String) -> GLuint {
     let shaderString = NSString(string: source)
     var shaderCString = shaderString.utf8String
-    
+
     let shader = glCreateShader(type)
     glShaderSource(shader, 1, &shaderCString, nil)
     glCompileShader(shader)
@@ -118,13 +118,13 @@ func compileShader(type: GLuint, source: String) -> GLuint {
     if compiled == 0 {
         var length: GLint = 0
         var log: [GLchar]
-        
+
         glGetShaderiv(shader, GLenum(GL_INFO_LOG_LENGTH), &length)
         log = Array(repeating: GLchar(0), count: Int(length))
 
         glGetShaderInfoLog(shader, length, &length, UnsafeMutablePointer(mutating: log))
         Logger.error("\(type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER") compilation error: \(log)")
-        
+
         return 0
     }
 #endif
@@ -135,31 +135,31 @@ func buildProgram(vertex: String, fragment: String) -> GLuint {
     let vshad: GLuint
     let fshad: GLuint
     let p: GLuint
-    
+
     var len: GLint = 0
 #if DEBUG
     var log: [GLchar]
 #endif
-    
+
     vshad = compileShader(type: GLuint(GL_VERTEX_SHADER), source: vertex)
     fshad = compileShader(type: GLuint(GL_FRAGMENT_SHADER), source: fragment)
-    
+
     p = glCreateProgram()
     glAttachShader(p, vshad)
     glAttachShader(p, fshad)
     glLinkProgram(p)
     glGetProgramiv(p, GLenum(GL_INFO_LOG_LENGTH), &len)
-    
+
 #if DEBUG
     if len > 0 {
         log = Array(repeating: GLchar(0), count: Int(len))
-        
+
         glGetProgramInfoLog(p, len, &len, UnsafeMutablePointer(mutating: log))
-        
+
         Logger.debug("program log: \(log)")
     }
 #endif
-    
+
     glDeleteShader(vshad)
     glDeleteShader(fshad)
     return p

@@ -49,7 +49,7 @@ func put_be16(_ data: inout [UInt8], val: Int16) {
     var buf: [UInt8] = .init(repeating: 0, count: 2)
     buf[1] = UInt8(val & 0xff)
     buf[0] = UInt8((val >> 8) & 0xff)
-    
+
     put_buff(&data, src: buf)
 }
 
@@ -63,11 +63,11 @@ func get_be16(_ val: ArraySlice<UInt8>) -> Int {
 
 func put_be24(_ data: inout [UInt8], val: Int32) {
     var buf: [UInt8] = .init(repeating: 0, count: 3)
-    
+
     buf[2] = UInt8(val & 0xff)
     buf[1] = UInt8((val >> 8) & 0xff)
     buf[0] = UInt8((val >> 16) & 0xff)
-    
+
     put_buff(&data, src: buf)
 }
 
@@ -78,7 +78,7 @@ func get_be24(_ val: ArraySlice<UInt8>) -> Int {
 
 func put_be32(_ data: inout [UInt8], val: Int32) {
     var buf: [UInt8] = .init(repeating: 0, count: 4)
-    
+
     buf[3] = UInt8(val & 0xff)
     buf[2] = UInt8((val >> 8) & 0xff)
     buf[1] = UInt8((val >> 16) & 0xff)
@@ -136,7 +136,7 @@ func get_string(_ buf: [UInt8], bufsize: inout Int) -> String? {
         buf = buf.dropFirst(4)
         bufsize = 4 + len
     }
-    
+
     let val = String(data: .init(buf.prefix(len)), encoding: .utf8)
     return val
 }
@@ -148,10 +148,10 @@ func get_string(_ buf: [UInt8]) -> String? {
 
 func put_double(_ data: inout [UInt8], val: Double) {
     put_byte(&data, val: AMFDataType.number.rawValue)
-    
+
     var buf = CFConvertFloat64HostToSwapped(val)
     let src = [UInt8](Data(bytes: &buf, count: MemoryLayout<CFSwappedFloat64>.size))
-    
+
     put_buff(&data, src: src)
 }
 
@@ -163,7 +163,7 @@ func get_double(_ buf: [UInt8]) -> Double {
 
 func get_double(_ buf: ArraySlice<UInt8>) -> Double {
     var arg: CFSwappedFloat64 = .init()
-    memcpy(&arg, buf.withUnsafeBytes{ $0.baseAddress }, MemoryLayout<CFSwappedFloat64>.size)
+    memcpy(&arg, buf.withUnsafeBytes { $0.baseAddress }, MemoryLayout<CFSwappedFloat64>.size)
     return CFConvertDoubleSwappedToHost(arg)
 }
 
@@ -196,14 +196,14 @@ class Buffer {
     private var buffer: [UInt8]
     var size: Int
     var total: Int
-    
+
     init(_ size: Int = 0) {
         total = size
         self.size = 0
         buffer = [UInt8]()
         resize(size)
     }
-    
+
     @discardableResult
     func resize(_ size: Int) -> Int {
         if size > 0 {
@@ -213,18 +213,18 @@ class Buffer {
         }
         total = size
         self.size = 0
-        
+
         return size
     }
-    
+
     func get() -> UnsafePointer<UInt8> {
         return buffer.withUnsafeBufferPointer { $0.baseAddress! }
     }
-    
+
     func getMutable() -> UnsafeMutablePointer<UInt8> {
         return buffer.withUnsafeMutableBufferPointer { $0.baseAddress! }
     }
-    
+
     @discardableResult
     func put(_ buf: UnsafeRawPointer, size: Int) -> Int {
         let size = size > self.total ? self.total : size
@@ -235,25 +235,24 @@ class Buffer {
         self.size = size
         return size
     }
-    
+
     @discardableResult
     func append(_ buf: UnsafeRawPointer, size: Int) -> Int {
         let size = size + self.size > self.total ? self.total - self.size : size
-        
+
         let p = buf.assumingMemoryBound(to: UInt8.self)
         let arr = Array(UnsafeBufferPointer(start: p, count: size))
         buffer[self.size..<size + self.size] = arr.prefix(size)
         self.size += size
         return size
     }
-    
+
     @discardableResult
     func read(_ buf: inout UnsafePointer<UInt8>?, size: Int) -> Int {
         let size = size > self.size ? self.size : size
-        
-        buf = buffer.withUnsafeBufferPointer{ $0.baseAddress }
-        
+
+        buf = buffer.withUnsafeBufferPointer { $0.baseAddress }
+
         return size
     }
 }
-

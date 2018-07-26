@@ -17,6 +17,6 @@ public protocol ISource: AnyObject {
      *                data being vended by the source.
      */
     var filter: IFilter? { get set }
-    
+
     func setOutput(_ output: IOutput)
 }

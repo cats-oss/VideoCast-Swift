@@ -13,38 +13,38 @@ public typealias MP4SessionParameters = MetaData<(filename: String, fps: Int, wi
 
 open class MP4Multiplexer: IOutputSession {
     private let writingQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.mp4multiplexer")
-    
+
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
     private var audioInput: AVAssetWriterInput?
-    
+
     private var videoFormat: CMVideoFormatDescription?
     private var audioFormat: CMAudioFormatDescription?
-    
+
     private var vps: [UInt8] = .init()
     private var sps: [UInt8] = .init()
     private var pps: [UInt8] = .init()
-    
+
     private let epoch: Date = .init()
-    
+
     private var filename: String = ""
     private var fps: Int = 30
     private var width: Int = 0
     private var height: Int = 0
     private var videoCodecType: CMVideoCodecType = kCMVideoCodecType_H264
     private let framecount: Int = 0
-    
+
     private var startedSession: Bool = false
     private var firstVideoBuffer: Bool = true
     private var firstAudioBuffer: Bool = true
-    private var firstVideoFrameTime: CMTime? = nil
-    private var lastVideoFrameTime: CMTime? = nil
-    
+    private var firstVideoFrameTime: CMTime?
+    private var lastVideoFrameTime: CMTime?
+
     private var started: Bool = false
     private var exiting: Atomic<Bool> = .init(false)
-    private var thread: Thread? = nil
+    private var thread: Thread?
     private let cond: NSCondition = .init()
-    
+
     struct SampleInput {
         var buffer: CMBlockBuffer
         var timingInfo: CMSampleTimingInfo
@@ -53,23 +53,23 @@ open class MP4Multiplexer: IOutputSession {
 
     private var videoSamples: [SampleInput] = .init()
     private var audioSamples: [SampleInput] = .init()
-    
+
     private var stopCallback: StopSessionCallback?
-    
+
     public init() {
-        
+
     }
-    
+
     deinit {
         if startedSession {
             stop {}
         }
-        
+
         audioFormat = nil
         videoFormat = nil
         assetWriter = nil
     }
-    
+
     open func stop(_ callback: @escaping StopSessionCallback) {
         startedSession = false
         exiting.value = true
@@ -77,31 +77,31 @@ open class MP4Multiplexer: IOutputSession {
 
         stopCallback = callback
     }
-    
+
     open func setSessionParameters(_ parameters: IMetaData) {
         guard let params = parameters as? MP4SessionParameters, let data = params.data else {
             Logger.debug("unexpected return")
             return
         }
-        
+
         filename = data.filename
         fps = data.fps
         width = data.width
         height = data.height
         videoCodecType = data.videoCodecType
         Logger.info("(\(fps), \(width), \(height), \(videoCodecType)")
-        
+
         if !started {
             started = true
             thread = Thread(block: writingThread)
             thread?.start()
         }
     }
-    
+
     open func setBandwidthCallback(_ callback: @escaping BandwidthCallback) {
-        
+
     }
-    
+
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         if let videMetadata = metadata as? VideoBufferMetadata {
             self.pushVideoBuffer(data, size: size, metadata: videMetadata)
@@ -109,12 +109,12 @@ open class MP4Multiplexer: IOutputSession {
             self.pushAudioBuffer(data, size: size, metadata: sounMetadata)
         }
     }
-    
+
     private func pushVideoBuffer(_ data: UnsafeRawPointer, size: Int, metadata: VideoBufferMetadata) {
         let data = data.assumingMemoryBound(to: UInt8.self)
         let isVLC: Bool
         var nalType: NalType = .unknown
-        
+
         let nal_type: UInt8
         switch videoCodecType {
         case kCMVideoCodecType_H264:
@@ -145,9 +145,9 @@ open class MP4Multiplexer: IOutputSession {
             Logger.error("unsupported codec type: \(videoCodecType)")
             return
         }
-        
+
         firstVideoBuffer = false
-        
+
         if !isVLC {
             switch nalType {
             case .vps:
@@ -180,11 +180,11 @@ open class MP4Multiplexer: IOutputSession {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             var timingInfo: CMSampleTimingInfo = .init()
             timingInfo.presentationTimeStamp = metadata.pts
             timingInfo.decodeTimeStamp = metadata.dts.isNumeric ? metadata.dts : metadata.pts
-            
+
             guard let assetWriter = assetWriter else { return }
             if assetWriter.status == .unknown {
                 if assetWriter.startWriting() {
@@ -195,26 +195,26 @@ open class MP4Multiplexer: IOutputSession {
                     Logger.error("could not start writing video: \(String(describing: assetWriter.error))")
                 }
             }
-            
+
             if nil == firstVideoFrameTime {
                 firstVideoFrameTime = timingInfo.decodeTimeStamp
             }
             lastVideoFrameTime = timingInfo.presentationTimeStamp
-            
+
             writingQueue.async { [weak self] in
                 guard let strongSelf = self, !strongSelf.exiting.value else { return }
-                
+
                 strongSelf.videoSamples.insert(.init(buffer: buffer, timingInfo: timingInfo, size: size), at: 0)
                 strongSelf.cond.signal()
             }
         }
     }
-    
+
     private func pushAudioBuffer(_ data: UnsafeRawPointer, size: Int, metadata: AudioBufferMetadata) {
         guard let assetWriter = assetWriter else { return }
 
         let data = data.assumingMemoryBound(to: UInt8.self)
-        
+
         if let _ = audioFormat {
             guard let firstVideoFrameTime = firstVideoFrameTime,
                 firstVideoFrameTime < metadata.pts else {
@@ -228,14 +228,14 @@ open class MP4Multiplexer: IOutputSession {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             var timingInfo: CMSampleTimingInfo = .init()
             timingInfo.presentationTimeStamp = metadata.pts
             timingInfo.decodeTimeStamp = metadata.dts.isNumeric ? metadata.dts : metadata.pts
-            
+
             writingQueue.async { [weak self] in
                 guard let strongSelf = self, !strongSelf.exiting.value else { return }
-                
+
                 strongSelf.audioSamples.insert(.init(buffer: buffer, timingInfo: timingInfo, size: size), at: 0)
                 strongSelf.cond.signal()
             }
@@ -245,20 +245,20 @@ open class MP4Multiplexer: IOutputSession {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             var asbd: AudioStreamBasicDescription = .init()
             asbd.mFormatID = kAudioFormatMPEG4AAC
             asbd.mFormatFlags = 0
             asbd.mFramesPerPacket = 1024
             asbd.mSampleRate = Float64(metaData.frequencyInHz)
             asbd.mChannelsPerFrame = UInt32(metaData.channelCount)
-            
+
             CMAudioFormatDescriptionCreate(kCFAllocatorDefault, &asbd, 0, nil, size, data, nil, &audioFormat)
-            
+
             let audio = AVAssetWriterInput(mediaType: .audio, outputSettings: nil, sourceFormatHint: audioFormat)
 
             audio.expectsMediaDataInRealTime = true
-            
+
             if assetWriter.canAdd(audio) {
                 assetWriter.add(audio)
                 audioInput = audio
@@ -267,49 +267,49 @@ open class MP4Multiplexer: IOutputSession {
             }
         }
     }
-    
+
     private func writingThread() {
         let fileUrl = URL(fileURLWithPath: filename)
         do {
             let writer = try AVAssetWriter(url: fileUrl, fileType: .mp4)
-            
+
             let fileManager = FileManager()
             let filePath = fileUrl.path
             if fileManager.fileExists(atPath: filePath) {
                 try fileManager.removeItem(at: fileUrl)
             }
-            
+
             assetWriter = writer
             assetWriter?.shouldOptimizeForNetworkUse = false
-            
+
         } catch {
             Logger.error("Could not create AVAssetWriter: \(error)")
             return
         }
-        
+
         while !exiting.value {
             cond.lock()
             defer {
                 cond.unlock()
             }
-            
+
             writingQueue.sync {
                 writeSample(.video)
                 writeSample(.audio)
             }
-            
+
             if videoSamples.count < 2 && audioSamples.count < 2 && !exiting.value {
                 cond.wait()
             }
         }
-        
+
         while videoSamples.count > 0 || audioSamples.count > 0 {
             writingQueue.sync {
                 writeSample(.video)
                 writeSample(.audio)
             }
         }
-        
+
         /*videoInput?.markAsFinished()
         audioInput?.markAsFinished()
         assetWriter?.endSession(atSourceTime: lastVideoFrameTime)*/
@@ -323,7 +323,7 @@ open class MP4Multiplexer: IOutputSession {
         })
 
     }
-    
+
     private func writeSample(_ mediaType: AVMediaType) {
         let samples = (mediaType == .video) ? videoSamples : audioSamples
         if samples.count > 1 || (exiting.value && samples.count > 0) {
@@ -337,36 +337,36 @@ open class MP4Multiplexer: IOutputSession {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             var sampleOut: CMSampleBuffer?
             var size: Int = sampleInput.size
-            
+
             sampleInput.timingInfo.duration = nextSampleInput.timingInfo.decodeTimeStamp - sampleInput.timingInfo.decodeTimeStamp
             if CMTimeCompare(kCMTimeZero, sampleInput.timingInfo.duration) == 0 {
                 // last sample
                 sampleInput.timingInfo.duration = .init(value: 1, timescale: 100000)
             }
-            
+
             CMSampleBufferCreate(kCFAllocatorDefault, sampleInput.buffer, true, nil, nil, format, 1, 1, &sampleInput.timingInfo, 1, &size, &sampleOut)
-            
+
             guard let sample = sampleOut else {
                 Logger.debug("unexpected return")
                 return
             }
             CMSampleBufferMakeDataReady(sample)
-            
+
             guard let input = (mediaType == .video) ? videoInput : audioInput else {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             if mediaType == .audio {
                 if firstAudioBuffer {
                     firstAudioBuffer = false
                     primeAudio(audioSample: sample)
                 }
             }
-            
+
             guard assetWriter.status == .writing else {
                 Logger.debug("unexpected return")
                 return
@@ -383,7 +383,7 @@ open class MP4Multiplexer: IOutputSession {
             Logger.verbose("Done \(mediaType)")
         }
     }
-    
+
     private func createAVCC() {
         guard let assetWriter = assetWriter else { return }
         switch videoCodecType {
@@ -395,21 +395,21 @@ open class MP4Multiplexer: IOutputSession {
             Logger.error("unsupported codec type: \(videoCodecType)")
             return
         }
-        
+
         let pointerVPS = UnsafePointer<UInt8>(vps)
         let pointerSPS = UnsafePointer<UInt8>(sps)
         let pointerPPS = UnsafePointer<UInt8>(pps)
-        
+
         var dataParamArray = [pointerSPS, pointerPPS]
         var sizeParamArray = [sps.count, pps.count]
         if videoCodecType == kCMVideoCodecType_HEVC {
             dataParamArray.insert(pointerVPS, at: 0)
             sizeParamArray.insert(vps.count, at: 0)
         }
-        
+
         let paramterSetPointers = UnsafePointer<UnsafePointer<UInt8>>(dataParamArray)
         let parameterSetSizes = UnsafePointer<Int>(sizeParamArray)
-        
+
         switch videoCodecType {
         case kCMVideoCodecType_H264:
             let ret = CMVideoFormatDescriptionCreateFromH264ParameterSets(kCFAllocatorDefault, dataParamArray.count, paramterSetPointers, parameterSetSizes, 4, &videoFormat)
@@ -433,7 +433,7 @@ open class MP4Multiplexer: IOutputSession {
         }
         let video = AVAssetWriterInput(mediaType: .video, outputSettings: nil, sourceFormatHint: videoFormat)
         video.expectsMediaDataInRealTime = true
-        
+
         if assetWriter.canAdd(video) {
             assetWriter.add(video)
             videoInput = video
@@ -441,11 +441,11 @@ open class MP4Multiplexer: IOutputSession {
             Logger.error("cannot add video input")
         }
     }
-    
+
     private func primeAudio(audioSample: CMSampleBuffer) {
         var attachmentMode: CMAttachmentMode = .init()
         let trimDuration = CMGetAttachment(audioSample, kCMSampleBufferAttachmentKey_TrimDurationAtStart, &attachmentMode)
-        
+
         if trimDuration == nil {
             Logger.debug("Prime audio")
             let trimTime: CMTime = .init(seconds: 0.1, preferredTimescale: 1000000000)

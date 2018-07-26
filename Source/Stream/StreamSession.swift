@@ -10,7 +10,7 @@ import Foundation
 
 class StreamCallback: NSObject, StreamDelegate {
     weak var session: StreamSession?
-    
+
     func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
         session?.nsStreamCallback(aStream, event: eventCode)
     }
@@ -18,26 +18,26 @@ class StreamCallback: NSObject, StreamDelegate {
 
 open class StreamSession: IStreamSession {
     open var status: StreamStatus = .init()
-    
+
     private var inputStream: InputStream?
     private var outputStream: OutputStream?
-    private var runLoop:    RunLoop?
+    private var runLoop: RunLoop?
     private var streamCallback: StreamCallback?
-    
+
     private var callback: StreamSessionCallback?
-    
+
     public init() {
         streamCallback = StreamCallback()
         streamCallback?.session = self
     }
-    
+
     deinit {
         disconnect()
         streamCallback = nil
-        
+
         Logger.debug("StreamSession::deinit")
     }
-    
+
     open func connect(host: String, port: Int, sscb callback: @escaping StreamSessionCallback) {
         self.callback = callback
         if !status.isEmpty {
@@ -46,14 +46,14 @@ open class StreamSession: IStreamSession {
         autoreleasepool {
             var readStream: Unmanaged<CFReadStream>?
             var writeStream: Unmanaged<CFWriteStream>?
-            
+
             CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, host as CFString, UInt32(port), &readStream, &writeStream)
-            
+
             inputStream = readStream?.takeRetainedValue()
             outputStream = writeStream?.takeRetainedValue()
-            
+
             let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.network")
-            
+
             if let _ = inputStream, let _ = outputStream {
                 queue.async { [weak self] in
                     self?.startNetwork()
@@ -62,25 +62,25 @@ open class StreamSession: IStreamSession {
                 nsStreamCallback(nil, event: .errorOccurred)
             }
         }
-        
+
     }
-    
+
     open func disconnect() {
         outputStream?.close()
         outputStream = nil
-        
+
         inputStream?.close()
         inputStream = nil
-        
+
         if let runLoop = runLoop {
             CFRunLoopStop(runLoop.getCFRunLoop())
             self.runLoop = nil
         }
     }
-    
+
     open func write(_ buffer: UnsafePointer<UInt8>, size: Int) -> Int {
         var ret = 0
-        
+
         guard let outputStream = outputStream else {
             Logger.debug("unexpected return")
             return ret
@@ -93,22 +93,22 @@ open class StreamSession: IStreamSession {
             // Remove the Has Space Available flag
             status.remove(.writeBufferHasSpace)
         } else if (ret < 0) {
-            Logger.error("ERROR! [\(String(describing: outputStream.streamError))] buffer: \(buffer) [ \(String(format:"0x%02X", buffer[0])) ], size: \(size)")
+            Logger.error("ERROR! [\(String(describing: outputStream.streamError))] buffer: \(buffer) [ \(String(format: "0x%02X", buffer[0])) ], size: \(size)")
         }
-        
+
         return ret
     }
-    
+
     open func read(_ buffer: UnsafeMutablePointer<UInt8>, size: Int) -> Int {
         var ret = 0
-        
+
         guard let inputStream = inputStream else {
             Logger.debug("unexpected return")
             return ret
         }
-        
+
         ret = inputStream.read(buffer, maxLength: size)
-        
+
         if ret < size && (status.contains(.readBufferHasBytes)) {
             status.remove(.readBufferHasBytes)
         } else if !inputStream.hasBytesAvailable {
@@ -117,7 +117,7 @@ open class StreamSession: IStreamSession {
         }
         return ret
     }
-    
+
     open func nsStreamCallback(_ stream: Stream?, event: Stream.Event) {
         if event.contains(.openCompleted) {
             // Only set connected event when input and output stream both connected
@@ -149,7 +149,7 @@ open class StreamSession: IStreamSession {
             }
         }
     }
-    
+
     private func setStatus(_ status: StreamStatus, clear: Bool = false) {
         if clear {
             self.status = status
@@ -158,7 +158,7 @@ open class StreamSession: IStreamSession {
         }
         callback?(self, status)
     }
-    
+
     private func startNetwork() {
         let runLoop = RunLoop.current
         self.runLoop = runLoop
@@ -168,7 +168,7 @@ open class StreamSession: IStreamSession {
         outputStream?.schedule(in: runLoop, forMode: .defaultRunLoopMode)
         outputStream?.open()
         inputStream?.open()
-        
+
         runLoop.run()
     }
 }

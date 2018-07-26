@@ -11,7 +11,7 @@ import GLKit
 
 open class GlowVideoFilter: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
-    
+
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
 precision mediump float;
@@ -40,11 +40,11 @@ void main(void) {
 }
 """)
     }
-    
+
     open override var name: String {
         return "jp.co.cyberagent.VideoCast.filters.glow"
     }
-    
+
     private static func registerFilter() -> Bool {
         FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.glow", instantiation: { return GlowVideoFilter() })
         return true

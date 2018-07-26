@@ -18,35 +18,35 @@ open class RTMPSession: IOutputSession {
     private let networkQueue: JobQueue = .init("jp.co.cyberagent.VideoCast.rtmp.network")
     private let jobQueue: JobQueue = .init("jp.co.cyberagent.VideoCast.rtmp")
     private var sentKeyframe: Date = .init()
-    
+
     private let networkWaitSemaphore: DispatchSemaphore = .init(value: 0)
-    
+
     private let s1: Buffer = .init()
     private let c1: Buffer = .init()
-    
+
     private let throughputSession: TCPThroughputAdaptation = .init()
-    
+
     private let previousTs: UInt64 = 0
     private var previousChunk: RTMPChunk_0 = .init()
-    
+
     private var previousChunkData: [ChunkStreamId: UInt64] = .init()
-    
+
     private let streamInBuffer: PreallocBuffer = .init(4096)
     private let streamSession: IStreamSession = StreamSession()
     private let outBuffer: [UInt8] = .init()
     private let uri: URL
-    
+
     private let callback: RTMPSessionStateCallback
-    private var bandwidthCallback: BandwidthCallback? = nil
-    
+    private var bandwidthCallback: BandwidthCallback?
+
     private let playPath: String
     private let app: String
     private var trackedCommands: [Int32: String] = .init()
-    
+
     private var outChunkSize: Int = 128
     private var inChunkSize: Int = 128
     private var bufferSize: Int64 = 0
-    
+
     private var streamId: Int32 = 0
     private var numberOfInvokes: Int32 = 0
     private var frameWidth: Int32 = 0
@@ -55,26 +55,26 @@ open class RTMPSession: IOutputSession {
     private var frameDuration: Double = 0
     private var audioSampleRate: Double = 0
     private var audioStereo: Bool = false
-    
+
     private var state: RTMPClientState = .none
-    
+
     private var clearing: Bool = false
     private var ending: Bool = false
-    
+
     public init(uri: String, callback: @escaping RTMPSessionStateCallback) {
         self.callback = callback
-        
+
         self.uri = URL(string: uri)!
-        
+
         let uri_tokens = uri.components(separatedBy: "/")
-        
+
         var tokenCount = 0
         var pp = ""
         var app: String = ""
         for it in uri_tokens {
             tokenCount += 1
             guard tokenCount >= 4 else { continue }   // skip protocol and host/port
-            
+
             if tokenCount == 4 {
                 app = it
             } else {
@@ -84,36 +84,36 @@ open class RTMPSession: IOutputSession {
         pp.removeLast()
         self.playPath = pp
         self.app = app
-        
+
         connectServer()
     }
-    
+
     deinit {
         Logger.debug("RTMPSession::deinit")
-        
+
         if !ending {
             stop {}
         }
     }
-    
+
     open func stop(_ callback: @escaping StopSessionCallback) {
         ending = true
 
         if state == .connected {
             sendDeleteStream()
         }
-        
+
         streamSession.disconnect()
         throughputSession.stop()
-        
+
         jobQueue.markExiting()
         jobQueue.enqueueSync {}
         networkQueue.markExiting()
         networkQueue.enqueueSync {}
-        
+
         callback()
     }
-    
+
     open func connectServer() {
         guard let host = uri.host else {
             Logger.debug("unexpected return")
@@ -123,22 +123,22 @@ open class RTMPSession: IOutputSession {
         streamInBuffer.reset()
         let port = uri.port ?? 1935
         Logger.info("Connecting:\(host):\(port), stream name:\(playPath)")
-        streamSession.connect(host: host, port: port, sscb: { [weak self] (session, status) in
+        streamSession.connect(host: host, port: port, sscb: { [weak self] (_, status) in
             self?.streamStatusChanged(status)
         })
     }
 
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending, let inMetadata = metadata as? RTMPMetadata, let metaData = inMetadata.data else { return }
-        
+
         // make the lamdba capture the data
         let buf = Buffer(size)
         buf.put(data, size: size)
-        
+
         jobQueue.enqueue {
             if !self.ending {
                 let packetTime = Date()
-                
+
                 var chunk: [UInt8] = .init()
                 chunk.reserveCapacity(size+64)
                 var len = buf.size
@@ -152,7 +152,7 @@ open class RTMPSession: IOutputSession {
                 let ts = UInt64(metaData.timestamp)
                 let chunkStreamId = metaData.chunkStreamId
                 var streamId = metaData.msgStreamId.rawValue
-                
+
                 if let it = self.previousChunkData[chunkStreamId] {
                     // Type 1.
                     put_byte(&chunk, val: RTMP_CHUNK_TYPE_1 | (chunkStreamId.rawValue & 0x1F))
@@ -167,13 +167,13 @@ open class RTMPSession: IOutputSession {
                     put_byte(&chunk, val: metaData.msgTypeId.rawValue)
                     put_buff(&chunk, src: &streamId, srcsize: MemoryLayout<Int32>.size) // msg stream id is little-endian
                 }
-                
+
                 self.previousChunkData[chunkStreamId] = ts
                 put_buff(&chunk, src: p, srcsize: tosend)
-                
+
                 len -= tosend
                 p += tosend
-                
+
                 while len > 0 {
                     tosend = min(len, self.outChunkSize)
                     put_byte(&chunk, val: RTMP_CHUNK_TYPE_3 | (chunkStreamId.rawValue & 0x1F))
@@ -198,20 +198,20 @@ open class RTMPSession: IOutputSession {
         audioSampleRate = data.audioFrequency
         audioStereo = data.stereo
     }
-    
+
     open func setBandwidthCallback(_ callback: @escaping BandwidthCallback) {
         bandwidthCallback = callback
         throughputSession.setThroughputCallback(callback)
     }
-    
+
     private func sendPacket(_ data: UnsafePointer<UInt8>, size: Int, streamId: ChunkStreamId, metadata: RTMPChunk_0) {
         let md = RTMPMetadata()
-        
+
         md.data = (streamId, Int(metadata.timestamp), Int(metadata.msg_length), metadata.msg_type_id, metadata.msg_stream_id, false)
-        
+
         pushBuffer(data, size: size, metadata: md)
     }
-    
+
     private func streamStatusChanged(_ status: StreamStatus) {
         if status.contains(.connected) && state.rawValue < RTMPClientState.connected.rawValue {
             setClientState(.connected)
@@ -233,14 +233,14 @@ open class RTMPSession: IOutputSession {
             setClientState(.error)
         }
     }
-    
+
     private func write(_ data: UnsafePointer<UInt8>, size: Int, packetTime: Date = .init(), isKeyframe: Bool = false) {
         if size > 0 {
             let buf = Buffer(size)
             buf.put(data, size: size)
-            
+
             throughputSession.addBufferSizeSample(Int(bufferSize))
-            
+
             increaseBuffer(Int64(size))
             if isKeyframe {
                 sentKeyframe = packetTime
@@ -250,14 +250,14 @@ open class RTMPSession: IOutputSession {
             }
             networkQueue.enqueue {
                 var tosend = size
-                
+
                 var ptr: UnsafePointer<UInt8>?
                 buf.read(&ptr, size: size)
                 guard var p = ptr else {
                     Logger.debug("unexpected return")
                     return
                 }
-                
+
                 while tosend > 0 && !self.ending && (!self.clearing || self.sentKeyframe == packetTime) {
                     self.clearing = false
                     let sent = self.streamSession.write(p, size: tosend)
@@ -271,9 +271,9 @@ open class RTMPSession: IOutputSession {
                 self.increaseBuffer(-Int64(size))
             }
         }
-        
+
     }
-    
+
     private func dataReceived() {
         var stop1 = false
         var stop2 = false
@@ -282,7 +282,7 @@ open class RTMPSession: IOutputSession {
             if maxlen > 0 {
                 let len = streamSession.read(streamInBuffer.writeBuffer, size: maxlen)
                 Logger.verbose("Want read:\(maxlen), read:\(len)")
-                
+
                 guard len > 0 else {
                     Logger.error("Read from stream error:\(len)")
                     stop2 = true
@@ -292,7 +292,7 @@ open class RTMPSession: IOutputSession {
             } else {
                 Logger.debug("Stream in buffer full")
             }
-            
+
             while streamInBuffer.availableBytes > 0 && !stop1 {
                 switch state {
                 case .handshake1s0:
@@ -335,14 +335,14 @@ open class RTMPSession: IOutputSession {
             }
         }
     }
-    
+
     private func setClientState(_ state: RTMPClientState) {
         self.state = state
         callback(self, state)
     }
-    
+
     // RTMP
-    
+
     private func handshake() {
         switch state {
         case .connected:
@@ -356,20 +356,20 @@ open class RTMPSession: IOutputSession {
             s1.resize(0)
         }
     }
-    
+
     private func handshake0() {
         var c0: UInt8 = 0x03
-        
+
         setClientState(.handshake0)
-        
+
         write(&c0, size: 1)
-        
+
         handshake()
     }
-    
+
     private func handshake1() {
         setClientState(.handshake1s0)
-        
+
         c1.resize(kRTMPSignatureSize)
         var ptr: UnsafePointer<UInt8>?
         c1.read(&ptr, size: kRTMPSignatureSize)
@@ -379,10 +379,10 @@ open class RTMPSession: IOutputSession {
         }
         var zero: UInt64 = 0
         c1.put(&zero, size: MemoryLayout<UInt64>.size)
-        
+
         write(p, size: kRTMPSignatureSize)
     }
-    
+
     private func handshake2() {
         setClientState(.handshake2)
         var ptr: UnsafePointer<UInt8>?
@@ -394,10 +394,10 @@ open class RTMPSession: IOutputSession {
         p += 4
         var zero: UInt32 = 0
         memcpy(UnsafeMutablePointer<UInt8>(mutating: p), &zero, MemoryLayout<UInt32>.size)
-        
+
         write(s1.get(), size: s1.size)
     }
-    
+
     private func sendConnectPacket() {
         var metadata: RTMPChunk_0 = .init()
         metadata.msg_stream_id = .control
@@ -408,7 +408,7 @@ open class RTMPSession: IOutputSession {
         url.host = uri.host
         url.port = uri.port
         url.path = "/" + app
-        
+
         put_string(&buff, string: "connect")
         put_double(&buff, val: Double(trackCommand("connect")))
         put_byte(&buff, val: AMFDataType.object.rawValue)
@@ -422,11 +422,11 @@ open class RTMPSession: IOutputSession {
         put_named_double(&buff, name: "videoFunction", val: 1)
         put_be16(&buff, val: 0)
         put_byte(&buff, val: AMFDataType.objectEnd.rawValue)
-        
+
         metadata.msg_length = Int32(buff.count)
         sendPacket(buff, size: buff.count, streamId: .connect, metadata: metadata)
     }
-    
+
     private func sendReleaseStream() {
         var metadata: RTMPChunk_0 = .init()
         metadata.msg_stream_id = .control
@@ -440,7 +440,7 @@ open class RTMPSession: IOutputSession {
 
         sendPacket(buff, size: buff.count, streamId: .create, metadata: metadata)
     }
-    
+
     private func sendFCPublish() {
         var metadata: RTMPChunk_0 = .init()
         metadata.msg_stream_id = .control
@@ -451,10 +451,10 @@ open class RTMPSession: IOutputSession {
         put_byte(&buff, val: AMFDataType.null.rawValue)
         put_string(&buff, string: playPath)
         metadata.msg_length = Int32(buff.count)
-        
+
         sendPacket(buff, size: buff.count, streamId: .create, metadata: metadata)
     }
-    
+
     private func sendCreateStream() {
         var metadata: RTMPChunk_0 = .init()
         metadata.msg_stream_id = .control
@@ -464,10 +464,10 @@ open class RTMPSession: IOutputSession {
         put_double(&buff, val: Double(trackCommand("createStream")))
         put_byte(&buff, val: AMFDataType.null.rawValue)
         metadata.msg_length = Int32(buff.count)
-        
+
         sendPacket(buff, size: buff.count, streamId: .create, metadata: metadata)
     }
-    
+
     private func sendPublish() {
         var metadata: RTMPChunk_0 = .init()
         metadata.msg_stream_id = .data
@@ -479,20 +479,20 @@ open class RTMPSession: IOutputSession {
         put_string(&buff, string: playPath)
         put_string(&buff, string: "LIVE")
         metadata.msg_length = Int32(buff.count)
-        
+
         sendPacket(buff, size: buff.count, streamId: .publish, metadata: metadata)
     }
-    
+
     private func sendHeaderPacket() {
         Logger.debug("send header packet")
-        
+
         var enc: [UInt8] = .init()
         var metadata: RTMPChunk_0 = .init()
-        
+
         put_string(&enc, string: "@setDataFrame")
         put_string(&enc, string: "onMetaData")
         put_byte(&enc, val: AMFDataType.object.rawValue)
-        
+
         put_named_double(&enc, name: "width", val: Double(frameWidth))
         put_named_double(&enc, name: "height", val: Double(frameHeight))
         put_named_double(&enc, name: "displaywidth", val: Double(frameWidth))
@@ -501,23 +501,23 @@ open class RTMPSession: IOutputSession {
         put_named_double(&enc, name: "frameheight", val: Double(frameHeight))
         put_named_double(&enc, name: "videodatarate", val: Double(bitrate) / 1024)
         put_named_double(&enc, name: "videoframerate", val: 1 / frameDuration)
-        
+
         put_named_string(&enc, name: "videocodecid", val: "avc1")
-        
+
         put_name(&enc, name: "trackinfo")
         put_byte(&enc, val: AMFDataType.strictArray.rawValue)
         put_be32(&enc, val: 2)
-        
+
         //
         // Audio stream metadata
         put_byte(&enc, val: AMFDataType.object.rawValue)
         put_named_string(&enc, name: "type", val: "audio")
-        
+
         let ss: String = "{AACFrame: codec:AAC, channels: \(audioStereo ? 2 : 1), frequency:\(audioSampleRate), samplesPerFrame:1024, objectType:LC}"
         put_named_string(&enc, name: "description", val: ss)
-        
+
         put_named_double(&enc, name: "timescale", val: 1000)
-        
+
         put_name(&enc, name: "sampledescription")
         put_byte(&enc, val: AMFDataType.strictArray.rawValue)
         put_be32(&enc, val: 1)
@@ -526,16 +526,16 @@ open class RTMPSession: IOutputSession {
         put_byte(&enc, val: 0)
         put_byte(&enc, val: 0)
         put_byte(&enc, val: AMFDataType.objectEnd.rawValue)
-        
+
         put_named_string(&enc, name: "language", val: "eng")
-        
+
         put_byte(&enc, val: 0)
         put_byte(&enc, val: 0)
         put_byte(&enc, val: AMFDataType.objectEnd.rawValue)
-        
+
         //
         // Video stream metadata
-        
+
         put_byte(&enc, val: AMFDataType.object.rawValue)
         put_named_string(&enc, name: "type", val: "video")
         put_named_double(&enc, name: "timescale", val: 1000)
@@ -551,7 +551,7 @@ open class RTMPSession: IOutputSession {
         put_byte(&enc, val: 0)
         put_byte(&enc, val: 0)
         put_byte(&enc, val: AMFDataType.objectEnd.rawValue)
-        
+
         put_be16(&enc, val: 0)
         put_byte(&enc, val: AMFDataType.objectEnd.rawValue)
         put_named_double(&enc, name: "audiodatarate", val: Double(131152) / Double(1024))
@@ -559,66 +559,66 @@ open class RTMPSession: IOutputSession {
         put_named_double(&enc, name: "audiosamplesize", val: 16)
         put_named_double(&enc, name: "audiochannels", val: audioStereo ? 2 : 1)
         put_named_string(&enc, name: "audiocodecid", val: "mp4a")
-        
+
         put_be16(&enc, val: 0)
         put_byte(&enc, val: AMFDataType.objectEnd.rawValue)
         let len = enc.count
-        
+
         metadata.msg_type_id = RtmpPt(rawValue: FlvTagType.meta.rawValue)!
         metadata.msg_stream_id = .data
         metadata.msg_length = Int32(len)
         metadata.timestamp = 0
-        
+
         sendPacket(enc, size: len, streamId: .meta, metadata: metadata)
     }
-    
+
     private func sendSetChunkSize(_ chunkSize: Int32) {
         jobQueue.enqueue {
             Logger.debug("send set chunk size:\(chunkSize)")
             var streamId: Int = 0
-            
+
             var buff: [UInt8] = .init()
-            
+
             put_byte(&buff, val: 2) // chunk stream ID 2
             put_be24(&buff, val: 0) // ts
             put_be24(&buff, val: 4) // size (4 bytes)
             put_byte(&buff, val: RtmpPt.chunkSize.rawValue) // chunk type
-            
+
             put_buff(&buff, src: &streamId, srcsize: MemoryLayout<Int32>.size)
-            
+
             put_be32(&buff, val: chunkSize)
-            
+
             self.write(buff, size: buff.count)
-            
+
             self.outChunkSize = Int(chunkSize)
         }
     }
-    
+
     private func sendPong() {
         jobQueue.enqueue {
             Logger.debug("send pong")
-            
+
             var streamId: Int = 0
-            
+
             var buff: [UInt8] = .init()
-            
+
             put_byte(&buff, val: 2) // chunk stream ID 2
             put_be24(&buff, val: 0) // ts
             put_be24(&buff, val: 6) // size (6 bytes)
             put_byte(&buff, val: RtmpPt.userControl.rawValue) // chunk type
-            
+
             put_buff(&buff, src: &streamId, srcsize: MemoryLayout<Int32>.size)
             put_be16(&buff, val: 7) // PingResponse
             put_be16(&buff, val: 0)
             put_be16(&buff, val: 0)
-            
+
             self.write(buff, size: buff.count)
         }
     }
-    
+
     private func sendDeleteStream() {
         Logger.debug("send delete stream")
-        
+
         var metadata: RTMPChunk_0 = .init()
         metadata.msg_stream_id = .control
         metadata.msg_type_id = RtmpPt.invoke
@@ -629,42 +629,42 @@ open class RTMPSession: IOutputSession {
         trackedCommands[numberOfInvokes] = "deleteStream"
         put_byte(&buff, val: AMFDataType.null.rawValue)
         put_double(&buff, val: Double(streamId))
-        
+
         metadata.msg_length = Int32(buff.count)
-        
+
         sendPacket(buff, size: buff.count, streamId: .create, metadata: metadata)
     }
-    
+
     private func sendSetBufferTime(_ milliseconds: Int) {
         jobQueue.enqueue {
             Logger.debug("send set buffer length")
-            
+
             var streamId: Int = 0
-            
+
             var buff: [UInt8] = .init()
-            
+
             put_byte(&buff, val: 2)
             put_be24(&buff, val: 0)
             put_be24(&buff, val: 10)
             put_byte(&buff, val: RtmpPt.userControl.rawValue) // chunk type
             put_buff(&buff, src: &streamId, srcsize: MemoryLayout<Int32>.size)
-            
+
             put_be16(&buff, val: 3) // SetBufferTime
             put_be32(&buff, val: self.streamId)
             put_be32(&buff, val: Int32(milliseconds))
-            
+
             self.write(buff, size: buff.count)
         }
     }
-    
+
     private func increaseBuffer(_ size: Int64) {
         bufferSize = max(bufferSize + size, 0)
     }
-    
+
     private func reassembleBuffer(_ p: UnsafePointer<UInt8>, msgSize: Int, packageSize: Int) {
-        
+
     }
-    
+
     private func tryReadOneMessage(_ msg: inout [UInt8], from_offset: Int) -> Int {
         let msgsize = msg.count
         var full_msg_length = msgsize
@@ -676,10 +676,10 @@ open class RTMPSession: IOutputSession {
                 full_msg_length += 1    // addn the chunk seperator 0xC?(0xC3 specially) count.
             }
         }
-        
+
         // because we do not confirm the header length, so check with header length.
         guard streamInBuffer.availableBytes >= from_offset + full_msg_length else { return -1 }
-        
+
         var msg_offset = 0  // where to write
         var buf_offset = from_offset    // where read for write
         var remain = msgsize
@@ -692,10 +692,10 @@ open class RTMPSession: IOutputSession {
         if remain > 0 {
             msg.replaceSubrange(msg_offset..., with: UnsafeBufferPointer<UInt8>(start: streamInBuffer.readBuffer+buf_offset, count: remain))
         }
-        
+
         return full_msg_length
     }
-    
+
     // Parse only one message every time, loop in the caller
     // If data not enough for one message, return false, else return true;
     private func parseCurrentData() -> Bool {
@@ -704,13 +704,13 @@ open class RTMPSession: IOutputSession {
             Logger.debug("No data in buffer")
             return false
         }
-        
+
         var first_byte: UInt8
         // at least one byte in current buffer.
         first_byte = streamInBuffer.readBuffer.pointee
         let header_type = (first_byte & 0xC0) >> 6
         Logger.verbose("First byte:0x\(String(format: "%X", first_byte)), header type:\(header_type)")
-        
+
         guard let type = RtmpHeaderType(rawValue: header_type) else {
             Logger.error("Invalid header type:\(header_type)")
             // FIXME: Maybe we shoult close the connection and reopen it
@@ -719,7 +719,7 @@ open class RTMPSession: IOutputSession {
             }
             return false
         }
-        
+
         switch type {
         case .full:
             var chunk: RTMPChunk_0 = .init()
@@ -730,7 +730,7 @@ open class RTMPSession: IOutputSession {
                 Logger.dumpBuffer("RTMPChunk_0", buf: streamInBuffer.readBuffer, size: streamInBuffer.availableBytes)
                 return false
             }
-            
+
             chunk.body.replaceSubrange(0..., with: UnsafeRawBufferPointer(start: streamInBuffer.readBuffer+1, count: chunk.body.count))
             guard chunk.msg_length >= 0 else {
                 Logger.debug("ERROR: Invalid header length")
@@ -748,11 +748,11 @@ open class RTMPSession: IOutputSession {
                 return false
             }
             streamInBuffer.didRead(1+chunk.body.count + full_msgsize)
-            
+
             handleMessage(msg, msgTypeId: chunk.msg_type_id)
             previousChunk = chunk
             return true
-            
+
         case .noMsgStreamId:
             var chunk: RTMPChunk_1 = .init()
             guard streamInBuffer.availableBytes >= 1+chunk.body.count else {
@@ -762,18 +762,18 @@ open class RTMPSession: IOutputSession {
                 return false
             }
             chunk.body.replaceSubrange(0..., with: UnsafeRawBufferPointer(start: streamInBuffer.readBuffer+1, count: chunk.body.count))
-            
+
             guard chunk.msg_length >= 0 else {
                 Logger.debug("ERROR: Invalid header length")
                 Logger.dumpBuffer("RTMPChunk_1 ERROR", buf: streamInBuffer.readBuffer, size: streamInBuffer.availableBytes)
                 // FIXME: Clear the stream in buffer ?
                 return false
             }
-            
+
             if chunk.msg_length > 65535 {
                 Logger.debug("Length too large ???:\(chunk.msg_length)")
             }
-            
+
             var msg: [UInt8] = .init(repeating: 0, count: Int(chunk.msg_length))
             let full_msgsize = tryReadOneMessage(&msg, from_offset: 1+chunk.body.count)
             guard full_msgsize > 0 else {
@@ -781,13 +781,13 @@ open class RTMPSession: IOutputSession {
                 return false
             }
             streamInBuffer.didRead(1+chunk.body.count + full_msgsize)
-            
+
             handleMessage(msg, msgTypeId: chunk.msg_type_id)
-            
+
             previousChunk.msg_type_id = chunk.msg_type_id
             previousChunk.msg_length = chunk.msg_length
             return true
-            
+
         case .timestamp:
             // the message length is the same as previous message.
             Logger.debug("Previous chunk length:\(previousChunk.msg_length), msgid:\(previousChunk.msg_type_id), streamid:\(String(describing: previousChunk.msg_stream_id))")
@@ -808,31 +808,31 @@ open class RTMPSession: IOutputSession {
             streamInBuffer.didRead(1+chunk.body.count + full_msgsize)
             handleMessage(msg, msgTypeId: previousChunk.msg_type_id)
             return true
-            
+
         case .only:
             streamInBuffer.didRead(1)
             return true
         }
     }
-    
+
     private func handleInvoke(_ p: [UInt8]) {
         var buflen = 0
         guard let command = get_string(p, bufsize: &buflen) else {
             Logger.debug("unexpected return")
             return
         }
-        
+
         Logger.debug("Received invoke \(command)")
-        
+
         switch command {
         case "_result":
             let pktId = Int32(get_double(p.dropFirst(11)))
-            
+
             guard let trackedCommand = self.trackedCommands[pktId] else {
                 Logger.debug("unexpected return")
                 return
             }
-            
+
             Logger.debug("Find command: \(trackedCommand) for ID:\(pktId)")
             switch trackedCommand {
             case "connect":
@@ -851,30 +851,30 @@ open class RTMPSession: IOutputSession {
             default:
                 break
             }
-            
+
         case "onStatus":
             let code = parseStatusCode(p.dropFirst(3 + command.count))
             Logger.debug("code : \(String(describing: code))")
             if code == "NetStream.Publish.Start" {
-                
+
                 sendHeaderPacket()
-                
+
                 sendSetChunkSize(getpagesize())
-                
+
                 setClientState(.sessionStarted)
-                
+
                 throughputSession.start()
             }
         default:
             break
         }
     }
-    
+
     private func handleUserControl(_ p: [UInt8]) {
         let eventType = get_be16(p)
-        
+
         Logger.debug("Received userControl \(eventType)")
-        
+
         switch eventType {
         case 6:
             sendPong()
@@ -883,7 +883,7 @@ open class RTMPSession: IOutputSession {
             break
         }
     }
-    
+
     @discardableResult
     private func handleMessage(_ p: [UInt8], msgTypeId: RtmpPt) -> Bool {
         var ret = true
@@ -919,14 +919,14 @@ open class RTMPSession: IOutputSession {
         }
         return ret
     }
-    
+
     private func parseStatusCode(_ p: ArraySlice<UInt8>) -> String? {
-        var props: [String:String] = .init()
-        
+        var props: [String: String] = .init()
+
         // skip over the packet id
         _ = get_double(p.dropFirst(1))  // num
         var p = p.dropFirst(MemoryLayout<Double>.size + 1)
-        
+
         // keep reading until we find an AMF Object
         var foundObject = false
         while !foundObject {
@@ -938,7 +938,7 @@ open class RTMPSession: IOutputSession {
                 p = p.dropFirst(Int(amfPrimitiveObjectSize(p)))
             }
         }
-        
+
         // read the properties of the object
         var nameLen: UInt16 = 0
         var valLen: UInt16 = 0
@@ -968,10 +968,10 @@ open class RTMPSession: IOutputSession {
                 break
             }
         } while get_be24(p) != AMFDataType.objectEnd.rawValue
-        
+
         return props["code"]
     }
-    
+
     private func amfPrimitiveObjectSize(_ p: ArraySlice<UInt8>) -> Int32 {
         guard let dataType = AmfDataType(rawValue: p[p.startIndex]) else {
             Logger.debug("unexpected return")
@@ -993,7 +993,7 @@ open class RTMPSession: IOutputSession {
         }
         return -1; // not a primitive, likely an object
     }
-    
+
     private func trackCommand(_ cmd: String) -> Int32 {
         numberOfInvokes += 1
         trackedCommands[numberOfInvokes] = cmd
