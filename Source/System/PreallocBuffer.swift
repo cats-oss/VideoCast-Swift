@@ -79,6 +79,7 @@ open class PreallocBuffer {
     }
 
     open func dumpInfo() {
-        Logger.debug("PreallocBuffer begin:\(preBufferSize), writer:\(writePointer)(\(availableSpace), reader:\(readPointer)(\(availableBytes)")
+        Logger.debug("PreallocBuffer begin:\(preBufferSize), " +
+            "writer:\(writePointer)(\(availableSpace), reader:\(readPointer)(\(availableBytes)")
     }
 }

@@ -44,13 +44,17 @@ open class VTEncode: IEncoder {
             encodeQueue.sync {
 
                 let v = _bitrate
-                var ret = VTSessionSetProperty(compressionSession, kVTCompressionPropertyKey_AverageBitRate, NSNumber(value: _bitrate))
+                var ret = VTSessionSetProperty(compressionSession,
+                                               kVTCompressionPropertyKey_AverageBitRate,
+                                               NSNumber(value: _bitrate))
 
                 if ret != noErr {
                     Logger.error("VTEncode::setBitrate Error setting bitrate! \(ret)")
                 }
                 var ref: NSNumber = 0
-                ret = VTSessionCopyProperty(compressionSession, kVTCompressionPropertyKey_AverageBitRate, kCFAllocatorDefault, &ref)
+                ret = VTSessionCopyProperty(compressionSession,
+                                            kVTCompressionPropertyKey_AverageBitRate,
+                                            kCFAllocatorDefault, &ref)
 
                 if ret == noErr && ref != 0 {
                     _bitrate = Int(truncating: ref)
@@ -171,7 +175,13 @@ open class VTEncode: IEncoder {
         enc.compressionSessionOutput(ptr, size: size, pts: pts, dts: dts, isKey: isKeyframe)
     }
 
-    init(frame_w: Int, frame_h: Int, fps: Int, bitrate: Int, codecType: CMVideoCodecType, useBaseline: Bool = true, ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
+    init(frame_w: Int,
+         frame_h: Int,
+         fps: Int,
+         bitrate: Int,
+         codecType: CMVideoCodecType,
+         useBaseline: Bool = true,
+         ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
         self.frameW = frame_w
         self.frameH = frame_h
         self.fps = fps
@@ -238,7 +248,11 @@ open class VTEncode: IEncoder {
         forceKeyframe = true
     }
 
-    open func compressionSessionOutput(_ data: UnsafeMutableRawPointer, size: Int, pts: CMTime, dts: CMTime, isKey: Bool) {
+    open func compressionSessionOutput(_ data: UnsafeMutableRawPointer,
+                                       size: Int,
+                                       pts: CMTime,
+                                       dts: CMTime,
+                                       isKey: Bool) {
         if let l = output, size > 0 {
             let md: VideoBufferMetadata = .init(pts: pts, dts: dts)
             md.isKey = isKey
@@ -246,9 +260,11 @@ open class VTEncode: IEncoder {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func setupCompressionSession(_ useBaseline: Bool) {
         self.baseline = useBaseline
 
+        // swiftlint:disable:next line_length
         // Parts of this code pulled from https://github.com/galad87/HandBrake-QuickSync-Mac/blob/2c1332958f7095c640cbcbcb45ffc955739d5945/libhb/platform/macosx/encvt_h264.c
         // More info from WWDC 2014 Session 513
 
@@ -334,7 +350,8 @@ open class VTEncode: IEncoder {
 
                 switch codecType {
                 case kCMVideoCodecType_H264:
-                    profileLevel = useBaseline ? kVTProfileLevel_H264_Baseline_AutoLevel : kVTProfileLevel_H264_Main_AutoLevel
+                    profileLevel = useBaseline ? kVTProfileLevel_H264_Baseline_AutoLevel :
+                    kVTProfileLevel_H264_Main_AutoLevel
                 case kCMVideoCodecType_HEVC:
                     if #available(iOS 11.0, *) {
                         profileLevel = kVTProfileLevel_HEVC_Main_AutoLevel

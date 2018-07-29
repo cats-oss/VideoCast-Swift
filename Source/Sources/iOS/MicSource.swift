@@ -18,7 +18,7 @@ open class MicSource: ISource {
         return ObjectIdentifier(self).hashValue
     }
 
-    open static func ==(lhs: MicSource, rhs: MicSource) -> Bool {
+    open static func == (lhs: MicSource, rhs: MicSource) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
 
@@ -67,7 +67,8 @@ open class MicSource: ISource {
         }
         let inputDataPtr = UnsafeMutableAudioBufferListPointer(&buffers)
 
-        mc.inputCallback(data: inputDataPtr[0].mData, data_size: Int(inputDataPtr[0].mDataByteSize), inNumberFrames: Int(inNumberFrames))
+        mc.inputCallback(data: inputDataPtr[0].mData, data_size:
+            Int(inputDataPtr[0].mDataByteSize), inNumberFrames: Int(inNumberFrames))
 
         return status
     }
@@ -75,12 +76,15 @@ open class MicSource: ISource {
     /*!
      *  Constructor.
      *
-     *  \param audioSampleRate the sample rate in Hz to capture audio at.  Best results if this matches the mixer's sampling rate.
+     *  \param audioSampleRate the sample rate in Hz to capture audio at.
+     *         Best results if this matches the mixer's sampling rate.
      *  \param excludeAudioUnit An optional lambda method that is called when the source generates its Audio Unit.
      *                          The parameter of this method will be a reference to its Audio Unit.  This is useful for
-     *                          applications that may be capturing Audio Unit data and do not wish to capture this source.
+     *                          applications that may be capturing Audio Unit data and
+     *                          do not wish to capture this source.
      *
      */
+    // swiftlint:disable:next function_body_length
     public init(sampleRate: Double = 48000,
                 channelCount: Int = 2,
                 excludeAudioUnit: ((AudioUnit) -> Void)? = nil) {
@@ -95,7 +99,8 @@ open class MicSource: ISource {
             if granted {
 
                 do {
-                    try session.setCategory(AVAudioSessionCategoryPlayAndRecord, with: [.defaultToSpeaker, .mixWithOthers])
+                    try session.setCategory(AVAudioSessionCategoryPlayAndRecord,
+                                            with: [.defaultToSpeaker, .mixWithOthers])
                     try session.setActive(true)
                 } catch {
                     Logger.error("Failed to set up audio session!")
@@ -124,27 +129,39 @@ open class MicSource: ISource {
                 excludeAudioUnit?(audioUnit)
                 var flagOne: UInt32 = 1
 
-                AudioUnitSetProperty(audioUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &flagOne, UInt32(MemoryLayout<UInt32>.size))
+                AudioUnitSetProperty(audioUnit, kAudioOutputUnitProperty_EnableIO,
+                                     kAudioUnitScope_Input, 1, &flagOne, UInt32(MemoryLayout<UInt32>.size))
 
                 var desc = AudioStreamBasicDescription()
                 desc.mSampleRate = sampleRate
                 desc.mFormatID = kAudioFormatLinearPCM
-                desc.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked
+                desc.mFormatFlags =
+                    kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked
                 desc.mChannelsPerFrame = UInt32(channelCount)
                 desc.mFramesPerPacket = 1
                 desc.mBitsPerChannel = 16
                 desc.mBytesPerFrame = desc.mBitsPerChannel / 8 * desc.mChannelsPerFrame
                 desc.mBytesPerPacket = desc.mBytesPerFrame * desc.mFramesPerPacket
 
-                var cb = AURenderCallbackStruct(inputProc: strongSelf.handleInputBuffer, inputProcRefCon: UnsafeMutableRawPointer(Unmanaged.passUnretained(strongSelf).toOpaque()))
-                AudioUnitSetProperty(audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &desc, UInt32(MemoryLayout<AudioStreamBasicDescription>.size))
-                AudioUnitSetProperty(audioUnit, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &cb, UInt32(MemoryLayout<AURenderCallbackStruct>.size))
+                var cb = AURenderCallbackStruct(
+                    inputProc: strongSelf.handleInputBuffer,
+                    inputProcRefCon: UnsafeMutableRawPointer(Unmanaged.passUnretained(strongSelf).toOpaque()))
+                AudioUnitSetProperty(
+                    audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &desc,
+                    UInt32(MemoryLayout<AudioStreamBasicDescription>.size))
+                AudioUnitSetProperty(audioUnit, kAudioOutputUnitProperty_SetInputCallback,
+                                     kAudioUnitScope_Global, 1, &cb,
+                                     UInt32(MemoryLayout<AURenderCallbackStruct>.size))
 
                 strongSelf.interruptionHandler = InterruptionHandler()
                 strongSelf.interruptionHandler?.source = self
 
                 if let interruptionHandler = strongSelf.interruptionHandler {
-                    NotificationCenter.default.addObserver(interruptionHandler, selector: #selector(InterruptionHandler.handleInterruption(notification:)), name: .AVAudioSessionInterruption, object: nil)
+                    NotificationCenter.default.addObserver(
+                        interruptionHandler,
+                        selector: #selector(InterruptionHandler.handleInterruption(notification:)),
+                        name: .AVAudioSessionInterruption, object: nil
+                    )
                 }
 
                 AudioUnitInitialize(audioUnit)

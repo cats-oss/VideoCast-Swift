@@ -27,14 +27,16 @@ open class PixelBufferSource: ISource {
         var pb: CVPixelBuffer? = nil
         var ret: CVReturn = kCVReturnSuccess
         autoreleasepool {
-            let pixelBufferOptions: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
+            let pixelBufferOptions: [String: Any] =
+                [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
                 kCVPixelBufferWidthKey as String: width,
                 kCVPixelBufferHeightKey as String: height,
                 kCVPixelBufferOpenGLESCompatibilityKey as String: true,
                 kCVPixelBufferIOSurfacePropertiesKey as String: [:]
             ]
 
-            ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat, pixelBufferOptions as NSDictionary, &pb)
+            ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat,
+                                      pixelBufferOptions as NSDictionary, &pb)
         }
         if ret != 0 {
             pixelBuffer = pb

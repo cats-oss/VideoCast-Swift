@@ -17,7 +17,10 @@ open class BasicVideoFilterBGRA: BasicVideoFilter {
     }
 
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.bgra", instantiation: { return BasicVideoFilterBGRA() })
+        FilterFactory.register(
+            name: "jp.co.cyberagent.VideoCast.filters.bgra",
+            instantiation: { return BasicVideoFilterBGRA() }
+        )
         return true
     }
 }

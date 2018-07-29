@@ -31,7 +31,10 @@ void main(void) {
     }
 
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.fisheye", instantiation: { return FisheyeVideoFilter() })
+        FilterFactory.register(
+            name: "jp.co.cyberagent.VideoCast.filters.fisheye",
+            instantiation: { return FisheyeVideoFilter() }
+        )
         return true
     }
 }

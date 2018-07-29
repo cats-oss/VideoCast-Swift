@@ -14,8 +14,10 @@ import GLKit
  */
 public typealias VideoBufferMetadata = MetaData<(
     zIndex: Int,                /*!< Specifies the z-Index the buffer (lower is farther back) */
-    matrix: GLKMatrix4,         /*!< Specifies the transformation matrix to use. Pass an Identity matrix if no transformation is to be applied.
-                                Note that the compositor operates using homogeneous coordinates (-1 to 1) unless otherwise specified. */
+    /*!< Specifies the transformation matrix to use. Pass an Identity matrix if no transformation is to be applied.
+     Note that the compositor operates using homogeneous coordinates (-1 to 1) unless otherwise specified. */
+    matrix: GLKMatrix4,
+
     blends: Bool,
     source: WeakRefISource    /*!< Specifies a smart pointer to the source */
     )>

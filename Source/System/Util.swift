@@ -11,13 +11,6 @@ import GLKit
 
 public let VC_TIME_BASE: Int32 = 1000000
 
-enum NalType {
-    case unknown
-    case vps
-    case sps
-    case pps
-}
-
 extension GLKMatrix4 {
     var array: [Float] {
         return (0..<16).map { i in

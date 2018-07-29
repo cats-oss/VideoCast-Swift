@@ -14,6 +14,7 @@ public enum JobQueuePriority {
     case low
 }
 
+// swiftlint:disable:next type_name
 open class Job {
     public var done: Bool = false
     public var isSynchronous: Bool = false

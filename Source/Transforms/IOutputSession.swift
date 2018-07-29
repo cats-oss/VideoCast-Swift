@@ -8,7 +8,10 @@
 
 import Foundation
 
-public typealias BandwidthCallback = (_ rateVector: Float, _ estimatedAvailableBandwidth: Float, _ immediateThroughput: Int) -> Void
+public typealias BandwidthCallback = (
+    _ rateVector: Float,
+    _ estimatedAvailableBandwidth: Float,
+    _ immediateThroughput: Int) -> Void
 public typealias StopSessionCallback = () -> Void
 
 public protocol IOutputSession: IOutput {

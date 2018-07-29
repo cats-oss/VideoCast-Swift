@@ -11,8 +11,10 @@ import GLKit
 
 open class AspectTransform: ITransform {
     public enum AspectMode {
-        case fit    /*!< An aspect mode which shrinks the incoming video to fit in the supplied boundaries. */
-        case fill   /*!< An aspect mode which scales the video to fill the supplied boundaries and maintain aspect ratio. */
+        /*!< An aspect mode which shrinks the incoming video to fit in the supplied boundaries. */
+        case fit
+        /*!< An aspect mode which scales the video to fill the supplied boundaries and maintain aspect ratio. */
+        case fill
     }
 
     private var scale: GLKVector3 = GLKVector3()

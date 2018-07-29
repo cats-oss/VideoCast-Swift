@@ -10,38 +10,12 @@ import Foundation
 import AVFoundation
 import GLKit
 
-class sbCallback: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
-    weak var source: CameraSource?
-
-    func captureOutput(_ output: AVCaptureOutput,
-                       didOutput sampleBuffer: CMSampleBuffer,
-                       from connection: AVCaptureConnection) {
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            Logger.debug("unexpected return")
-            return
-        }
-        source?.bufferCaptured(pixelBuffer: pixelBuffer)
-    }
-
-    func captureOutput(_ output: AVCaptureOutput,
-                       didDrop sampleBuffer: CMSampleBuffer,
-                       from connection: AVCaptureConnection) {
-    }
-
-    @objc func orientationChanged(notification: Notification) {
-        guard let source = source, !source.orientationLocked else { return }
-        DispatchQueue.global().async { [weak self] in
-            self?.source?.reorientCamera()
-        }
-    }
-}
-
 open class CameraSource: ISource {
     open var hashValue: Int {
         return ObjectIdentifier(self).hashValue
     }
 
-    open static func ==(lhs: CameraSource, rhs: CameraSource) -> Bool {
+    open static func == (lhs: CameraSource, rhs: CameraSource) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
 
@@ -60,7 +34,7 @@ open class CameraSource: ISource {
 
     private var captureSession: AVCaptureSession?
     private var captureDevice: AVCaptureDevice?
-    private var callbackSession: sbCallback?
+    private var callbackSession: SbCallback?
     private var previewLayer: AVCaptureVideoPreviewLayer?
 
     private var fps: Int = 0
@@ -115,11 +89,16 @@ open class CameraSource: ISource {
      *
      *  \param fps      Optional parameter to set the output frames per second.
      *  \param useFront Start with the front-facing camera
-     *  \param useInterfaceOrientation whether to use interface or device orientation as reference for video capture orientation
+     *  \param useInterfaceOrientation whether to use interface or device orientation
+     *          as reference for video capture orientation
      *  \param sessionPreset name of the preset to use for the capture session
      *  \param callbackBlock block to be called after everything is set
      */
-    open func setupCamera(fps: Int = 15, useFront: Bool = true, useInterfaceOrientation: Bool = false, sessionPreset: AVCaptureSession.Preset? = nil, callback: (() -> Void)? = nil) {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    open func setupCamera(fps: Int = 15, useFront: Bool = true,
+                          useInterfaceOrientation: Bool = false,
+                          sessionPreset: AVCaptureSession.Preset? = nil,
+                          callback: (() -> Void)? = nil) {
         self.fps = fps
         self.useInterfaceOrientation = useInterfaceOrientation
 
@@ -131,7 +110,8 @@ open class CameraSource: ISource {
 
                     let position: AVCaptureDevice.Position = useFront ? .front : .back
 
-                    if let d = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: position) {
+                    if let d = AVCaptureDevice.default(.builtInWideAngleCamera,
+                                                       for: AVMediaType.video, position: position) {
                         strongSelf.captureDevice = d
                         do {
                             try d.lockForConfiguration()
@@ -154,13 +134,14 @@ open class CameraSource: ISource {
 
                             let output = AVCaptureVideoDataOutput()
 
-                            output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+                            output.videoSettings =
+                                [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
 
-                            let callbackSession: sbCallback
+                            let callbackSession: SbCallback
                             if let cs = strongSelf.callbackSession {
                                 callbackSession = cs
                             } else {
-                                callbackSession = sbCallback()
+                                callbackSession = SbCallback()
                                 callbackSession.source = self
                                 strongSelf.callbackSession = callbackSession
                             }
@@ -181,10 +162,19 @@ open class CameraSource: ISource {
 
                             if strongSelf.orientationLocked {
                                 if strongSelf.useInterfaceOrientation {
-                                    NotificationCenter.default.addObserver(callbackSession, selector: #selector(type(of: callbackSession).orientationChanged(notification:)), name: .UIApplicationDidChangeStatusBarOrientation, object: nil)
+                                    NotificationCenter.default.addObserver(
+                                        callbackSession,
+                                        selector:
+                                        #selector(type(of: callbackSession).orientationChanged(notification:)),
+                                        name: .UIApplicationDidChangeStatusBarOrientation,
+                                        object: nil)
                                 } else {
                                     UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-                                    NotificationCenter.default.addObserver(callbackSession, selector: #selector(type(of: callbackSession).orientationChanged(notification:)), name: .UIDeviceOrientationDidChange, object: nil)
+                                    NotificationCenter.default.addObserver(
+                                        callbackSession,
+                                        selector:
+                                        #selector(type(of: callbackSession).orientationChanged(notification:)),
+                                        name: .UIDeviceOrientationDidChange, object: nil)
                                 }
                             }
                         } catch {
@@ -221,7 +211,7 @@ open class CameraSource: ISource {
         do {
             try captureDevice?.lockForConfiguration()
 
-            if session.inputs.count > 0 {
+            if !session.inputs.isEmpty {
                 guard let currentCameraInput = session.inputs[0] as? AVCaptureDeviceInput else {
                     Logger.debug("unexpected return")
                     return
@@ -230,7 +220,8 @@ open class CameraSource: ISource {
                 session.removeInput(currentCameraInput)
                 captureDevice?.unlockForConfiguration()
 
-                guard let newCamera = cameraWithPosition( currentCameraInput.device.position == .back ? .front : .back) else {
+                guard let newCamera = cameraWithPosition(
+                    currentCameraInput.device.position == .back ? .front : .back) else {
                     Logger.debug("unexpected return")
                     return
                 }
@@ -267,7 +258,7 @@ open class CameraSource: ISource {
 
         session.beginConfiguration()
 
-        if session.inputs.count > 0 {
+        if !session.inputs.isEmpty {
             guard let currentCameraInput = session.inputs[0] as? AVCaptureDeviceInput else {
                 Logger.debug("unexpected return")
                 return ret
@@ -347,7 +338,9 @@ open class CameraSource: ISource {
                 ret = false
             }
         } else {
-            Logger.info("Focus mode not supported: \(wantsContinuous ? AVCaptureDevice.FocusMode.continuousAutoFocus : AVCaptureDevice.FocusMode.autoFocus)")
+            let mode = wantsContinuous ? AVCaptureDevice.FocusMode.continuousAutoFocus :
+                AVCaptureDevice.FocusMode.autoFocus
+            Logger.info("Focus mode not supported: \(mode)")
         }
 
         return ret
@@ -397,7 +390,9 @@ open class CameraSource: ISource {
                 ret = false
             }
         } else {
-            Logger.info("Exposure mode not supported: \(wantsContinuous ? AVCaptureDevice.ExposureMode.continuousAutoExposure : AVCaptureDevice.ExposureMode.autoExpose)")
+            let mode = wantsContinuous ? AVCaptureDevice.ExposureMode.continuousAutoExposure :
+                AVCaptureDevice.ExposureMode.autoExpose
+            Logger.info("Exposure mode not supported: \(mode)")
         }
 
         return ret
@@ -419,6 +414,7 @@ open class CameraSource: ISource {
     }
 
     /*! Used by Objective-C Device/Interface Orientation Notifications */
+    // swiftlint:disable:next cyclomatic_complexity
     open func reorientCamera() {
         guard let session = captureSession else {
             Logger.debug("unexpected return")

@@ -29,7 +29,10 @@ open class InvertColorsVideoFilter: BasicVideoFilter {
     }
 
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.invertColors", instantiation: { return InvertColorsVideoFilter() })
+        FilterFactory.register(
+            name: "jp.co.cyberagent.VideoCast.filters.invertColors",
+            instantiation: { return InvertColorsVideoFilter() }
+        )
         return true
     }
 }

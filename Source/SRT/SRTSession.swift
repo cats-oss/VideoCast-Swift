@@ -104,6 +104,7 @@ open class SRTSession: IOutputSession {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending.value else { return }
 
@@ -167,6 +168,7 @@ open class SRTSession: IOutputSession {
 
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func transmitThread() {
         loglevel.setLogLevel()
         logfa.setLogFA()
@@ -192,7 +194,7 @@ open class SRTSession: IOutputSession {
             _ = logfile.withCString { udtSetLogStream($0) }
         }
 
-        if (!quiet) {
+        if !quiet {
             Logger.debug("Media path: \(uri)")
         }
 

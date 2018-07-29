@@ -85,7 +85,9 @@ open class AACEncode: IEncoder {
                         Logger.debug("unexpected return")
                         return
                     }
-                    let result = AudioConverterSetProperty(audioConverter, kAudioConverterEncodeBitRate, UInt32(MemoryLayout<UInt32>.size), &br)
+                    let result = AudioConverterSetProperty(audioConverter,
+                                                           kAudioConverterEncodeBitRate,
+                                                           UInt32(MemoryLayout<UInt32>.size), &br)
                     var propSize = UInt32(MemoryLayout<UInt32>.size)
 
                     guard result == noErr else {
@@ -99,6 +101,7 @@ open class AACEncode: IEncoder {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     public init(frequencyInHz: Int, channelCount: Int, averageBitrate bitrate: Int) {
         self._bitrate = bitrate
 
@@ -160,7 +163,10 @@ open class AACEncode: IEncoder {
 
         }
         if result == noErr {
-            result = AudioConverterGetProperty(audioConverter, kAudioConverterPropertyMaximumOutputPacketSize, &propSize, &outputPacketSize)
+            result = AudioConverterGetProperty(audioConverter,
+                                               kAudioConverterPropertyMaximumOutputPacketSize,
+                                               &propSize,
+                                               &outputPacketSize)
         }
 
         guard result == noErr else {
@@ -249,7 +255,8 @@ open class AACEncode: IEncoder {
                 packetSize: bytesPerSample,
                 pd: nil)
 
-            var output_packet_desc: UnsafeMutablePointer<AudioStreamPacketDescription>? = .allocate(capacity: Int(num_packets))
+            var output_packet_desc: UnsafeMutablePointer<AudioStreamPacketDescription>? =
+                .allocate(capacity: Int(num_packets))
             defer {
                 output_packet_desc?.deallocate()
             }

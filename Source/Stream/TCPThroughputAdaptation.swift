@@ -11,9 +11,12 @@ import Foundation
 open class TCPThroughputAdaptation: IThroughputAdaptation {
     private let kWeight: Float = 0.75
     private let kPivotSamples: Int = 5
-    private let kMeasurementDelay: TimeInterval = 2    // seconds - represents the time between measurements when increasing or decreasing bitrate
-    private let kSettlementDelay: TimeInterval = 30   // seconds - represents time to wait after a bitrate decrease before attempting to increase again
-    private let kIncreaseDelta: TimeInterval = 10   // seconds - number of seconds to wait between increase vectors (after initial ramp up)
+    // seconds - represents the time between measurements when increasing or decreasing bitrate
+    private let kMeasurementDelay: TimeInterval = 2
+    // seconds - represents time to wait after a bitrate decrease before attempting to increase again
+    private let kSettlementDelay: TimeInterval = 30
+    // seconds - number of seconds to wait between increase vectors (after initial ramp up)
+    private let kIncreaseDelta: TimeInterval = 10
 
     private var previousTurndown: Date = .init()
     private var previousIncrease: Date = .init()
@@ -120,6 +123,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func sampleThread() {
         var prev: Date = .init()
 
@@ -175,7 +179,9 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
                         prevValue = it
                     }
 
-                    if buffGrowthAvg <= 0 && (!hasFirstTurndown || (previousTurndownDiff > kSettlementDelay && previousIncreaseDiff > kIncreaseDelta)) {
+                    if buffGrowthAvg <= 0 &&
+                        (!hasFirstTurndown || (previousTurndownDiff > kSettlementDelay &&
+                            previousIncreaseDiff > kIncreaseDelta)) {
                         vec = 1
                     } else if buffGrowthAvg > 0 {
                         vec = -1
@@ -193,7 +199,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
                         }
                     }
 
-                    if turnSamples.count > 0 {
+                    if !turnSamples.isEmpty {
 
                         for turnSample in turnSamples {
                             turnAvg += turnSample

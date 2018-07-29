@@ -8,7 +8,10 @@
 
 import Foundation
 
-public typealias ThroughputCallback = (_ bitrateRecommendedVector: Float, _ predictedBytesPerSecond: Float, _ immediateBytesPerSecond: Int) -> Void
+public typealias ThroughputCallback = (
+    _ bitrateRecommendedVector: Float,
+    _ predictedBytesPerSecond: Float,
+    _ immediateBytesPerSecond: Int) -> Void
 
 public protocol IThroughputAdaptation {
     func setThroughputCallback(_ callback: @escaping ThroughputCallback)

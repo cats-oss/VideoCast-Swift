@@ -46,7 +46,10 @@ void main(void) {
     }
 
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.glow", instantiation: { return GlowVideoFilter() })
+        FilterFactory.register(
+            name: "jp.co.cyberagent.VideoCast.filters.glow",
+            instantiation: { return GlowVideoFilter() }
+        )
         return true
     }
 }

@@ -25,9 +25,7 @@ open class VCPreviewView: UIView {
     private var cache: CVOpenGLESTextureCache?
 
     private var context: EAGLContext?
-    private var glLayer: CAEAGLLayer {
-        return layer as! CAEAGLLayer
-    }
+    private var glLayer: CAEAGLLayer!
 
     final public override class var layerClass: AnyClass {
         return CAEAGLLayer.self
@@ -69,6 +67,7 @@ open class VCPreviewView: UIView {
         generateGLESBuffers()
     }
 
+    // swiftlint:disable:next function_body_length
     open func drawFrame(pixelBuffer: CVPixelBuffer) {
         guard !paused.value else { return }
 
@@ -170,6 +169,11 @@ open class VCPreviewView: UIView {
 
 private extension VCPreviewView {
     func configure() {
+        guard let glLayer = layer as? CAEAGLLayer else {
+            Logger.error("layer is not CAEGLLayer")
+            return
+        }
+        self.glLayer = glLayer
         backgroundColor = .black
 
         Logger.debug("Creating context")
@@ -184,8 +188,12 @@ private extension VCPreviewView {
             self?.setupGLES()
         }
 
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: .UIApplicationDidEnterBackground, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillEnterForeground), name: .UIApplicationWillEnterForeground, object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationDidEnterBackground),
+                                               name: .UIApplicationDidEnterBackground, object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationWillEnterForeground),
+                                               name: .UIApplicationWillEnterForeground, object: nil)
     }
 
     @objc func applicationDidEnterBackground() {
@@ -225,8 +233,10 @@ private extension VCPreviewView {
 
         glEnableVertexAttribArray(GLuint(attrpos))
         glEnableVertexAttribArray(GLuint(attrtex))
-        glVertexAttribPointer(GLuint(attrpos), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<Float>.size * 4), BUFFER_OFFSET(0))
-        glVertexAttribPointer(GLuint(attrtex), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(MemoryLayout<Float>.size * 4), BUFFER_OFFSET(8))
+        glVertexAttribPointer(GLuint(attrpos), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE),
+                              GLsizei(MemoryLayout<Float>.size * 4), BUFFER_OFFSET(0))
+        glVertexAttribPointer(GLuint(attrtex), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE),
+                              GLsizei(MemoryLayout<Float>.size * 4), BUFFER_OFFSET(8))
 
         EAGLContext.setCurrent(current)
     }
@@ -258,7 +268,8 @@ private extension VCPreviewView {
 
         glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_WIDTH), &width)
         glGetRenderbufferParameteriv(GLenum(GL_RENDERBUFFER), GLenum(GL_RENDERBUFFER_HEIGHT), &height)
-        glFramebufferRenderbuffer(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0), GLenum(GL_RENDERBUFFER), renderBuffer)
+        glFramebufferRenderbuffer(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0),
+                                  GLenum(GL_RENDERBUFFER), renderBuffer)
 
         glErrors()
 

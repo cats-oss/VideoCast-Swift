@@ -123,7 +123,8 @@ func compileShader(type: GLuint, source: String) -> GLuint {
         log = Array(repeating: GLchar(0), count: Int(length))
 
         glGetShaderInfoLog(shader, length, &length, UnsafeMutablePointer(mutating: log))
-        Logger.error("\(type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER") compilation error: \(log)")
+        Logger.error("\(type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER") " +
+            "compilation error: \(log)")
 
         return 0
     }

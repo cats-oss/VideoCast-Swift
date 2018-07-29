@@ -47,6 +47,7 @@ open class H264Packetizer: ITransform {
         Logger.debug("H264Packetizer::deinit")
     }
 
+    // swiftlint:disable:next function_body_length
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         let inBuffer = data.assumingMemoryBound(to: UInt8.self)
         var inSize = size
@@ -64,13 +65,13 @@ open class H264Packetizer: ITransform {
 
         switch nal_type {
         case 7:
-            if sps.count == 0 {
+            if sps.isEmpty {
                 sps.removeAll()
                 let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: 4), count: inSize-4)
                 sps.append(contentsOf: buf)
             }
         case 8:
-            if pps.count == 0 {
+            if pps.isEmpty {
                 pps.removeAll()
                 let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: 4), count: inSize-4)
                 pps.append(contentsOf: buf)
@@ -91,7 +92,7 @@ open class H264Packetizer: ITransform {
         let outMeta: RTMPMetadata = .init(ts: dts)
         var conf: [UInt8] = .init()
 
-        if is_config && sps.count > 0 && pps.count > 0 {
+        if is_config && !sps.isEmpty && !pps.isEmpty {
             conf = configurationFromSpsAndPps
             inSize = conf.count
         }
@@ -103,7 +104,7 @@ open class H264Packetizer: ITransform {
 
         if is_config {
             // create modified SPS/PPS buffer
-            if sps.count > 0 && pps.count > 0 && !sentConfig {
+            if !sps.isEmpty && !pps.isEmpty && !sentConfig {
                 put_buff(&outBuffer, src: conf)
                 sentConfig = true
             } else {

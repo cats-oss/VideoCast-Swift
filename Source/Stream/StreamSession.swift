@@ -47,14 +47,16 @@ open class StreamSession: IStreamSession {
             var readStream: Unmanaged<CFReadStream>?
             var writeStream: Unmanaged<CFWriteStream>?
 
-            CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, host as CFString, UInt32(port), &readStream, &writeStream)
+            CFStreamCreatePairWithSocketToHost(
+                kCFAllocatorDefault, host as CFString,
+                UInt32(port), &readStream, &writeStream)
 
             inputStream = readStream?.takeRetainedValue()
             outputStream = writeStream?.takeRetainedValue()
 
             let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.network")
 
-            if let _ = inputStream, let _ = outputStream {
+            if inputStream != nil && outputStream != nil {
                 queue.async { [weak self] in
                     self?.startNetwork()
                 }
@@ -92,8 +94,9 @@ open class StreamSession: IStreamSession {
         if ret >= 0 && ret < size && (status.contains(.writeBufferHasSpace)) {
             // Remove the Has Space Available flag
             status.remove(.writeBufferHasSpace)
-        } else if (ret < 0) {
-            Logger.error("ERROR! [\(String(describing: outputStream.streamError))] buffer: \(buffer) [ \(String(format: "0x%02X", buffer[0])) ], size: \(size)")
+        } else if ret < 0 {
+            Logger.error("ERROR! [\(String(describing: outputStream.streamError))]" +
+                "buffer: \(buffer) [ \(String(format: "0x%02X", buffer[0])) ], size: \(size)")
         }
 
         return ret
@@ -122,7 +125,8 @@ open class StreamSession: IStreamSession {
         if event.contains(.openCompleted) {
             // Only set connected event when input and output stream both connected
             if let inputStream = inputStream, let outputStream = outputStream,
-                inputStream.streamStatus.rawValue >= Stream.Status.open.rawValue && outputStream.streamStatus.rawValue >= Stream.Status.open.rawValue &&
+                inputStream.streamStatus.rawValue >= Stream.Status.open.rawValue &&
+                    outputStream.streamStatus.rawValue >= Stream.Status.open.rawValue &&
                     inputStream.streamStatus.rawValue < Stream.Status.atEnd.rawValue &&
                     outputStream.streamStatus.rawValue < Stream.Status.atEnd.rawValue {
                 setStatus(.connected, clear: true)

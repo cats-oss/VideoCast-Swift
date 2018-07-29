@@ -33,35 +33,17 @@ open class AnnexbEncode: ITransform {
         self.output = output
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     public func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         let inBuffer = data.assumingMemoryBound(to: UInt8.self)
         var nalType: NalType = .unknown
         let keyFrame: Bool = metadata.isKey
 
-        let nal_type: UInt8
         switch codecType {
         case kCMVideoCodecType_H264:
-            nal_type = inBuffer[nalu_header_size] & 0x1F
-            switch nal_type {
-            case 7:
-                nalType = .sps
-            case 8:
-                nalType = .pps
-            default:
-                break
-            }
+            (nalType, _) = getNalTypeH264(inBuffer)
         case kCMVideoCodecType_HEVC:
-            nal_type = (inBuffer[nalu_header_size] & 0x7E) >> 1
-            switch nal_type {
-            case 32:
-                nalType = .vps
-            case 33:
-                nalType = .sps
-            case 34:
-                nalType = .pps
-            default:
-                break
-            }
+            (nalType, _) = getNalTypeHEVC(inBuffer)
         default:
             Logger.error("unsupported codec type: \(codecType)")
             return
@@ -71,18 +53,21 @@ open class AnnexbEncode: ITransform {
 
         switch nalType {
         case .vps:
-            if vps.count == 0 {
-                let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: nalu_header_size), count: size-nalu_header_size)
+            if vps.isEmpty {
+                let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: nalu_header_size),
+                                                     count: size-nalu_header_size)
                 vps.append(contentsOf: buf)
             }
         case .sps:
-            if sps.count == 0 {
-                let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: nalu_header_size), count: size-nalu_header_size)
+            if sps.isEmpty {
+                let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: nalu_header_size),
+                                                     count: size-nalu_header_size)
                 sps.append(contentsOf: buf)
             }
         case .pps:
-            if pps.count == 0 {
-                let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: nalu_header_size), count: size-nalu_header_size)
+            if pps.isEmpty {
+                let buf = UnsafeBufferPointer<UInt8>(start: inBuffer.advanced(by: nalu_header_size),
+                                                     count: size-nalu_header_size)
                 pps.append(contentsOf: buf)
             }
 
@@ -91,7 +76,8 @@ open class AnnexbEncode: ITransform {
         }
 
         if is_config {
-            if conf.count == 0 && sps.count > 0 && pps.count > 0 && (codecType != kCMVideoCodecType_HEVC || vps.count > 0) {
+            if conf.isEmpty && !sps.isEmpty && !pps.isEmpty
+                && (codecType != kCMVideoCodecType_HEVC || !vps.isEmpty) {
                 conf = configurationFromSpsAndPps
             }
         } else {
@@ -126,7 +112,8 @@ open class AnnexbEncode: ITransform {
                 if !isAUD(data_ptr[4]) {  // AUD NAL
                     // Update buffer.
                     annexb_buffer.append(contentsOf: kAnnexBHeaderBytes)
-                    let buf = UnsafeBufferPointer<UInt8>(start: data_ptr.advanced(by: nalu_header_size), count: packet_size)
+                    let buf = UnsafeBufferPointer<UInt8>(start: data_ptr.advanced(by: nalu_header_size),
+                                                         count: packet_size)
                     annexb_buffer.append(contentsOf: buf)
                 }
 

@@ -46,34 +46,85 @@ class Logger {
 
     static let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.logger", qos: .background)
 
-    class func error<T>(_ message: @autoclosure () -> T, file: String = #file, function: String = #function, line: Int = #line ) {
-        Logger.log(synchronous: asyncError, level: levelDef, flag: .error, ctx: 0, file: file, function: function, line: line, message: message)
+    class func error<T>(_ message: @autoclosure () -> T,
+                        file: String = #file,
+                        function: String = #function,
+                        line: Int = #line ) {
+        Logger.log(synchronous: asyncError,
+                   level: levelDef,
+                   flag: .error,
+                   ctx: 0,
+                   file: file,
+                   function: function,
+                   line: line,
+                   message: message)
     }
 
-    class func warn<T>(_ message: @autoclosure () -> T, file: String = #file, function: String = #function, line: Int = #line ) {
-        Logger.log(synchronous: asyncWarn, level: levelDef, flag: .warn, ctx: 0, file: file, function: function, line: line, message: message)
+    class func warn<T>(_ message: @autoclosure () -> T,
+                       file: String = #file,
+                       function: String = #function,
+                       line: Int = #line ) {
+        Logger.log(synchronous: asyncWarn,
+                   level: levelDef,
+                   flag: .warn,
+                   ctx: 0,
+                   file: file,
+                   function: function,
+                   line: line,
+                   message: message)
     }
 
-    class func info<T>(_ message: @autoclosure () -> T, file: String = #file, function: String = #function, line: Int = #line ) {
-        Logger.log(synchronous: asyncInfo, level: levelDef, flag: .info, ctx: 0, file: file, function: function, line: line, message: message)
+    class func info<T>(_ message: @autoclosure () -> T,
+                       file: String = #file,
+                       function: String = #function,
+                       line: Int = #line ) {
+        Logger.log(synchronous: asyncInfo,
+                   level: levelDef,
+                   flag: .info,
+                   ctx: 0,
+                   file: file,
+                   function: function,
+                   line: line,
+                   message: message)
     }
 
-    class func debug<T>(_ message: @autoclosure () -> T, file: String = #file, function: String = #function, line: Int = #line ) {
-        Logger.log(synchronous: asyncDebug, level: levelDef, flag: .debug, ctx: 0, file: file, function: function, line: line, message: message)
+    class func debug<T>(_ message: @autoclosure () -> T,
+                        file: String = #file,
+                        function: String = #function,
+                        line: Int = #line ) {
+        Logger.log(synchronous: asyncDebug,
+                   level: levelDef,
+                   flag: .debug,
+                   ctx: 0,
+                   file: file,
+                   function: function,
+                   line: line,
+                   message: message)
     }
 
-    class func verbose<T>(_ message: @autoclosure () -> T, file: String = #file, function: String = #function, line: Int = #line ) {
-        Logger.log(synchronous: asyncVerbose, level: levelDef, flag: .verbose, ctx: 0, file: file, function: function, line: line, message: message)
+    class func verbose<T>(_ message: @autoclosure () -> T,
+                          file: String = #file,
+                          function: String = #function,
+                          line: Int = #line ) {
+        Logger.log(synchronous: asyncVerbose,
+                   level: levelDef,
+                   flag: .verbose,
+                   ctx: 0,
+                   file: file,
+                   function: function,
+                   line: line,
+                   message: message)
     }
 
-    class func log<T>(synchronous: Bool,
-                   level: LogFlags,
-                   flag: LogFlags,
-                   ctx: Int,
-                   file: String,
-                   function: String,
-                   line: Int,
-                   message: @autoclosure () -> T) {
+    class func log<T>(
+        synchronous: Bool,
+        level: LogFlags,
+        flag: LogFlags,
+        ctx: Int,
+        file: String,
+        function: String,
+        line: Int,
+        message: @autoclosure () -> T) {
         if level.contains(flag) {
             let message = message()
             let logging = {

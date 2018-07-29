@@ -79,8 +79,14 @@ void main(void) {
             glUniform1i(unitex, 0)
             glEnableVertexAttribArray(GLuint(attrpos))
             glEnableVertexAttribArray(GLuint(attrtex))
-            glVertexAttribPointer(GLuint(attrpos), GLint(BUFFER_SIZE_POSITION), GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_POSITION)
-            glVertexAttribPointer(GLuint(attrtex), GLint(BUFFER_SIZE_POSITION), GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_TEXTURE)
+            glVertexAttribPointer(
+                GLuint(attrpos), GLint(BUFFER_SIZE_POSITION),
+                GLenum(GL_FLOAT), GLboolean(GL_FALSE),
+                GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_POSITION)
+            glVertexAttribPointer(
+                GLuint(attrtex), GLint(BUFFER_SIZE_POSITION),
+                GLenum(GL_FLOAT), GLboolean(GL_FALSE),
+                GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_TEXTURE)
             initialized = true
         case .GL_3:
             break

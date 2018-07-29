@@ -20,7 +20,9 @@ open class AACPacketizer: ITransform {
     private let ctsOffset: CMTime
     private let channelCount: Int
 
-    public init(sampleRate: Int = 48000, channelCount: Int = 2, ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
+    public init(sampleRate: Int = 48000,
+                channelCount: Int = 2,
+                ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
         self.sampleRate = Float(sampleRate)
         self.channelCount = channelCount
         self.ctsOffset = ctsOffset

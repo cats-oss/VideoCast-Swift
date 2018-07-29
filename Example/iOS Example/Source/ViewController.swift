@@ -14,9 +14,21 @@ class ViewController: UIViewController {
     @IBOutlet weak var previewView: UIView!
     @IBOutlet weak var btnConnect: UIButton!
 
-    var session = VCSimpleSession(videoSize: CGSize(width: 720, height: 408), frameRate: 30, bitrate: 1000000, videoCodecType: .h264, useInterfaceOrientation: false)
+    var session = VCSimpleSession(
+        videoSize: CGSize(width: 720, height: 408),
+        frameRate: 30,
+        bitrate: 1000000,
+        videoCodecType: .h264,
+        useInterfaceOrientation: false
+    )
 
-    //var session = VCSimpleSession(videoSize: CGSize(width: 1280, height: 720), frameRate: 30, bitrate: 1500000, videoCodecType: .hevc, useInterfaceOrientation: false)
+    /*var session = VCSimpleSession(
+        videoSize: CGSize(width: 1280, height: 720),
+        frameRate: 30,
+        bitrate: 1500000,
+        videoCodecType: .hevc,
+        useInterfaceOrientation: false
+    )*/
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -56,12 +68,16 @@ class ViewController: UIViewController {
     @IBAction func btnConnectTouch(_ sender: AnyObject) {
         switch session.sessionState {
         case .none, .previewStarted, .ended, .error:
-            //session.startRtmpSession(url: "rtmp://dev-wowza002b.freshlive.io/live", streamKey: "dev00210927?token=10927A4d5I5")
-            session.startSRTSession(url: "srt://dev-srtproxy002.freshlive.io:5000?streamid=dev00210927")
+            session.startRtmpSession(
+                url: "rtmp://localhost/live",
+                streamKey: "myStream"
+            )
+            /*session.startSRTSession(
+                url: "srt://localhost:5000?streamid=myStream"
+            )*/
 
         default:
             session.endSession()
-            break
         }
     }
 

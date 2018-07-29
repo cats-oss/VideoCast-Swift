@@ -69,6 +69,7 @@ struct SRTSocketOption {
         return srt_setsockopt(socket, 0, symbol, data, size)
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func extract(_ type: SRTOptionType, value: String, o: inout SRTOptionValue?) {
         switch type {
         case .string:
@@ -139,7 +140,11 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "kmpreannounce", symbol: SRTO_KMPREANNOUNCE, binding: .pre, type: .int, valmap: nil)
 ]
 
-func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String: String], failures: inout [String]) -> SRTOptionMode {
+// swiftlint:disable:next cyclomatic_complexity
+func srtConfigurePre(_ socket: SRTSOCKET,
+                     host: String,
+                     options: inout [String: String],
+                     failures: inout [String]) -> SRTOptionMode {
 
     if options["passphrase"] != nil {
         // Insert default
@@ -163,7 +168,7 @@ func srtConfigurePre(_ socket: SRTSOCKET, host: String, options: inout [String: 
         // Use the following convention:
         // 1. Server for source, Client for target
         // 2. If host is empty, then always server.
-        if ( host == "" ) {
+        if host == "" {
             mode = .listener
         } else {
             // Host is given, so check also "adapter"

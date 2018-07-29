@@ -33,7 +33,10 @@ void main(void) {
     }
 
     private static func registerFilter() -> Bool {
-        FilterFactory.register(name: "jp.co.cyberagent.VideoCast.filters.sepia", instantiation: { return SepiaVideoFilter() })
+        FilterFactory.register(
+            name: "jp.co.cyberagent.VideoCast.filters.sepia",
+            instantiation: { return SepiaVideoFilter() }
+        )
         return true
     }
 }

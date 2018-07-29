@@ -27,7 +27,7 @@ public enum RTMPClientState: Int {
     case notConnected = 11
 }
 
-public struct RTMPChunk_0 {
+public struct RTMPChunk0 {
     public var body: [UInt8] = .init(repeating: 0, count: 11)
     public var timestamp: Int32 {
         get {
@@ -80,7 +80,7 @@ public struct RTMPChunk_0 {
 
 public let RTMP_CHUNK_TYPE_0 = 0x0
 
-public struct RTMPChunk_1 {
+public struct RTMPChunk1 {
     public var body: [UInt8] = .init(repeating: 0, count: 7)
     public var delta: Int32 {
         get {
@@ -117,7 +117,7 @@ public struct RTMPChunk_1 {
 }
 public let RTMP_CHUNK_TYPE_1: UInt8 = 0x40
 
-public struct RTMPChunk_2 {
+public struct RTMPChunk2 {
     public var body: [UInt8] = .init(repeating: 0, count: 3)
     public var delta: Int32 {
         get {
@@ -162,9 +162,9 @@ public enum FlvTagType: UInt8 {
 
 // RTMP header type is 1 byte
 public enum RtmpHeaderType: UInt8 {
-    case full           = 0x0   // RTMPChunk_0
-    case noMsgStreamId  = 0x1   // RTMPChunk_1
-    case timestamp      = 0x2   // RTMPChunk_2
+    case full           = 0x0   // RTMPChunk0
+    case noMsgStreamId  = 0x1   // RTMPChunk1
+    case timestamp      = 0x2   // RTMPChunk2
     case only           = 0x3   // no chunk header
 }
 
@@ -220,7 +220,8 @@ public struct FlvFlags: OptionSet {
     public static let samplesize8bit    = FlvFlags(rawValue: 0)
     public static let samplesize16bit   = FlvFlags(rawValue: 1 << FLV_AUDIO_SAMPLESSIZE_OFFSET)
 
-    public static let samplerateSpecial  = FlvFlags(rawValue: 0)  /**< signifies 5512Hz and 8000Hz in the case of NELLYMOSER */
+    /**< signifies 5512Hz and 8000Hz in the case of NELLYMOSER */
+    public static let samplerateSpecial  = FlvFlags(rawValue: 0)
     public static let samplerate11025hz = FlvFlags(rawValue: 1 << FLV_AUDIO_SAMPLERATE_OFFSET)
     public static let samplerate22050hz = FlvFlags(rawValue: 2 << FLV_AUDIO_SAMPLERATE_OFFSET)
     public static let samplerate44100hz = FlvFlags(rawValue: 3 << FLV_AUDIO_SAMPLERATE_OFFSET)

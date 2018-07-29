@@ -98,7 +98,7 @@ open class FileSink: IOutputSession {
             }
 
             writingQueue.sync {
-                if buffers.count > 0 {
+                if !buffers.isEmpty {
                     if let buffer = buffers.popLast() {
                         fh.write(buffer)
                     }
@@ -110,7 +110,7 @@ open class FileSink: IOutputSession {
             }
         }
 
-        while buffers.count > 0 {
+        while !buffers.isEmpty {
             writingQueue.sync {
                 if let buffer = buffers.popLast() {
                     fh.write(buffer)
