@@ -46,12 +46,10 @@ class SrtSource: SrtCommon {
         repeat {
             stat = srt_recvmsg(sock, &data, Int32(chunk))
             if stat == SRT_ERROR {
-                if !blocking_mode {
-                    // EAGAIN for SRT READING
-                    if srt_getlasterror(nil) == SRT_EASYNCRCV.rawValue {
-                        data.removeAll()
-                        return false
-                    }
+                // EAGAIN for SRT READING
+                if srt_getlasterror(nil) == SRT_EASYNCRCV.rawValue {
+                    data.removeAll()
+                    return false
                 }
                 try error(udtGetLastError(), src: "recvmsg")
             }

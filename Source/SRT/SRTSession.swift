@@ -141,9 +141,10 @@ open class SRTSession: IOutputSession {
                         }
 
                         let data = p.assumingMemoryBound(to: Int8.self)
-                        if try !tar.isOpen || !tar.write(data, size: buf.size) {
+                        if !tar.isOpen {
                             self.lostBytes += buf.size
-
+                        } else if try !tar.write(data, size: buf.size) {
+                            self.lostBytes += buf.size
                         } else {
                             self.wroteBytes += buf.size
                         }

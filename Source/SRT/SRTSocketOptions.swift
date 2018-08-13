@@ -147,10 +147,12 @@ func srtConfigurePre(_ socket: SRTSOCKET,
                      failures: inout [String]) -> SRTOptionMode {
 
     if options["passphrase"] != nil {
+        /*
         // Insert default
         if options["pbkeylen"] == nil {
             options["pbkeylen"] = "16"
         }
+         */
     }
 
     let mode: SRTOptionMode

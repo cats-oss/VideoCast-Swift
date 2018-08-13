@@ -13,7 +13,6 @@ class SrtCommon {
 
     //< Defines which of SND or RCV option variant should be used, also to set SRT_SENDER for output
     var output_direction: Bool = false
-    var blocking_mode: Bool = false //< enforces using SRTO_SNDSYN or SRTO_RCVSYN, depending on @a m_output_direction
     var timeout: Int = 0 //< enforces using SRTO_SNDTIMEO or SRTO_RCVTIMEO, depending on @a m_output_direction
     var tsbpdmode: Bool = true
     var outgoing_port: Int = 0
@@ -52,10 +51,8 @@ class SrtCommon {
         srt_epoll = pollid
         try initParameters(host, par: par)
 
-        if SrtConf.transmit_verbose {
-            Logger.debug("Opening SRT \(dir_output ? "target" : "source") \(mode)" +
-                "(\(blocking_mode ? "" : "non-")blocking) on \(host):\(port)")
-        }
+        Logger.verbose("Opening SRT \(dir_output ? "target" : "source") \(mode)" +
+            " on \(host):\(port)")
 
         switch mode {
         case "caller":
@@ -78,9 +75,7 @@ class SrtCommon {
         var par = par
 
         // Application-specific options: mode, blocking, timeout, adapter
-        if SrtConf.transmit_verbose {
-            Logger.debug("Parameters:\(par)")
-        }
+        Logger.verbose("Parameters:\(par)")
 
         mode = "default"
         if let mode = par["mode"] {
@@ -105,12 +100,6 @@ class SrtCommon {
         }
 
         par["mode"] = nil
-
-        // no blocking mode support at the moment
-        /*if let blocking = par[.blocking] as? Bool {
-         blocking_mode = blocking
-         par[.blocking] = nil
-         }*/
 
         if let val = par["timeout"] {
             guard let timeout = Int(val) else {
@@ -173,9 +162,7 @@ class SrtCommon {
         var sa_copy = sa
         stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
-            if SrtConf.transmit_verbose {
-                Logger.debug("Binding a server on \(host):\(port) ...")
-            }
+            Logger.verbose("Binding a server on \(host):\(port) ...")
             return srt_bind(bindsock, psa, Int32(MemoryLayout.size(ofValue: sa)))
         }
         if stat == SRT_ERROR {
@@ -183,9 +170,7 @@ class SrtCommon {
             try error(udtGetLastError(), src: "srt_bind")
         }
 
-        if SrtConf.transmit_verbose {
-            Logger.debug(" listen...")
-        }
+        Logger.verbose(" listen...")
         stat = srt_listen(bindsock, backlog)
         if stat == SRT_ERROR {
             srt_close(bindsock)
@@ -198,7 +183,6 @@ class SrtCommon {
         // object that is doing Accept in appropriate direction class.
         // The new object should get the accepted socket.
         output_direction = src.output_direction
-        blocking_mode = src.blocking_mode
         timeout = src.timeout
         tsbpdmode = src.tsbpdmode
         bindsock = SRT_INVALID_SOCK // no listener
@@ -211,9 +195,7 @@ class SrtCommon {
         var scl: sockaddr_in = .init()
         var sclen: Int32 = Int32(MemoryLayout.size(ofValue: scl))
 
-        if SrtConf.transmit_verbose {
-            Logger.debug(" accept...")
-        }
+        Logger.verbose(" accept...")
 
         withUnsafeMutablePointer(to: &scl) {
             let pscl = UnsafeMutableRawPointer($0).assumingMemoryBound(to: sockaddr.self)
@@ -228,16 +210,12 @@ class SrtCommon {
         }
         registerEpoll()
 
-        if true {
-            // we do one client connection at a time,
-            // so close the listener.
-            srt_close(bindsock)
-            bindsock = SRT_INVALID_SOCK
-        }
+        // we do one client connection at a time,
+        // so close the listener.
+        srt_close(bindsock)
+        bindsock = SRT_INVALID_SOCK
 
-        if SrtConf.transmit_verbose {
-            Logger.debug(" connected.")
-        }
+        Logger.verbose(" connected.")
 
         // ConfigurePre is done on bindsock, so any possible Pre flags
         // are DERIVED by sock. ConfigurePost is done exclusively on sock.
@@ -250,43 +228,33 @@ class SrtCommon {
     }
 
     func close() {
-        if SrtConf.transmit_verbose {
-            Logger.debug("SrtCommon: DESTROYING CONNECTION, closing sockets (rt%\(sock) ls%\(bindsock)...")
-        }
+        Logger.verbose("SrtCommon: DESTROYING CONNECTION, closing sockets (rt%\(sock) ls%\(bindsock)...")
 
-        var yes: Int32 = 1
         if sock != SRT_INVALID_SOCK {
             unregisterEpoll()
-            srt_setsockflag(sock, SRTO_SNDSYN, &yes, Int32(MemoryLayout.size(ofValue: yes)))
             srt_close(sock)
+            sock = SRT_INVALID_SOCK
         }
 
         if bindsock != SRT_INVALID_SOCK {
-            // Set sndsynchro to the socket to synch-close it.
-            srt_setsockflag(bindsock, SRTO_SNDSYN, &yes, Int32(MemoryLayout.size(ofValue: yes)))
             srt_close(bindsock)
+            bindsock = SRT_INVALID_SOCK
         }
-        if SrtConf.transmit_verbose {
-            Logger.debug("SrtCommon: ... done.")
-        }
+        Logger.verbose("SrtCommon: ... done.")
     }
 
     func error(_ udtError: UdtErrorInfo, src: String) throws {
         let str = String(cString: udtError.message)
-        if SrtConf.transmit_verbose {
-            Logger.error("FAILURE \(src):[\(udtError.code)] \(str)")
-        } else {
-            Logger.error("ERROR #\(udtError.code): \(str)")
-        }
+        Logger.verbose("ERROR #\(udtError.code): \(str)")
 
         throw SRTError.transmission(message: "error: \(src): \(str)")
     }
 
     func configurePost(_ sock: SRTSOCKET) -> Int32 {
-        var yes: Int32 = blocking_mode ? 1 : 0
+        var no: Int32 = 0
         var result: Int32 = 0
         if output_direction {
-            result = srt_setsockopt(sock, 0, SRTO_SNDSYN, &yes, Int32(MemoryLayout.size(ofValue: yes)))
+            result = srt_setsockopt(sock, 0, SRTO_SNDSYN, &no, Int32(MemoryLayout.size(ofValue: no)))
             if result == -1 {
                 return result
             }
@@ -295,7 +263,7 @@ class SrtCommon {
                 return srt_setsockopt(sock, 0, SRTO_SNDTIMEO, &timeout, Int32(MemoryLayout.size(ofValue: timeout)))
             }
         } else {
-            result = srt_setsockopt(sock, 0, SRTO_RCVSYN, &yes, Int32(MemoryLayout.size(ofValue: yes)))
+            result = srt_setsockopt(sock, 0, SRTO_RCVSYN, &no, Int32(MemoryLayout.size(ofValue: no)))
             if result == -1 {
                 return result
             }
@@ -307,8 +275,8 @@ class SrtCommon {
 
         var failures: [String] = .init()
         srtConfigurePost(sock, options: options, failures: &failures)
-        for failure in failures where SrtConf.transmit_verbose {
-            Logger.warn("failed to set '\(failure)'" +
+        for failure in failures {
+            Logger.verbose("failed to set '\(failure)'" +
                 "(post, \(output_direction ? "target" : "source")) to \(String(describing: options[failure]))")
         }
 
@@ -326,10 +294,7 @@ class SrtCommon {
             }
         }
 
-        // Let's pretend async mode is set this way.
-        // This is for asynchronous connect.
-        var maybe = blocking_mode
-        result = srt_setsockopt(sock, 0, SRTO_RCVSYN, &maybe, Int32(MemoryLayout.size(ofValue: maybe)))
+        result = srt_setsockopt(sock, 0, SRTO_RCVSYN, &no, Int32(MemoryLayout.size(ofValue: no)))
         if result == -1 {
             return result
         }
@@ -344,9 +309,7 @@ class SrtCommon {
         let conmode = srtConfigurePre(sock, host: "", options: &options, failures: &failures)
 
         if conmode == .failure {
-            if SrtConf.transmit_verbose {
-                Logger.warn("WARNING: failed to set options: \(failures.description)")
-            }
+            Logger.verbose("WARNING: failed to set options: \(failures.description)")
 
             return SRT_ERROR
         }
@@ -394,20 +357,12 @@ class SrtCommon {
         var sa_copy = sa
         var stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
-            if SrtConf.transmit_verbose {
-                Logger.debug("Connecting to \(host):\(port) ...")
-            }
+            Logger.verbose("Connecting to \(host):\(port) ...")
             return srt_connect(sock, psa, Int32(MemoryLayout.size(ofValue: sa)))
         }
         if stat == SRT_ERROR {
             //srt_close(sock)
             try error(udtGetLastError(), src: "UDT::connect")
-        }
-
-        if SrtConf.transmit_verbose {
-            if blocking_mode {
-                Logger.debug(" connected.")
-            }
         }
 
         stat = configurePost(sock)
@@ -418,9 +373,6 @@ class SrtCommon {
 
     func openServer(_ host: String, port: Int) throws {
         try prepareListener(host, port: port, backlog: 1)
-        if blocking_mode {
-            try acceptNewClient()
-        }
     }
 
     func openRendezvous(_ adapter: String, host: String, port: Int) throws {
@@ -442,9 +394,7 @@ class SrtCommon {
         var sa_copy = localsa
         stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let plsa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
-            if SrtConf.transmit_verbose {
-                Logger.debug("Binding a server on \(adapter):\(port) ...")
-            }
+            Logger.verbose("Binding a server on \(adapter):\(port) ...")
             return srt_bind(sock, plsa, Int32(MemoryLayout.size(ofValue: localsa)))
         }
         if stat == SRT_ERROR {
@@ -457,20 +407,12 @@ class SrtCommon {
         sa_copy = sa
         stat = withUnsafePointer(to: &sa_copy) { ptr -> Int32 in
             let psa = UnsafeRawPointer(ptr).assumingMemoryBound(to: sockaddr.self)
-            if SrtConf.transmit_verbose {
-                Logger.debug("Connecting to \(host):\(port) ...")
-            }
+            Logger.verbose("Connecting to \(host):\(port) ...")
             return srt_connect(sock, psa, Int32(MemoryLayout.size(ofValue: sa)))
         }
         if stat == SRT_ERROR {
             srt_close(sock)
             try error(udtGetLastError(), src: "srt_connect")
-        }
-
-        if SrtConf.transmit_verbose {
-            if blocking_mode && SrtConf.transmit_verbose {
-                Logger.debug(" connected.")
-            }
         }
 
         stat = configurePost(sock)

@@ -54,9 +54,6 @@ class SrtTarget: SrtCommon {
     func write(_ data: UnsafePointer<Int8>, size: Int) throws -> Bool {
         let stat = srt_sendmsg2(sock, data, Int32(size), nil)
         if stat == SRT_ERROR {
-            if blocking_mode {
-                try error(udtGetLastError(), src: "srt_sendmsg")
-            }
             return false
         }
 
