@@ -104,7 +104,7 @@ open class SRTSession: IOutputSession {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending.value else { return }
 

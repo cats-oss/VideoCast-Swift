@@ -153,7 +153,7 @@ class Logger {
         hexBuf.reserveCapacity(size * 4 + 1)
 
         for i in 0..<size {
-            hexBuf += String(format: "%02x%s", buf[i], sep)
+            hexBuf += String(format: "%02x", buf[i]) + sep
             if i % breaklen == breaklen-1 {
                 hexBuf += "\n"
             }

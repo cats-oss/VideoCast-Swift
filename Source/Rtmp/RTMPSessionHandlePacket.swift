@@ -58,6 +58,7 @@ extension RTMPSession {
         // at least one byte in current buffer.
         first_byte = streamInBuffer.readBuffer.pointee
         let header_type = (first_byte & 0xC0) >> 6
+        let chunk_stream_id = first_byte & 0x3F
         Logger.verbose("First byte:0x\(String(format: "%X", first_byte)), header type:\(header_type)")
 
         guard let type = RtmpHeaderType(rawValue: header_type) else {
@@ -102,10 +103,14 @@ extension RTMPSession {
             streamInBuffer.didRead(1+chunk.body.count + full_msgsize)
 
             handleMessage(msg, msgTypeId: chunk.msg_type_id)
-            previousChunk = chunk
+            previousChunkMap[chunk_stream_id] = chunk
             return true
 
         case .noMsgStreamId:
+            guard var previousChunk = previousChunkMap[chunk_stream_id] else {
+                Logger.error("could not find previous chunk with stream id \(chunk_stream_id)")
+                return false
+            }
             var chunk: RTMPChunk1 = .init()
             guard streamInBuffer.availableBytes >= 1+chunk.body.count else {
                 Logger.debug("Not enough a header")
@@ -142,9 +147,14 @@ extension RTMPSession {
 
             previousChunk.msg_type_id = chunk.msg_type_id
             previousChunk.msg_length = chunk.msg_length
+            previousChunkMap[chunk_stream_id] = previousChunk
             return true
 
         case .timestamp:
+            guard let previousChunk = previousChunkMap[chunk_stream_id] else {
+                Logger.error("could not find previous chunk with stream id \(chunk_stream_id)")
+                return false
+            }
             // the message length is the same as previous message.
             Logger.debug("Previous chunk length:\(previousChunk.msg_length), " +
                 "msgid:\(previousChunk.msg_type_id), streamid:\(String(describing: previousChunk.msg_stream_id))")

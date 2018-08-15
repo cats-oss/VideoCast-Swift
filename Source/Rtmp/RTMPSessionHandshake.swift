@@ -43,8 +43,17 @@ extension RTMPSession {
             Logger.debug("unexpected return")
             return
         }
-        var zero: UInt64 = 0
-        c1.put(&zero, size: MemoryLayout<UInt64>.size)
+
+        uptime = CFSwapInt32HostToBig(UInt32(ProcessInfo().systemUptime * 1000))
+        c1.put(&uptime, size: MemoryLayout<UInt32>.size)
+
+        var zero: UInt32 = 0
+        c1.append(&zero, size: MemoryLayout<UInt32>.size)
+
+        let sig = c1.getMutable()
+        for i in 8 ..< kRTMPSignatureSize {
+            sig[i] = UInt8(arc4random_uniform(256))
+        }
 
         write(p, size: kRTMPSignatureSize)
     }
@@ -58,8 +67,7 @@ extension RTMPSession {
             return
         }
         p += 4
-        var zero: UInt32 = 0
-        memcpy(UnsafeMutablePointer<UInt8>(mutating: p), &zero, MemoryLayout<UInt32>.size)
+        memcpy(UnsafeMutablePointer<UInt8>(mutating: p), &uptime, MemoryLayout<UInt32>.size)
 
         write(s1.get(), size: s1.size)
     }

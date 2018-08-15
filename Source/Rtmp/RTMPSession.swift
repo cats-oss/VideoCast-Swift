@@ -27,11 +27,12 @@ open class RTMPSession: IOutputSession {
 
     let s1: Buffer = .init()
     let c1: Buffer = .init()
+    var uptime: UInt32 = 0
 
     let throughputSession: TCPThroughputAdaptation = .init()
 
     private let previousTs: UInt64 = 0
-    var previousChunk: RTMPChunk0 = .init()
+    var previousChunkMap: [UInt8: RTMPChunk0] = .init()
 
     private var previousChunkData: [ChunkStreamId: UInt64] = .init()
 
@@ -197,9 +198,9 @@ open class RTMPSession: IOutputSession {
                     }
                 case .handshake1s1:
                     if streamInBuffer.availableBytes >= kRTMPSignatureSize {
-                        streamInBuffer.didRead(kRTMPSignatureSize)
                         s1.resize(kRTMPSignatureSize)
                         s1.put(streamInBuffer.readBuffer, size: kRTMPSignatureSize)
+                        streamInBuffer.didRead(kRTMPSignatureSize)
                         handshake()
                     } else {
                         Logger.debug("Not enough s1 size")
