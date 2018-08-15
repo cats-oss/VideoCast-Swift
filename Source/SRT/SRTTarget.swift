@@ -67,7 +67,7 @@ class SrtTarget: SrtCommon {
         }
         if SrtConf.transmit_stats_report > 0 &&
             (SrtSource.counter % SrtConf.transmit_stats_report) == SrtConf.transmit_stats_report - 1 {
-            printSrtStats(Int(sock), mon: perf)
+            printSrtStats(Int(sock), mon: &perf)
             clear_stats = SrtConf.transmit_total_stats ? 0 : 1
         }
 

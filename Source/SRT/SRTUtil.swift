@@ -8,19 +8,15 @@
 
 import Foundation
 
-func printSrtStats(_ sid: Int, mon: CBytePerfMon) {
-    Logger.info("======= SRT STATS: sid=\(sid)")
-    Logger.info(String(format: "PACKETS     SENT: %11d  RECEIVED:   %11d", mon.pktSent, mon.pktRecv))
-    Logger.info(String(format: "LOST PKT    SENT: %11d  RECEIVED:   %11d", mon.pktSndLoss, mon.pktRcvLoss))
-    Logger.info(String(format: "REXMIT      SENT: %11d  RECEIVED:   %11d", mon.pktRetrans, mon.pktRcvRetrans))
-    Logger.info(String(format: "DROP PKT    SENT: %11d  RECEIVED:   %11d", mon.pktSndDrop, mon.pktRcvDrop))
-    Logger.info(String(format: "RATE     SENDING: %11d  RECEIVING:  %11d", mon.mbpsSendRate, mon.mbpsRecvRate))
-    Logger.info(String(format: "BELATED RECEIVED: %11d  AVG TIME:   %11d", mon.pktRcvBelated, mon.pktRcvAvgBelatedTime))
-    Logger.info(String(format: "REORDER DISTANCE: %11d", mon.pktReorderDistance))
-    Logger.info(String(format: "WINDOW      FLOW: %11d  CONGESTION: %11d  FLIGHT: %11d",
-                       mon.pktFlowWindow, mon.pktCongestionWindow, mon.pktFlightSize))
-    Logger.info(String(format: "LINK         RTT: %9dms  BANDWIDTH:  %7dMb/s ", mon.msRTT, mon.mbpsBandwidth))
-    Logger.info(String(format: "BUFFERLEFT:  SND: %11d  RCV:        %11d", mon.byteAvailSndBuf, mon.byteAvailRcvBuf))
+func printSrtStats(_ sid: Int, mon: inout CBytePerfMon) {
+    let stats = SrtStats(sid, mon: &mon)
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = .prettyPrinted
+    // swiftlint:disable:next force_try
+    let data = try! encoder.encode(stats)
+    if let json = String(data: data, encoding: .utf8) {
+        Logger.info(json)
+    }
 }
 
 func parseSrtUri(_ uri: String) throws -> (host: String, port: Int, par: [String: String]) {
