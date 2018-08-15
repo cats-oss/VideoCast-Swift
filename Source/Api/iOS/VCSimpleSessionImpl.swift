@@ -346,7 +346,7 @@ extension VCSimpleSession {
                 video.bitrate = min(Int(videoBr / 32000 + vector) * 32000, strongSelf.minVideoBitrate)
             }
 
-            Logger.info("\n(\(vector) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted)")
+            Logger.info("\n(\(vector)) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted))")
         }
 
         let sessionParameters = RTMPSessionParameters()

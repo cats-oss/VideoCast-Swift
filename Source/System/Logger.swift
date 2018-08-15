@@ -31,9 +31,9 @@ class Logger {
     }
 
 #if DEBUG
-    static let levelDef: LogFlags = .debug
+    static let levelDef: LogFlags = .levelDebug
 #else
-    static let levelDef: LogFlags = .info
+    static let levelDef: LogFlags = .levelInfo
 #endif
 
     static let asyncEnabled = true

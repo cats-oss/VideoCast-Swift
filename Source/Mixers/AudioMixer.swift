@@ -30,7 +30,7 @@ open class AudioMixer: IAudioMixer {
     var currentWindow: MixWindow
     var outgoingWindow: MixWindow?
 
-    private var mixQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
+    private var mixQueue = JobQueue("jp.co.cyberagent.VideoCast.composite", priority: .high)
 
     var epoch = Date()
     var nextMixTime = Date()
