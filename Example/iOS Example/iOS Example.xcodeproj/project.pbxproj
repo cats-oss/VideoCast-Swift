@@ -115,9 +115,9 @@
 		8151F3971FFF12F300615BF4 = {
 			isa = PBXGroup;
 			children = (
-				8151F3A21FFF12F300615BF4 /* Source */,
-				8151F3A11FFF12F300615BF4 /* Products */,
 				811D4B701FFF153C004EC189 /* VideoCast.xcodeproj */,
+				8151F3A11FFF12F300615BF4 /* Products */,
+				8151F3A21FFF12F300615BF4 /* Source */,
 			);
 			sourceTree = "<group>";
 		};

@@ -15,7 +15,7 @@ struct SrtStats: Codable {
     let link: SrtStatsLink
     let send: SrtStatsSend
     let recv: SrtStatsRecv
-    
+
     init(_ sid: Int, mon: inout CBytePerfMon) {
         self.sid = sid
         self.time = mon.msTimeStamp
@@ -30,7 +30,7 @@ struct SrtStatsWindow: Codable {
     let flow: Int32
     let congestion: Int32
     let flight: Int32
-    
+
     init(_ mon: inout CBytePerfMon) {
         flow = mon.pktFlowWindow
         congestion = mon.pktCongestionWindow
@@ -42,7 +42,7 @@ struct SrtStatsLink: Codable {
     let rtt: Double
     let bandwidth: Double
     let maxBandwidth: Double
-    
+
     init(_ mon: inout CBytePerfMon) {
         rtt = mon.msRTT
         bandwidth = mon.mbpsBandwidth
@@ -58,7 +58,7 @@ struct SrtStatsSend: Codable {
     let bytes: UInt64
     let bytesDropped: UInt64
     let mbitRate: Double
-    
+
     init(_ mon: inout CBytePerfMon) {
         packets = mon.pktSent
         packetsLost = mon.pktSndLoss
@@ -80,7 +80,7 @@ struct SrtStatsRecv: Codable {
     let bytesLost: UInt64
     let bytesDropped: UInt64
     let mbitRate: Double
-    
+
     init(_ mon: inout CBytePerfMon) {
         packets = mon.pktRecv
         packetsLost = mon.pktRcvLoss
