@@ -9,8 +9,6 @@
 import Foundation
 
 class SrtCommon {
-    var clear_stats: Int32 = 0
-
     //< Defines which of SND or RCV option variant should be used, also to set SRT_SENDER for output
     var output_direction: Bool = false
     var timeout: Int = 0 //< enforces using SRTO_SNDTIMEO or SRTO_RCVTIMEO, depending on @a m_output_direction

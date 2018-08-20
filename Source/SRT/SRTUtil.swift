@@ -8,7 +8,7 @@
 
 import Foundation
 
-func printSrtStats(_ sid: Int, mon: inout CBytePerfMon) {
+func printSrtStats(_ sid: Int32, mon: inout CBytePerfMon) {
     let stats = SrtStats(sid, mon: &mon)
     let encoder = JSONEncoder()
     encoder.outputFormatting = .prettyPrinted

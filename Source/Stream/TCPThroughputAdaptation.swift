@@ -227,7 +227,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
                 if vec > 0 {
                     previousIncrease = now
                 }
-                callback(vec, turnAvg, Int(detectedBytesPerSec))
+                _ = callback(vec, turnAvg, Int(detectedBytesPerSec))
             }
 
         }

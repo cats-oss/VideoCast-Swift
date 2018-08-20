@@ -255,7 +255,8 @@ extension VCSimpleSession {
                 break
             }
         }
-        self.outputSession = outputSession
+
+        startOutputSessionCommon(outputSession)
 
         let sessionParameters = SRTSessionParameters()
 
@@ -266,10 +267,7 @@ extension VCSimpleSession {
             logfile: "",
             internal_log: true,
             autoreconnect: false,
-            quiet: false,
-            fullstats: false,
-            report: 0,
-            stats: 0
+            quiet: false
         )
 
         outputSession.setSessionParameters(sessionParameters)
@@ -302,52 +300,8 @@ extension VCSimpleSession {
                 break
             }
         }
-        self.outputSession = outputSession
 
-        bpsCeiling = bitrate
-
-        if useAdaptiveBitrate {
-            bitrate = 500000
-        }
-
-        outputSession.setBandwidthCallback {[weak self] vector, predicted, _ in
-            guard let strongSelf = self else { return }
-
-            strongSelf.estimatedThroughput = Int(predicted)
-
-            guard let video = strongSelf.vtEncoder, let audio = strongSelf.aacEncoder,
-                strongSelf.useAdaptiveBitrate else { return }
-
-            strongSelf.delegate.detectedThroughput?(Int(predicted), video.bitrate)
-
-            guard vector != 0 else { return }
-
-            let vector = vector < 0 ? -1 : 1
-
-            let videoBr = video.bitrate
-
-            switch videoBr {
-            case 500001...:
-                audio.bitrate = 128000
-            case 250001...500000:
-                audio.bitrate = 96000
-            default:
-                audio.bitrate = 80000
-            }
-
-            switch videoBr {
-            case 1152001...:
-                video.bitrate = min(Int(videoBr / 384000 + vector) * 384000, strongSelf.bpsCeiling)
-            case 512001...:
-                video.bitrate = min(Int(videoBr / 128000 + vector) * 128000, strongSelf.bpsCeiling)
-            case 128001...:
-                video.bitrate = min(Int(videoBr / 64000 + vector) * 64000, strongSelf.bpsCeiling)
-            default:
-                video.bitrate = min(Int(videoBr / 32000 + vector) * 32000, strongSelf.minVideoBitrate)
-            }
-
-            Logger.info("\n(\(vector)) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted))")
-        }
+        startOutputSessionCommon(outputSession)
 
         let sessionParameters = RTMPSessionParameters()
 
@@ -361,5 +315,74 @@ extension VCSimpleSession {
         )
 
         outputSession.setSessionParameters(sessionParameters)
+    }
+
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    func startOutputSessionCommon(_ outputSession: IOutputSession) {
+        self.outputSession = outputSession
+
+        bpsCeiling = bitrate
+
+        if useAdaptiveBitrate {
+            bitrate = 500000
+        }
+
+        outputSession.setBandwidthCallback {[weak self] vector, predicted, _ in
+            guard let strongSelf = self else { return 0 }
+
+            strongSelf.estimatedThroughput = Int(predicted)
+
+            guard let video = strongSelf.vtEncoder, let audio = strongSelf.aacEncoder,
+                strongSelf.useAdaptiveBitrate else { return 0 }
+
+            strongSelf.delegate.detectedThroughput?(Int(predicted), video.bitrate)
+
+            let bytesPerSec = { (video.bitrate + audio.bitrate) / 8 }
+
+            guard vector != 0 else { return bytesPerSec() }
+
+            let vector = vector < 0 ? -1 : 1
+
+            let setAudioBitrate = { (videoBr: Int) in
+                switch videoBr {
+                case 500001...:
+                    audio.bitrate = 128000
+                case 250001...500000:
+                    audio.bitrate = 96000
+                default:
+                    audio.bitrate = 80000
+                }
+            }
+
+            if outputSession is SRTSession && predicted < Float(bytesPerSec()) {
+                let bwe = predicted * 8
+                let bitrate = Int(Double(bwe) / kBitrateRatio)
+
+                setAudioBitrate(bitrate)
+
+                let availableVideoBitrate = bitrate - audio.bitrate
+                video.bitrate = max(Int(Float(availableVideoBitrate)), strongSelf.minVideoBitrate)
+            } else {
+                let videoBr = video.bitrate
+
+                setAudioBitrate(videoBr)
+
+                switch videoBr {
+                case 1152001...:
+                    video.bitrate = min(Int(videoBr / 384000 + vector) * 384000, strongSelf.bpsCeiling)
+                case 512001...:
+                    video.bitrate = min(Int(videoBr / 128000 + vector) * 128000, strongSelf.bpsCeiling)
+                case 128001...:
+                    video.bitrate = min(Int(videoBr / 64000 + vector) * 64000, strongSelf.bpsCeiling)
+                default:
+                    video.bitrate = max(min(Int(videoBr / 32000 + vector) * 32000,
+                                            strongSelf.bpsCeiling), strongSelf.minVideoBitrate)
+                }
+            }
+
+            Logger.info("\n(\(vector)) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted))")
+
+            return bytesPerSec()
+        }
     }
 }

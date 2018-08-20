@@ -9,7 +9,6 @@
 import Foundation
 
 class SrtSource: SrtCommon {
-    static var counter: UInt32 = 1
     var hostport_copy: String = ""
 
     var isOpen: Bool {
@@ -63,21 +62,6 @@ class SrtSource: SrtCommon {
         if chunk < data.count {
             data = .init(repeating: 0, count: chunk)
         }
-
-        var perf: CBytePerfMon = .init()
-        srt_bstats(sock, &perf, clear_stats)
-        clear_stats = 0
-        if SrtConf.transmit_bw_report > 0 &&
-            (SrtSource.counter % SrtConf.transmit_bw_report) == SrtConf.transmit_bw_report - 1 {
-            Logger.info("+++/+++SRT BANDWIDTH: \(perf.mbpsBandwidth)")
-        }
-        if SrtConf.transmit_stats_report > 0 &&
-            (SrtSource.counter % SrtConf.transmit_stats_report) == SrtConf.transmit_stats_report - 1 {
-            printSrtStats(Int(sock), mon: &perf)
-            clear_stats = SrtConf.transmit_total_stats ? 0 : 1
-        }
-
-        SrtSource.counter += 1
 
         return true
     }
