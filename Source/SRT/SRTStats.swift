@@ -8,15 +8,15 @@
 
 import Foundation
 
-struct SrtStats: Codable {
-    let sid: Int
+class SrtStats: Codable {
+    let sid: Int32
     let time: Int64
     let window: SrtStatsWindow
     let link: SrtStatsLink
     let send: SrtStatsSend
     let recv: SrtStatsRecv
 
-    init(_ sid: Int, mon: inout CBytePerfMon) {
+    init(_ sid: Int32, mon: inout CBytePerfMon) {
         self.sid = sid
         self.time = mon.msTimeStamp
         self.window = SrtStatsWindow(&mon)

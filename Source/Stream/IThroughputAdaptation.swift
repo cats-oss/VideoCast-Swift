@@ -8,10 +8,13 @@
 
 import Foundation
 
+// ratio - stream bitrate / available bandwidth
+public let kBitrateRatio: Double = 1.5
+
 public typealias ThroughputCallback = (
     _ bitrateRecommendedVector: Float,
     _ predictedBytesPerSecond: Float,
-    _ immediateBytesPerSecond: Int) -> Void
+    _ immediateBytesPerSecond: Int) -> Int
 
 public protocol IThroughputAdaptation {
     func setThroughputCallback(_ callback: @escaping ThroughputCallback)

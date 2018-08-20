@@ -140,6 +140,8 @@
 		81E2E08A2008981A00DE5465 /* IPixelBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E2E0882008981A00DE5465 /* IPixelBuffer.swift */; };
 		81E2E08C2008BE2700DE5465 /* JobQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E2E08B2008BE2700DE5465 /* JobQueue.swift */; };
 		81E2E08D2008BE2700DE5465 /* JobQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E2E08B2008BE2700DE5465 /* JobQueue.swift */; };
+		81EC5132212564600012F2F6 /* SRTStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EC5131212564600012F2F6 /* SRTStatsManager.swift */; };
+		81EC5133212564600012F2F6 /* SRTStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EC5131212564600012F2F6 /* SRTStatsManager.swift */; };
 		81F4DB62203A95DE00966662 /* TSMultiplexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F4DB61203A95DE00966662 /* TSMultiplexer.swift */; };
 		81F4DB63203A95DE00966662 /* TSMultiplexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F4DB61203A95DE00966662 /* TSMultiplexer.swift */; };
 		81FACD5B20208773001FFD6B /* IStreamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FACD5A20208773001FFD6B /* IStreamSession.swift */; };
@@ -291,6 +293,7 @@
 		81E2E084200897B000DE5465 /* PixelBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBuffer.swift; sourceTree = "<group>"; };
 		81E2E0882008981A00DE5465 /* IPixelBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPixelBuffer.swift; sourceTree = "<group>"; };
 		81E2E08B2008BE2700DE5465 /* JobQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobQueue.swift; sourceTree = "<group>"; };
+		81EC5131212564600012F2F6 /* SRTStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTStatsManager.swift; sourceTree = "<group>"; };
 		81F4DB61203A95DE00966662 /* TSMultiplexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TSMultiplexer.swift; sourceTree = "<group>"; };
 		81FACD5A20208773001FFD6B /* IStreamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IStreamSession.swift; sourceTree = "<group>"; };
 		81FACD5D20208B50001FFD6B /* StreamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamSession.swift; sourceTree = "<group>"; };
@@ -650,6 +653,7 @@
 				819AEC942050CE70006D76A3 /* SRTSocketOptions.swift */,
 				B126AC24210DB9A700E1EEF3 /* SRTSource.swift */,
 				8116922F2125591D0074EA71 /* SRTStats.swift */,
+				81EC5131212564600012F2F6 /* SRTStatsManager.swift */,
 				B126AC21210DB98F00E1EEF3 /* SRTTarget.swift */,
 				81CE06F7204EA85000E71AB6 /* SRTTransmit.swift */,
 				81D3309E20500EEC001E6AE7 /* SRTUtil.swift */,
@@ -929,6 +933,7 @@
 				81E2E0892008981A00DE5465 /* IPixelBuffer.swift in Sources */,
 				B142946E210C471900B17FC2 /* RTMPSessionHandlePacket.swift in Sources */,
 				818F9E34202D7BBF006F586F /* MP4Multiplexer.swift in Sources */,
+				81EC5132212564600012F2F6 /* SRTStatsManager.swift in Sources */,
 				812B917D20188C6400D93731 /* Util.swift in Sources */,
 				813B2DDD201B14B4005658ED /* Buffer.swift in Sources */,
 				81D3309B204FEC17001E6AE7 /* udt_wrapper.cpp in Sources */,
@@ -1023,6 +1028,7 @@
 				B126AC26210DB9A700E1EEF3 /* SRTSource.swift in Sources */,
 				814265D41FFF6EBD001258F2 /* IVideoMixer.swift in Sources */,
 				818F9E35202D7BBF006F586F /* MP4Multiplexer.swift in Sources */,
+				81EC5133212564600012F2F6 /* SRTStatsManager.swift in Sources */,
 				81F4DB63203A95DE00966662 /* TSMultiplexer.swift in Sources */,
 				81DD027B200457210064A203 /* IVideoFilter.swift in Sources */,
 				81D1C1EF203290630087F23E /* GlowVideoFilter.swift in Sources */,

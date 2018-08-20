@@ -15,10 +15,7 @@ public typealias SRTSessionParameters = MetaData<(
     logfile: String,
     internal_log: Bool,
     autoreconnect: Bool,
-    quiet: Bool,
-    fullstats: Bool,
-    report: UInt32,
-    stats: UInt32
+    quiet: Bool
     )>
 
 public enum SRTClientState: Int {
@@ -63,6 +60,9 @@ open class SRTSession: IOutputSession {
     private var started: Bool = false
     private var ending: Atomic<Bool> = .init(false)
 
+    private var bandwidthCallback: BandwidthCallback?
+    private let statsManager: SrtStatsManager = .init()
+
     public init(uri: String, callback: @escaping SRTSessionStateCallback) {
         self.uri = uri
         self.callback = callback
@@ -80,9 +80,6 @@ open class SRTSession: IOutputSession {
         internal_log = data.internal_log
         autoreconnect = data.autoreconnect
         quiet = data.quiet
-        SrtConf.transmit_total_stats = data.fullstats
-        SrtConf.transmit_bw_report = data.report
-        SrtConf.transmit_stats_report = data.stats
 
         start()
     }
@@ -96,6 +93,7 @@ open class SRTSession: IOutputSession {
     }
 
     open func stop(_ callback: @escaping StopSessionCallback) {
+        statsManager.stop()
         ending.value = true
         cond.broadcast()
         if started {
@@ -166,7 +164,8 @@ open class SRTSession: IOutputSession {
     }
 
     open func setBandwidthCallback(_ callback: @escaping BandwidthCallback) {
-
+        bandwidthCallback = callback
+        statsManager.setThroughputCallback(callback)
     }
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length
@@ -318,6 +317,7 @@ open class SRTSession: IOutputSession {
                             } else {
                                 // force re-connection
                                 srt_epoll_remove_usock(pollid, s)
+                                statsManager.stop()
                                 tar = nil
                             }
                         case SRTS_CONNECTED:
@@ -327,6 +327,9 @@ open class SRTSession: IOutputSession {
                                 }
                                 tarConnected = true
                                 setClientState(.connected)
+                                if let tar = tar {
+                                    statsManager.start(tar.sock)
+                                }
                             }
 
                         default:
