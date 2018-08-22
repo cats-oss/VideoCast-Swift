@@ -142,22 +142,18 @@ open class AudioMixer: IAudioMixer {
 
         guard inSource.value != nil else { return }
 
-        let resampledBuffer = resample(data, size: size, metadata: inMeta)
+        var resampledBuffer = resample(data, size: size, metadata: inMeta)
 
-        if resampledBuffer.size == 0 {
-            resampledBuffer.resize(size)
-            resampledBuffer.put(data, size: size)
+        if resampledBuffer.buffer.isEmpty {
+            resampledBuffer.buffer.append(data, count: size)
         }
 
         mixQueue.enqueue { [weak self] in
             guard let strongSelf = self else { return }
-
-            var mixTime = cMixTime
-
-            let g: Float = 0.70710678118  // 1 / sqrt(2)
-
             guard let lSource = inSource.value else { return }
 
+            var mixTime = cMixTime
+            let g: Float = 0.70710678118  // 1 / sqrt(2)
             let h = hash(lSource)
 
             if let time = strongSelf.lastSampleTime[h],
@@ -166,9 +162,7 @@ open class AudioMixer: IAudioMixer {
             }
 
             var startOffset = 0
-
             var window: MixWindow? = currentWindow
-
             let diff = mixTime.timeIntervalSince(currentWindow.start)
 
             if diff > 0 {
@@ -176,59 +170,46 @@ open class AudioMixer: IAudioMixer {
                     Double(strongSelf.bytesPerSample)) & ~(strongSelf.bytesPerSample-1)
 
                 while let size = window?.size, startOffset >= size {
-                    startOffset = (startOffset - size)
+                    startOffset -= size
                     window = window?.next
-
                 }
             } else {
                 startOffset = 0
             }
 
-            let sampleDuration = Double(resampledBuffer.size) / Double(strongSelf.bytesPerSample *
+            let sampleDuration = Double(resampledBuffer.buffer.count) / Double(strongSelf.bytesPerSample *
                 strongSelf.outFrequencyInHz)
-
             let mult = strongSelf.inGain[h].map { $0 * g } ?? 0
 
-            var ptr: UnsafePointer<UInt8>?
-            resampledBuffer.read(&ptr, size: resampledBuffer.size)
+            resampledBuffer.buffer.withUnsafeBytes { (p: UnsafePointer<Int16>) in
+                var mix = p
+                var bytesLeft = resampledBuffer.buffer.count
+                var so = startOffset
 
-            guard var p = ptr else {
-                Logger.debug("unexpected return")
-                return
-            }
-
-            var bytesLeft = resampledBuffer.size
-
-            var so = startOffset
-
-            while bytesLeft > 0 {
-                guard let _window = window else {
-                    Logger.debug("unexpected return")
-                    break
-                }
-
-                let rawp = UnsafeRawPointer(p)
-                let toCopy = min(size - so, bytesLeft)
-
-                let count = toCopy / MemoryLayout<Int16>.size
-
-                let mix = rawp.bindMemory(to: Int16.self, capacity: count)
-
-                if let ptr = _window.buffer.withUnsafeMutableBytes({ $0.baseAddress }) {
-                    let winMix = (ptr + so).bindMemory(to: Int16.self, capacity: count)
-                    for i in 0..<count {
-                        winMix[i] = AudioMixer.TPMixSamples(winMix[i], Int16(Float(mix[i])*mult))
+                while bytesLeft > 0 {
+                    guard let _window = window else {
+                        Logger.debug("unexpected return")
+                        break
                     }
 
-                    p += toCopy
-                    bytesLeft -= toCopy
+                    let toCopy = min(size - so, bytesLeft)
+                    let count = toCopy / MemoryLayout<Int16>.size
 
-                    if bytesLeft > 0 {
-                        window = window?.next
-                        so = 0
+                    _window.buffer[so...].withUnsafeMutableBufferPointer {
+                        let winMix = UnsafeMutableRawBufferPointer($0).bindMemory(to: Int16.self)
+                        for i in 0..<count {
+                            winMix[i] = AudioMixer.TPMixSamples(winMix[i], Int16(Float((mix + i).pointee)*mult))
+                        }
+
+                        mix += count
+                        bytesLeft -= toCopy
+
+                        if bytesLeft > 0 {
+                            window = window?.next
+                            so = 0
+                        }
                     }
                 }
-
             }
 
             strongSelf.lastSampleTime[h] = mixTime + sampleDuration

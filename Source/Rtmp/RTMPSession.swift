@@ -25,8 +25,8 @@ open class RTMPSession: IOutputSession {
 
     private let networkWaitSemaphore: DispatchSemaphore = .init(value: 0)
 
-    let s1: Buffer = .init()
-    let c1: Buffer = .init()
+    var s1: Data = .init()
+    var c1: Data = .init()
     var uptime: UInt32 = 0
 
     let throughputSession: TCPThroughputAdaptation = .init()
@@ -125,8 +125,8 @@ open class RTMPSession: IOutputSession {
 
     func write(_ data: UnsafePointer<UInt8>, size: Int, packetTime: Date = .init(), isKeyframe: Bool = false) {
         if size > 0 {
-            let buf = Buffer(size)
-            buf.put(data, size: size)
+            var buf = Data(capacity: size)
+            buf.append(data, count: size)
 
             throughputSession.addBufferSizeSample(Int(bufferSize))
 
@@ -138,26 +138,23 @@ open class RTMPSession: IOutputSession {
                 clearing = true
             }
             networkQueue.enqueue {
-                var tosend = size
+                buf.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) in
+                    var p = ptr
+                    var tosend = buf.count
 
-                var ptr: UnsafePointer<UInt8>?
-                buf.read(&ptr, size: size)
-                guard var p = ptr else {
-                    Logger.debug("unexpected return")
-                    return
-                }
-
-                while tosend > 0 && !self.ending && (!self.clearing || self.sentKeyframe == packetTime) {
-                    self.clearing = false
-                    let sent = self.streamSession.write(p, size: tosend)
-                    p += sent
-                    tosend -= sent
-                    self.throughputSession.addSentBytesSample(sent)
-                    if sent == 0 {
-                        _ = self.networkWaitSemaphore.wait(timeout: DispatchTime.now() +
-                            DispatchTimeInterval.seconds(1))
+                    while tosend > 0 && !self.ending && (!self.clearing || self.sentKeyframe == packetTime) {
+                        self.clearing = false
+                        let sent = self.streamSession.write(p, size: tosend)
+                        p += sent
+                        tosend -= sent
+                        self.throughputSession.addSentBytesSample(sent)
+                        if sent == 0 {
+                            _ = self.networkWaitSemaphore.wait(timeout: DispatchTime.now() +
+                                DispatchTimeInterval.seconds(1))
+                        }
                     }
                 }
+
                 self.increaseBuffer(-Int64(size))
             }
         }
@@ -198,8 +195,8 @@ open class RTMPSession: IOutputSession {
                     }
                 case .handshake1s1:
                     if streamInBuffer.availableBytes >= kRTMPSignatureSize {
-                        s1.resize(kRTMPSignatureSize)
-                        s1.put(streamInBuffer.readBuffer, size: kRTMPSignatureSize)
+                        s1 = Data(capacity: kRTMPSignatureSize)
+                        s1.append(streamInBuffer.readBuffer, count: kRTMPSignatureSize)
                         streamInBuffer.didRead(kRTMPSignatureSize)
                         handshake()
                     } else {
@@ -285,8 +282,8 @@ extension RTMPSession {
         guard !ending, let inMetadata = metadata as? RTMPMetadata, let metaData = inMetadata.data else { return }
 
         // make the lamdba capture the data
-        let buf = Buffer(size)
-        buf.put(data, size: size)
+        var buf = Data(capacity: size)
+        buf.append(data.assumingMemoryBound(to: UInt8.self), count: size)
 
         jobQueue.enqueue {
             if !self.ending {
@@ -294,48 +291,45 @@ extension RTMPSession {
 
                 var chunk: [UInt8] = .init()
                 chunk.reserveCapacity(size+64)
-                var len = buf.size
+                var len = buf.count
                 var tosend = min(len, self.outChunkSize)
-                var ptr: UnsafePointer<UInt8>?
-                buf.read(&ptr, size: buf.size)
-                guard var p = ptr else {
-                    Logger.debug("unexpected return")
-                    return
-                }
-                let ts = UInt64(metaData.timestamp)
-                let chunkStreamId = metaData.chunkStreamId
-                var streamId = metaData.msgStreamId.rawValue
+                buf.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) in
+                    var p = ptr
+                    let ts = UInt64(metaData.timestamp)
+                    let chunkStreamId = metaData.chunkStreamId
+                    var streamId = metaData.msgStreamId.rawValue
 
-                if let it = self.previousChunkData[chunkStreamId] {
-                    // Type 1.
-                    put_byte(&chunk, val: RTMP_CHUNK_TYPE_1 | (chunkStreamId.rawValue & 0x1F))
-                    put_be24(&chunk, val: Int32(ts - it))   // timestamp delta
-                    put_be24(&chunk, val: Int32(metaData.msgLength))
-                    put_byte(&chunk, val: metaData.msgTypeId.rawValue)
-                } else {
-                    // Type 0.
-                    put_byte(&chunk, val: chunkStreamId.rawValue & 0x1F)
-                    put_be24(&chunk, val: Int32(ts))
-                    put_be24(&chunk, val: Int32(metaData.msgLength))
-                    put_byte(&chunk, val: metaData.msgTypeId.rawValue)
-                    // msg stream id is little-endian
-                    put_buff(&chunk, src: &streamId, srcsize: MemoryLayout<Int32>.size)
-                }
+                    if let it = self.previousChunkData[chunkStreamId] {
+                        // Type 1.
+                        put_byte(&chunk, val: RTMP_CHUNK_TYPE_1 | (chunkStreamId.rawValue & 0x1F))
+                        put_be24(&chunk, val: Int32(ts - it))   // timestamp delta
+                        put_be24(&chunk, val: Int32(metaData.msgLength))
+                        put_byte(&chunk, val: metaData.msgTypeId.rawValue)
+                    } else {
+                        // Type 0.
+                        put_byte(&chunk, val: chunkStreamId.rawValue & 0x1F)
+                        put_be24(&chunk, val: Int32(ts))
+                        put_be24(&chunk, val: Int32(metaData.msgLength))
+                        put_byte(&chunk, val: metaData.msgTypeId.rawValue)
+                        // msg stream id is little-endian
+                        put_buff(&chunk, src: &streamId, srcsize: MemoryLayout<Int32>.size)
+                    }
 
-                self.previousChunkData[chunkStreamId] = ts
-                put_buff(&chunk, src: p, srcsize: tosend)
-
-                len -= tosend
-                p += tosend
-
-                while len > 0 {
-                    tosend = min(len, self.outChunkSize)
-                    put_byte(&chunk, val: RTMP_CHUNK_TYPE_3 | (chunkStreamId.rawValue & 0x1F))
+                    self.previousChunkData[chunkStreamId] = ts
                     put_buff(&chunk, src: p, srcsize: tosend)
-                    p+=tosend
-                    len-=tosend
+
+                    len -= tosend
+                    p += tosend
+
+                    while len > 0 {
+                        tosend = min(len, self.outChunkSize)
+                        put_byte(&chunk, val: RTMP_CHUNK_TYPE_3 | (chunkStreamId.rawValue & 0x1F))
+                        put_buff(&chunk, src: p, srcsize: tosend)
+                        p+=tosend
+                        len-=tosend
+                    }
+                    self.write(chunk, size: chunk.count, packetTime: packetTime, isKeyframe: metaData.isKeyframe)
                 }
-                self.write(chunk, size: chunk.count, packetTime: packetTime, isKeyframe: metaData.isKeyframe)
             }
         }
     }

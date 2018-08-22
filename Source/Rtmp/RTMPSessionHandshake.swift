@@ -18,8 +18,8 @@ extension RTMPSession {
         case .handshake1s1:
             handshake2()
         default:
-            c1.resize(0)
-            s1.resize(0)
+            c1.removeAll()
+            s1.removeAll()
         }
     }
 
@@ -36,39 +36,36 @@ extension RTMPSession {
     private func handshake1() {
         setClientState(.handshake1s0)
 
-        c1.resize(kRTMPSignatureSize)
-        var ptr: UnsafePointer<UInt8>?
-        c1.read(&ptr, size: kRTMPSignatureSize)
-        guard let p = ptr else {
-            Logger.debug("unexpected return")
-            return
-        }
+        c1.removeAll()
+        c1.reserveCapacity(kRTMPSignatureSize)
 
         uptime = CFSwapInt32HostToBig(UInt32(ProcessInfo().systemUptime * 1000))
-        c1.put(&uptime, size: MemoryLayout<UInt32>.size)
+        withUnsafeBytes(of: &uptime, {
+            c1.append($0.bindMemory(to: UInt8.self))
+        })
 
         var zero: UInt32 = 0
-        c1.append(&zero, size: MemoryLayout<UInt32>.size)
+        withUnsafeBytes(of: &zero, {
+            c1.append($0.bindMemory(to: UInt8.self))
+        })
 
-        let sig = c1.getMutable()
-        for i in 8 ..< kRTMPSignatureSize {
-            sig[i] = UInt8(arc4random_uniform(256))
+        for _ in 8 ..< kRTMPSignatureSize {
+            c1.append(UInt8(arc4random_uniform(256)))
         }
 
-        write(p, size: kRTMPSignatureSize)
+        c1.withUnsafeBytes { (p: UnsafePointer<UInt8>) in
+            write(p, size: c1.count)
+        }
     }
 
     private func handshake2() {
         setClientState(.handshake2)
-        var ptr: UnsafePointer<UInt8>?
-        s1.read(&ptr, size: kRTMPSignatureSize)
-        guard var p = ptr else {
-            Logger.debug("unexpected return")
-            return
+        s1.withUnsafeMutableBytes { (p: UnsafeMutablePointer<UInt32>) in
+            (p + 1).pointee = uptime
         }
-        p += 4
-        memcpy(UnsafeMutablePointer<UInt8>(mutating: p), &uptime, MemoryLayout<UInt32>.size)
 
-        write(s1.get(), size: s1.size)
+        s1.withUnsafeBytes { (p: UnsafePointer<UInt8>) in
+            write(p, size: s1.count)
+        }
     }
 }

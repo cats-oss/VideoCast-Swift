@@ -9,13 +9,8 @@
 import Foundation
 
 struct SRTOptionValue {
-    var value: UnsafeRawPointer {
-        return data.withUnsafeBytes({ (p: UnsafePointer<UInt8>) -> UnsafeRawPointer in
-            return UnsafeRawPointer(p)
-        })
-    }
     var size: Int { return data.count }
-    private let data: Data
+    let data: Data
 
     init(_ data: Data) {
         self.data = data
@@ -61,7 +56,9 @@ struct SRTSocketOption {
         var oo: SRTOptionValue?
         extract(type, value: value, o: &oo)
         guard let o = oo else { return false }
-        let result = setso(socket, data: o.value, size: Int32(o.size))
+        let result = o.data.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) in
+            return setso(socket, data: ptr, size: Int32(o.size))
+        }
         return result != -1
     }
 
