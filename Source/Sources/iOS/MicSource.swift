@@ -100,7 +100,7 @@ open class MicSource: ISource {
 
                 do {
                     try session.setCategory(AVAudioSessionCategoryPlayAndRecord,
-                                            with: [.defaultToSpeaker, .mixWithOthers])
+                                            with: [.defaultToSpeaker, .mixWithOthers, .allowBluetooth])
                     try session.setActive(true)
                 } catch {
                     Logger.error("Failed to set up audio session: \(error)")
