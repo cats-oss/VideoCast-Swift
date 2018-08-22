@@ -263,93 +263,89 @@ extension TSMultiplexer {
         var pts = metadata.pts
         var dts = metadata.dts
 
-        let buf = Buffer(size)
-        buf.put(data, size: size)
+        var buf = Data(capacity: size)
+        buf.append(data.assumingMemoryBound(to: UInt8.self), count: size)
 
         jobQueue.enqueue {
-            var ptr: UnsafePointer<UInt8>?
-            buf.read(&ptr, size: buf.size)
-            guard let p = ptr else {
-                Logger.debug("unexpected return")
-                return
-            }
+            buf.withUnsafeBytes { (p: UnsafePointer<UInt8>) in
+                let size = buf.count
+                let st = self.streams[metadata.streamIndex]
+                guard let ts_st = st.data else { return }
+                let delay: CMTime = self.max_delay.convertScale(90000, method: .default)
+                let stream_id = -1
 
-            let st = self.streams[metadata.streamIndex]
-            guard let ts_st = st.data else { return }
-            let delay: CMTime = self.max_delay.convertScale(90000, method: .default)
-            let stream_id = -1
+                // correct for pts < dts which some players (ffmpeg) don't like
+                // swiftlint:disable:next shorthand_operator
+                pts = pts + self.ctsOffset
+                dts = dts.isNumeric ? dts : (st.mediaType == .video ? pts - self.ctsOffset : pts)
 
-            // correct for pts < dts which some players (ffmpeg) don't like
-            // swiftlint:disable:next shorthand_operator
-            pts = pts + self.ctsOffset
-            dts = dts.isNumeric ? dts : (st.mediaType == .video ? pts - self.ctsOffset : pts)
-
-            if self.ts.flags.contains(.resend_headers) {
-                self.ts.pat_packet_count = self.ts.pat_packet_period - 1
-                self.ts.sdt_packet_count = self.ts.sdt_packet_period - 1
-                self.ts.flags.remove(.resend_headers)
-            }
-
-            if !self.ts.copyts {
-                if pts.isNumeric {
-                    // swiftlint:disable:next shorthand_operator
-                    pts = pts + delay
+                if self.ts.flags.contains(.resend_headers) {
+                    self.ts.pat_packet_count = self.ts.pat_packet_period - 1
+                    self.ts.sdt_packet_count = self.ts.sdt_packet_period - 1
+                    self.ts.flags.remove(.resend_headers)
                 }
-                if dts.isNumeric {
-                    // swiftlint:disable:next shorthand_operator
-                    dts = dts + delay
-                }
-            }
 
-            guard !ts_st.first_pts_check || pts.isNumeric else {
-                Logger.error("first pts value must be set")
-                return
-            }
-            ts_st.first_pts_check = false
-
-            let cond = { (dts: CMTime?, payload_dts: CMTime?, delay: CMTime) -> Bool in
-                guard let dts = dts, let payload_dts = payload_dts else { return false }
-                return dts - payload_dts > delay
-            }
-
-            if dts.isNumeric {
-                for st2 in self.streams {
-                    guard let ts_st2 = st2.data else { continue }
-                    if !ts_st2.payload.isEmpty
-                        && (ts_st2.payload_dts == nil ||
-                            cond(dts, ts_st2.payload_dts, CMTimeMultiplyByRatio(delay, 1, 2))) {
-                        self.write_pes(st2, payload: ts_st2.payload, payload_size: ts_st2.payload.count,
-                                       pts: ts_st2.payload_pts, dts: ts_st2.payload_dts,
-                                       key: ts_st2.key, steram_id: stream_id)
-                        ts_st2.payload.removeAll(keepingCapacity: true)
+                if !self.ts.copyts {
+                    if pts.isNumeric {
+                        // swiftlint:disable:next shorthand_operator
+                        pts = pts + delay
+                    }
+                    if dts.isNumeric {
+                        // swiftlint:disable:next shorthand_operator
+                        dts = dts + delay
                     }
                 }
-            }
 
-            if !ts_st.payload.isEmpty && (ts_st.payload.count + size > self.ts.pes_payload_size ||
-                (dts.isNumeric && ts_st.payload_dts != nil &&
-                    cond(dts, ts_st.payload_dts, self.max_delay))) {
-                self.write_pes(st, payload: ts_st.payload, payload_size: ts_st.payload.count,
-                               pts: ts_st.payload_pts, dts: ts_st.payload_dts,
-                               key: ts_st.key, steram_id: stream_id)
-                ts_st.payload.removeAll(keepingCapacity: true)
-            }
+                guard !ts_st.first_pts_check || pts.isNumeric else {
+                    Logger.error("first pts value must be set")
+                    return
+                }
+                ts_st.first_pts_check = false
 
-            if st.mediaType != .audio || size > self.ts.pes_payload_size {
-                assert(ts_st.payload.isEmpty)
-                // for video and subtitle, write a single pes packet
-                self.write_pes(st, payload: p, payload_size: size,
-                               pts: pts, dts: dts, key: metadata.isKey, steram_id: stream_id)
-                return
-            }
+                let cond = { (dts: CMTime?, payload_dts: CMTime?, delay: CMTime) -> Bool in
+                    guard let dts = dts, let payload_dts = payload_dts else { return false }
+                    return dts - payload_dts > delay
+                }
 
-            if ts_st.payload.isEmpty {
-                ts_st.payload_pts = pts
-                ts_st.payload_dts = dts
-                ts_st.key = metadata.isKey
-            }
+                if dts.isNumeric {
+                    for st2 in self.streams {
+                        guard let ts_st2 = st2.data else { continue }
+                        if !ts_st2.payload.isEmpty
+                            && (ts_st2.payload_dts == nil ||
+                                cond(dts, ts_st2.payload_dts, CMTimeMultiplyByRatio(delay, 1, 2))) {
+                            self.write_pes(st2, payload: ts_st2.payload, payload_size: ts_st2.payload.count,
+                                           pts: ts_st2.payload_pts, dts: ts_st2.payload_dts,
+                                           key: ts_st2.key, steram_id: stream_id)
+                            ts_st2.payload.removeAll(keepingCapacity: true)
+                        }
+                    }
+                }
 
-            ts_st.payload.append(contentsOf: UnsafeBufferPointer<UInt8>(start: p, count: size))
+                if !ts_st.payload.isEmpty && (ts_st.payload.count + size > self.ts.pes_payload_size ||
+                    (dts.isNumeric && ts_st.payload_dts != nil &&
+                        cond(dts, ts_st.payload_dts, self.max_delay))) {
+                    self.write_pes(st, payload: ts_st.payload, payload_size: ts_st.payload.count,
+                                   pts: ts_st.payload_pts, dts: ts_st.payload_dts,
+                                   key: ts_st.key, steram_id: stream_id)
+                    ts_st.payload.removeAll(keepingCapacity: true)
+                }
+
+                if st.mediaType != .audio || size > self.ts.pes_payload_size {
+                    assert(ts_st.payload.isEmpty)
+                    // for video and subtitle, write a single pes packet
+                    self.write_pes(st, payload: p, payload_size: size,
+                                   pts: pts, dts: dts, key: metadata.isKey, steram_id: stream_id)
+                    return
+                }
+
+                if ts_st.payload.isEmpty {
+                    ts_st.payload_pts = pts
+                    ts_st.payload_dts = dts
+                    ts_st.key = metadata.isKey
+                }
+
+                ts_st.payload.append(contentsOf: UnsafeBufferPointer<UInt8>(start: p, count: size))
+            }
         }
     }
 }

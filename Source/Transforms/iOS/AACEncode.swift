@@ -21,7 +21,7 @@ open class AACEncode: IEncoder {
     private var bytesPerSample: UInt32 = 0
     private var outputPacketMaxSize: UInt32 = 0
 
-    private let outputBuffer: Buffer = .init()
+    private var outputBuffer: Data = .init()
 
     private var _bitrate: Int
     private var asc: [UInt8] = .init(repeating: 0, count: 2)
@@ -233,51 +233,55 @@ open class AACEncode: IEncoder {
         let aac_packet_count = sampleCount / Int(kSamplesPerFrame)
         let required_bytes = aac_packet_count * Int(outputPacketMaxSize)
 
-        if outputBuffer.size < required_bytes {
-            outputBuffer.resize(required_bytes)
+        if outputBuffer.count < required_bytes {
+            outputBuffer = Data(count: required_bytes)
         }
-        var p = outputBuffer.getMutable()
-        var p_out = data.assumingMemoryBound(to: UInt8.self)
 
-        for i in 0..<aac_packet_count {
-            var num_packets: UInt32 = 1
+        outputBuffer.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>) in
+            var p = ptr
+            var p_out = data.assumingMemoryBound(to: UInt8.self)
 
-            var buf = AudioBuffer()
-            buf.mDataByteSize = outputPacketMaxSize * num_packets
-            buf.mData = UnsafeMutableRawPointer(p)
-            var l = AudioBufferList(
-                mNumberBuffers: 1,
-                mBuffers: buf)
+            for i in 0..<aac_packet_count {
+                var num_packets: UInt32 = 1
 
-            var ud = UserData(
-                data: UnsafeMutableRawPointer(mutating: p_out),
-                size: kSamplesPerFrame * bytesPerSample,
-                packetSize: bytesPerSample,
-                pd: nil)
+                var buf = AudioBuffer()
+                buf.mDataByteSize = outputPacketMaxSize * num_packets
+                buf.mData = UnsafeMutableRawPointer(p)
+                var l = AudioBufferList(
+                    mNumberBuffers: 1,
+                    mBuffers: buf)
 
-            var output_packet_desc: UnsafeMutablePointer<AudioStreamPacketDescription>? =
-                .allocate(capacity: Int(num_packets))
-            defer {
-                output_packet_desc?.deallocate()
+                var ud = UserData(
+                    data: UnsafeMutableRawPointer(mutating: p_out),
+                    size: kSamplesPerFrame * bytesPerSample,
+                    packetSize: bytesPerSample,
+                    pd: nil)
+
+                var output_packet_desc: UnsafeMutablePointer<AudioStreamPacketDescription>? =
+                    .allocate(capacity: Int(num_packets))
+                defer {
+                    output_packet_desc?.deallocate()
+                }
+                converterQueue.sync {
+                    _ = AudioConverterFillComplexBuffer(audioConverter, ioProc, &ud,
+                                                        &num_packets, &l, output_packet_desc)
+                }
+
+                if let output_packet_desc = output_packet_desc {
+                    p += Int(output_packet_desc[0].mDataByteSize)
+                }
+                p_out += Int(kSamplesPerFrame * bytesPerSample)
             }
-            converterQueue.sync {
-                _ = AudioConverterFillComplexBuffer(audioConverter, ioProc, &ud, &num_packets, &l, output_packet_desc)
-            }
+            let totalBytes = p - ptr
 
-            if let output_packet_desc = output_packet_desc {
-                p += Int(output_packet_desc[0].mDataByteSize)
-            }
-            p_out += Int(kSamplesPerFrame * bytesPerSample)
-        }
-        let totalBytes = p - outputBuffer.getMutable()
+            if let output = output, totalBytes > 0 {
+                if !sentConfig {
+                    output.pushBuffer(asc, size: MemoryLayout<UInt8>.size * asc.count, metadata: metadata)
+                    sentConfig = true
+                }
 
-        if let output = output, totalBytes > 0 {
-            if !sentConfig {
-                output.pushBuffer(asc, size: MemoryLayout<UInt8>.size * asc.count, metadata: metadata)
-                sentConfig = true
+                output.pushBuffer(ptr, size: totalBytes, metadata: metadata)
             }
-
-            output.pushBuffer(outputBuffer.get(), size: totalBytes, metadata: metadata)
         }
     }
 

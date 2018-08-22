@@ -164,7 +164,9 @@ func get_double(_ buf: [UInt8]) -> Double {
 
 func get_double(_ buf: ArraySlice<UInt8>) -> Double {
     var arg: CFSwappedFloat64 = .init()
-    memcpy(&arg, buf.withUnsafeBytes { $0.baseAddress }, MemoryLayout<CFSwappedFloat64>.size)
+    _ = buf.withUnsafeBytes {
+        memcpy(&arg, $0.baseAddress, MemoryLayout<CFSwappedFloat64>.size)
+    }
     return CFConvertDoubleSwappedToHost(arg)
 }
 
@@ -194,66 +196,9 @@ func put_named_bool(_ data: inout [UInt8], name: String, val: Bool) {
 }
 
 class Buffer {
-    private var buffer: [UInt8]
-    var size: Int
-    var total: Int
+    var buffer: Data
 
     init(_ size: Int = 0) {
-        total = size
-        self.size = 0
-        buffer = [UInt8]()
-        resize(size)
-    }
-
-    @discardableResult
-    func resize(_ size: Int) -> Int {
-        if size > 0 {
-            buffer = [UInt8](repeating: 0, count: size)
-        } else {
-            buffer = [UInt8]()
-        }
-        total = size
-        self.size = 0
-
-        return size
-    }
-
-    func get() -> UnsafePointer<UInt8> {
-        return buffer.withUnsafeBufferPointer { $0.baseAddress! }
-    }
-
-    func getMutable() -> UnsafeMutablePointer<UInt8> {
-        return buffer.withUnsafeMutableBufferPointer { $0.baseAddress! }
-    }
-
-    @discardableResult
-    func put(_ buf: UnsafeRawPointer, size: Int) -> Int {
-        let size = size > self.total ? self.total : size
-
-        let p = buf.assumingMemoryBound(to: UInt8.self)
-        let arr = Array(UnsafeBufferPointer(start: p, count: size))
-        buffer[..<size] = arr.prefix(size)
-        self.size = size
-        return size
-    }
-
-    @discardableResult
-    func append(_ buf: UnsafeRawPointer, size: Int) -> Int {
-        let size = size + self.size > self.total ? self.total - self.size : size
-
-        let p = buf.assumingMemoryBound(to: UInt8.self)
-        let arr = Array(UnsafeBufferPointer(start: p, count: size))
-        buffer[self.size..<size + self.size] = arr.prefix(size)
-        self.size += size
-        return size
-    }
-
-    @discardableResult
-    func read(_ buf: inout UnsafePointer<UInt8>?, size: Int) -> Int {
-        let size = size > self.size ? self.size : size
-
-        buf = buffer.withUnsafeBufferPointer { $0.baseAddress }
-
-        return size
+        buffer = Data(count: size)
     }
 }

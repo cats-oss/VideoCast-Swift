@@ -170,29 +170,30 @@ extension AudioMixer {
             usesOSStruct: inUsesOSStruct
         )
 
-        let mData = outBuffer.getMutable()
+        outBuffer.buffer.withUnsafeMutableBytes { (mData: UnsafeMutablePointer<UInt8>) in
+             var outBufferList = AudioBufferList(
+                mNumberBuffers: 1,
+                mBuffers: AudioBuffer(
+                    mNumberChannels: UInt32(outChannelCount),
+                    mDataByteSize: UInt32(outBufferSize),
+                    mData: mData
+            ))
 
-        var outBufferList = AudioBufferList(
-            mNumberBuffers: 1,
-            mBuffers: AudioBuffer(
-                mNumberChannels: UInt32(outChannelCount),
-                mDataByteSize: UInt32(outBufferSize),
-                mData: mData
-        ))
+            var sampleCount = UInt32(outBufferSampleCount)
+            let status = AudioConverterFillComplexBuffer(inConverter,  /* AudioConverterRef inAudioConverter */
+                AudioMixer.ioProc,    /* AudioConverterComplexInputDataProc inInputDataProc */
+                &userData, /* void *inInputDataProcUserData */
+                &sampleCount, /* UInt32 *ioOutputDataPacketSize */
+                &outBufferList,   /* AudioBufferList *outOutputData */
+                nil   /* AudioStreamPacketDescription *outPacketDescription */
+            )
+            if status != noErr {
+                Logger.error("status = \(status) (\(String(format: "%x", status))")
+            }
 
-        var sampleCount = UInt32(outBufferSampleCount)
-        let status = AudioConverterFillComplexBuffer(inConverter,  /* AudioConverterRef inAudioConverter */
-            AudioMixer.ioProc,    /* AudioConverterComplexInputDataProc inInputDataProc */
-            &userData, /* void *inInputDataProcUserData */
-            &sampleCount, /* UInt32 *ioOutputDataPacketSize */
-            &outBufferList,   /* AudioBufferList *outOutputData */
-            nil   /* AudioStreamPacketDescription *outPacketDescription */
-        )
-        if status != noErr {
-            Logger.error("status = \(status) (\(String(format: "%x", status))")
+            outBuffer.buffer.count = Int(outBufferList.mBuffers.mDataByteSize)
         }
 
-        outBuffer.size = Int(outBufferList.mBuffers.mDataByteSize)
         return outBuffer
     }
 

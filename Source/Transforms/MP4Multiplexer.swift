@@ -407,14 +407,11 @@ extension MP4Multiplexer {
             sizeParamArray.insert(vps.count, at: 0)
         }
 
-        let paramterSetPointers = UnsafePointer<UnsafePointer<UInt8>>(dataParamArray)
-        let parameterSetSizes = UnsafePointer<Int>(sizeParamArray)
-
         switch videoCodecType {
         case kCMVideoCodecType_H264:
             let ret = CMVideoFormatDescriptionCreateFromH264ParameterSets(
-                kCFAllocatorDefault, dataParamArray.count, paramterSetPointers,
-                parameterSetSizes, 4, &videoFormat)
+                kCFAllocatorDefault, dataParamArray.count, &dataParamArray,
+                &sizeParamArray, 4, &videoFormat)
             guard ret == noErr else {
                 Logger.error("could not create video format for h264")
                 return
@@ -424,8 +421,8 @@ extension MP4Multiplexer {
                 let ret = CMVideoFormatDescriptionCreateFromHEVCParameterSets(
                     kCFAllocatorDefault,
                     dataParamArray.count,
-                    paramterSetPointers,
-                    parameterSetSizes,
+                    &dataParamArray,
+                    &sizeParamArray,
                     4,
                     nil,
                     &videoFormat)

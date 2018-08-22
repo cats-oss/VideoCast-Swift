@@ -111,16 +111,16 @@ open class SRTSession: IOutputSession {
             bufReady = sendBuf
             sendBuf = nil
         } else {
-            if let buf = sendBuf, size + buf.size <= buf.total {
-                buf.append(data, size: size)
-                if buf.size == buf.total {
+            if let buf = sendBuf, size + buf.buffer.count <= SrtConf.transmit_chunk_size {
+                buf.buffer.append(data.assumingMemoryBound(to: UInt8.self), count: size)
+                if buf.buffer.count == SrtConf.transmit_chunk_size {
                     bufReady = buf
                     sendBuf = nil
                 }
             } else {
                 bufReady = sendBuf
-                let newBuf = Buffer(Int(SrtConf.transmit_chunk_size))
-                newBuf.put(data, size: size)
+                let newBuf = Buffer()
+                newBuf.buffer.append(data.assumingMemoryBound(to: UInt8.self), count: size)
                 sendBuf = newBuf
             }
         }
@@ -131,20 +131,15 @@ open class SRTSession: IOutputSession {
                     do {
                         guard let tar = self.tar else { return }
 
-                        var ptr: UnsafePointer<UInt8>?
-                        buf.read(&ptr, size: buf.size)
-                        guard let p = UnsafeRawPointer(ptr) else {
-                            Logger.debug("unexpected return")
-                            return
-                        }
-
-                        let data = p.assumingMemoryBound(to: Int8.self)
-                        if !tar.isOpen {
-                            self.lostBytes += buf.size
-                        } else if try !tar.write(data, size: buf.size) {
-                            self.lostBytes += buf.size
-                        } else {
-                            self.wroteBytes += buf.size
+                        try buf.buffer.withUnsafeBytes { (data: UnsafePointer<Int8>) in
+                            let size = buf.buffer.count
+                            if !tar.isOpen {
+                                self.lostBytes += size
+                            } else if try !tar.write(data, size: size) {
+                                self.lostBytes += size
+                            } else {
+                                self.wroteBytes += size
+                            }
                         }
 
                         if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes) {

@@ -78,29 +78,31 @@ class CRC {
 
         let ctx = table[crcId.rawValue]
         var crc = crc
-        var buffer = buffer.withUnsafeBufferPointer { $0.baseAddress! }
-        let end = buffer + length
+        buffer.withUnsafeBufferPointer {
+            guard var buffer = $0.baseAddress else { return }
+            let end = buffer + length
 
-        if ctx[256] == 0 {
-            while (Int(bitPattern: buffer) & 3) != 0 && buffer < end {
-                crc = ctx[Int(UInt8(crc) ^ buffer.pointee)] ^ (crc >> 8)
+            if ctx[256] == 0 {
+                while (Int(bitPattern: buffer) & 3) != 0 && buffer < end {
+                    crc = ctx[Int(UInt8(crc) ^ buffer.pointee)] ^ (crc >> 8)
+                    buffer += 1
+                }
+
+                while buffer < end - 3 {
+                    crc ^= CFSwapInt32LittleToHost(UnsafeRawPointer(buffer).load(as: UInt32.self))
+                    buffer += 4
+                    let c1 = ctx[Int(3 * 256 + ( crc        & 0xFF))]
+                    let c2 = ctx[Int(2 * 256 + ((crc >> 8 ) & 0xFF))]
+                    let c3 = ctx[Int(1 * 256 + ((crc >> 16) & 0xFF))]
+                    let c4 = ctx[Int(0 * 256 + ((crc >> 24)       ))]
+                    crc = c1 ^ c2 ^ c3 ^ c4
+                }
+            }
+
+            while buffer < end {
+                crc = ctx[Int(UInt8(crc & 0xff) ^ buffer.pointee)] ^ (crc >> 8)
                 buffer += 1
             }
-
-            while buffer < end - 3 {
-                crc ^= CFSwapInt32LittleToHost(UnsafeRawPointer(buffer).load(as: UInt32.self))
-                buffer += 4
-                let c1 = ctx[Int(3 * 256 + ( crc        & 0xFF))]
-                let c2 = ctx[Int(2 * 256 + ((crc >> 8 ) & 0xFF))]
-                let c3 = ctx[Int(1 * 256 + ((crc >> 16) & 0xFF))]
-                let c4 = ctx[Int(0 * 256 + ((crc >> 24)       ))]
-                crc = c1 ^ c2 ^ c3 ^ c4
-            }
-        }
-
-        while buffer < end {
-            crc = ctx[Int(UInt8(crc & 0xff) ^ buffer.pointee)] ^ (crc >> 8)
-            buffer += 1
         }
 
         return crc

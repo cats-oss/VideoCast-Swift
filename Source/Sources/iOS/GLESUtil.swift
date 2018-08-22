@@ -117,14 +117,16 @@ func compileShader(type: GLuint, source: String) -> GLuint {
 #if DEBUG
     if compiled == 0 {
         var length: GLint = 0
-        var log: [GLchar]
+        var log: Data
 
         glGetShaderiv(shader, GLenum(GL_INFO_LOG_LENGTH), &length)
-        log = Array(repeating: GLchar(0), count: Int(length))
 
-        glGetShaderInfoLog(shader, length, &length, UnsafeMutablePointer(mutating: log))
+        log = Data(count: Int(length))
+        log.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<GLchar>) in
+            glGetShaderInfoLog(shader, length, &length, ptr)
+        }
         Logger.error("\(type == GL_VERTEX_SHADER ? "GL_VERTEX_SHADER" : "GL_FRAGMENT_SHADER") " +
-            "compilation error: \(log)")
+            "compilation error: \(String(data: log, encoding: .utf8) ?? "")")
 
         return 0
     }
@@ -139,7 +141,7 @@ func buildProgram(vertex: String, fragment: String) -> GLuint {
 
     var len: GLint = 0
 #if DEBUG
-    var log: [GLchar]
+    var log: Data
 #endif
 
     vshad = compileShader(type: GLuint(GL_VERTEX_SHADER), source: vertex)
@@ -153,11 +155,12 @@ func buildProgram(vertex: String, fragment: String) -> GLuint {
 
 #if DEBUG
     if len > 0 {
-        log = Array(repeating: GLchar(0), count: Int(len))
+        log = Data(count: Int(len))
+        log.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<GLchar>) in
+            glGetProgramInfoLog(p, len, &len, ptr)
+        }
 
-        glGetProgramInfoLog(p, len, &len, UnsafeMutablePointer(mutating: log))
-
-        Logger.debug("program log: \(log)")
+        Logger.debug("program log: \(String(data: log, encoding: .utf8) ?? "")")
     }
 #endif
 
