@@ -87,7 +87,8 @@ open class MicSource: ISource {
     // swiftlint:disable:next function_body_length
     public init(sampleRate: Double = 48000,
                 preferedChannelCount: Int = 2,
-                excludeAudioUnit: ((AudioUnit) -> Void)? = nil) {
+                excludeAudioUnit: ((AudioUnit) -> Void)? = nil,
+                mode: String = AVAudioSessionModeDefault) {
         self.sampleRate = sampleRate
         self.channelCount = preferedChannelCount
 
@@ -105,6 +106,12 @@ open class MicSource: ISource {
                 } catch {
                     Logger.error("Failed to set up audio session: \(error)")
                     return
+                }
+
+                do {
+                    try session.setMode(mode)
+                } catch {
+                    Logger.error("Failed to set mode: \(error)")
                 }
 
                 do {
