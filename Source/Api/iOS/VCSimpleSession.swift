@@ -45,7 +45,7 @@ open class VCSimpleSession {
     var bpsCeiling = 0
 
     private var _torch = false
-    private var _audioChannelCount = 2
+    private var _audioChannelCount = 1
     private var _audioSampleRate: Float = 48000
     private var _micGain: Float = 1
     private var _cameraState: VCCameraState

@@ -33,7 +33,7 @@ open class MicSource: ISource {
     private var component: AudioComponent?
 
     private let sampleRate: Double
-    private let channelCount: Int
+    private var channelCount: Int
 
     private weak var output: IOutput?
 
@@ -86,10 +86,10 @@ open class MicSource: ISource {
      */
     // swiftlint:disable:next function_body_length
     public init(sampleRate: Double = 48000,
-                channelCount: Int = 2,
+                preferedChannelCount: Int = 2,
                 excludeAudioUnit: ((AudioUnit) -> Void)? = nil) {
         self.sampleRate = sampleRate
-        self.channelCount = channelCount
+        self.channelCount = preferedChannelCount
 
         let session = AVAudioSession.sharedInstance()
 
@@ -103,9 +103,18 @@ open class MicSource: ISource {
                                             with: [.defaultToSpeaker, .mixWithOthers])
                     try session.setActive(true)
                 } catch {
-                    Logger.error("Failed to set up audio session!")
+                    Logger.error("Failed to set up audio session: \(error)")
                     return
                 }
+
+                do {
+                    try session.setPreferredInputNumberOfChannels(preferedChannelCount)
+                } catch {
+                    Logger.info("Failed to set preferred input number of channels: \(error)")
+                }
+
+                let channelCount = session.inputNumberOfChannels
+                strongSelf.channelCount = channelCount
 
                 var acd = AudioComponentDescription(
                     componentType: kAudioUnitType_Output,

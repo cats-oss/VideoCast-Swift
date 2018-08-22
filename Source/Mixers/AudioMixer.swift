@@ -142,7 +142,7 @@ open class AudioMixer: IAudioMixer {
 
         guard inSource.value != nil else { return }
 
-        var resampledBuffer = resample(data, size: size, metadata: inMeta)
+        let resampledBuffer = resample(data, size: size, metadata: inMeta)
 
         if resampledBuffer.buffer.isEmpty {
             resampledBuffer.buffer.append(data, count: size)
@@ -192,7 +192,7 @@ open class AudioMixer: IAudioMixer {
                         break
                     }
 
-                    let toCopy = min(size - so, bytesLeft)
+                    let toCopy = min(_window.size - so, bytesLeft)
                     let count = toCopy / MemoryLayout<Int16>.size
 
                     _window.buffer[so...].withUnsafeMutableBufferPointer {

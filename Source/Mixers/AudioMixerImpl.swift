@@ -170,7 +170,7 @@ extension AudioMixer {
             usesOSStruct: inUsesOSStruct
         )
 
-        outBuffer.buffer.withUnsafeMutableBytes { (mData: UnsafeMutablePointer<UInt8>) in
+        let size: Int = outBuffer.buffer.withUnsafeMutableBytes { (mData: UnsafeMutablePointer<UInt8>) in
              var outBufferList = AudioBufferList(
                 mNumberBuffers: 1,
                 mBuffers: AudioBuffer(
@@ -190,9 +190,9 @@ extension AudioMixer {
             if status != noErr {
                 Logger.error("status = \(status) (\(String(format: "%x", status))")
             }
-
-            outBuffer.buffer.count = Int(outBufferList.mBuffers.mDataByteSize)
+            return Int(outBufferList.mBuffers.mDataByteSize)
         }
+        outBuffer.buffer.count = size
 
         return outBuffer
     }

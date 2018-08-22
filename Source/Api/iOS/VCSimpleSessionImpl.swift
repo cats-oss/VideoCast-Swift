@@ -111,7 +111,7 @@ extension VCSimpleSession {
         }
 
         // Add mic source
-        micSource = MicSource(sampleRate: Double(audioSampleRate), channelCount: audioChannelCount)
+        micSource = MicSource(sampleRate: Double(audioSampleRate), preferedChannelCount: audioChannelCount)
         micSource?.setOutput(audioMixer)
 
         let epoch = Date()
@@ -134,7 +134,8 @@ extension VCSimpleSession {
         // Add encoders
 
         let aacEncoder =
-            AACEncode(frequencyInHz: Int(audioSampleRate), channelCount: audioChannelCount, averageBitrate: 96000)
+            AACEncode(frequencyInHz: Int(audioSampleRate), channelCount: audioChannelCount,
+                      averageBitrate: audioChannelCount > 1 ? 105000 : 88000)
         self.aacEncoder = aacEncoder
 
         let vtEncoder = VTEncode(
@@ -346,11 +347,11 @@ extension VCSimpleSession {
             let setAudioBitrate = { (videoBr: Int) in
                 switch videoBr {
                 case 500001...:
-                    audio.bitrate = 128000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 128000 : 108000
                 case 250001...500000:
-                    audio.bitrate = 96000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 86000 : 72000
                 default:
-                    audio.bitrate = 80000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 57000 : 48000
                 }
             }
 
