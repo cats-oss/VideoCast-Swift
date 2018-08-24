@@ -46,8 +46,10 @@ extension VCSimpleSession {
         audioMixer.setMinimumBufferDuration(frameDuration * 2)
 
         // Add video mixer
+        /*videoMixer = MetalVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height),
+                                     frameDuration: frameDuration)*/
         videoMixer = GLESVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height),
-                                    frameDuration: frameDuration)
+                                     frameDuration: frameDuration)
 
         let videoSplit = Split()
 
@@ -58,7 +60,7 @@ extension VCSimpleSession {
             guard let strongSelf = self else { return }
 
             let pixelBuffer = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
-            preview.drawFrame(pixelBuffer: pixelBuffer)
+            preview.drawFrame(pixelBuffer)
 
             if strongSelf.sessionState == .none {
                 strongSelf.sessionState = .previewStarted
