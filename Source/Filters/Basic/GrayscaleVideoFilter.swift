@@ -12,21 +12,16 @@ import GLKit
 open class GrayscaleVideoFilter: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
 
-    open override var pixelKernel: String? {
-        return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
-precision mediump float;
-varying vec2      vCoord;
-uniform sampler2D uTex0;
-void main(void) {
-   vec4 color = texture2D(uTex0, vCoord);
-   float gray = dot(color.rgb, vec3(0.3, 0.59, 0.11));
-   gl_FragColor = vec4(gray, gray, gray, color.a);
-}
-""")
+    open override var fragmentFunc: String {
+        return "grayscale_fragment"
     }
 
     open override var name: String {
         return "jp.co.cyberagent.VideoCast.filters.grayscale"
+    }
+
+    open override var piplineDescripter: String? {
+        return "grayscalePiplineState"
     }
 
     private static func registerFilter() -> Bool {

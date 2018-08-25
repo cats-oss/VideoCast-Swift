@@ -7,25 +7,18 @@
 //
 
 import Foundation
+import Metal
 import GLKit
 
-func kernel(language: FilterLanguage, target: FilterLanguage, kernelstr: String) -> String? {
-    return language == target ? kernelstr : nil
-}
-
-public enum FilterLanguage {
-    case GL_ES2_3
-    case GL_2
-    case GL_3
-}
-
 public protocol IVideoFilter: IFilter {
-    var vertexKernel: String? { get }
-    var pixelKernel: String? { get }
+    var vertexFunc: String { get }
+    var fragmentFunc: String { get }
+    var piplineDescripter: String? { get }
 
-    var filterLanguage: FilterLanguage { get set }
-    var program: GLuint { get set }
+    var renderPipelineState: MTLRenderPipelineState? { get set }
 
     var matrix: GLKMatrix4 { get set }
     var dimensions: CGSize { get set }
+
+    func render(_ renderEncoder: MTLRenderCommandEncoder)
 }

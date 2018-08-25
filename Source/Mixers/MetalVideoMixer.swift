@@ -1,23 +1,24 @@
 //
-//  GLESVideoMixer.swift
+//  MetalVideoMixer.swift
 //  VideoCast
 //
-//  Created by Tomohiro Matsuzawa on 2018/01/10.
+//  Created by Tomohiro Matsuzawa on 2018/08/23.
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
 import Foundation
+import Metal
 import GLKit
 
 /*
  *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that
-    has been composited from the various sources.
+ has been composited from the various sources.
  *  Sources must output VideoBufferMetadata with their buffers. This compositor uses homogeneous coordinates.
  */
-open class GLESVideoMixer: IVideoMixer {
+open class MetalVideoMixer: IVideoMixer {
     public var filterFactory = FilterFactory()
 
-    let glJobQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
+    let metalJobQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
 
     let bufferDuration: TimeInterval
 
@@ -29,16 +30,18 @@ open class GLESVideoMixer: IVideoMixer {
 
     let pixelBufferPool: CVPixelBufferPool?
     var pixelBuffer = [CVPixelBuffer?](repeating: nil, count: 2)
-    var textureCache: CVOpenGLESTextureCache?
-    var texture = [CVOpenGLESTexture?](repeating: nil, count: 2)
+    var textureCache: CVMetalTextureCache?
+    var texture = [CVMetalTexture?](repeating: nil, count: 2)
 
-    private let callbackSession: GLESObjCCallback
-    var glesCtx: EAGLContext?
-    var vbo: GLuint = 0
-    private var vao: GLuint = 0
-    var fbo = [GLuint](repeating: 0, count: 2)
-    private var prog: GLuint = 0
-    private var uMat: GLuint = 0
+    var renderPassDescriptor = MTLRenderPassDescriptor()
+    var vertexBuffer: MTLBuffer?
+    var colorSamplerState: MTLSamplerState?
+    var metalTexture = [MTLTexture?](repeating: nil, count: 2)
+
+    private let callbackSession: MetalObjCCallback
+
+    let device: MTLDevice = MTLCreateSystemDefaultDevice()!
+    var commandQueue: MTLCommandQueue!
 
     let frameW: Int
     let frameH: Int
@@ -67,16 +70,12 @@ open class GLESVideoMixer: IVideoMixer {
      *  \param frame_w          The width of the output frame
      *  \param frame_h          The height of the output frame
      *  \param frameDuration    The duration of time a frame is presented, in seconds. 30 FPS would be (1/30)
-     *  \param excludeContext   An optional lambda method that is called when the mixer generates its GL ES context.
-     *                          The parameter of this method will be a pointer to its EAGLContext.  This is useful for
-     *                          applications that may be capturing GLES data and do not wish to capture the mixer.
      */
     public init(
         frame_w: Int,
         frame_h: Int,
         frameDuration: TimeInterval,
-        pixelBufferPool: CVPixelBufferPool? = nil,
-        excludeContext: (() -> Void)? = nil) {
+        pixelBufferPool: CVPixelBufferPool? = nil) {
         bufferDuration = frameDuration
         frameW = frame_w
         frameH = frame_h
@@ -85,41 +84,25 @@ open class GLESVideoMixer: IVideoMixer {
         zRange.0 = .max
         zRange.1 = .min
 
-        callbackSession = GLESObjCCallback()
+        callbackSession = MetalObjCCallback()
         callbackSession.mixer = self
 
-        perfGLSync(glContext: glesCtx, jobQueue: glJobQueue) {
-            self.setupGLES(excludeContext: excludeContext)
+        metalJobQueue.enqueueSync {
+            self.setupMetal()
         }
     }
 
     deinit {
-        Logger.debug("GLESVideoMixer::deinit")
+        Logger.debug("MetalVideoMixer::deinit")
 
-        perfGLSync(glContext: glesCtx, jobQueue: glJobQueue) {
-            glDeleteFramebuffers(2, self.fbo)
-            glDeleteBuffers(1, &self.vbo)
-            if let texture0 = self.texture[0], let texture1 = self.texture[1] {
-                let textures: [GLuint] = [
-                    CVOpenGLESTextureGetName(texture0),
-                    CVOpenGLESTextureGetName(texture1)
-                ]
-                glDeleteTextures(2, textures)
-            }
-
+        metalJobQueue.enqueueSync {
             self.sourceBuffers.removeAll()
-
-            if let textureCache = self.textureCache {
-                CVOpenGLESTextureCacheFlush(textureCache, 0)
-            }
-
-            self.glesCtx = nil
         }
 
         _mixThread?.cancel()
 
-        glJobQueue.markExiting()
-        glJobQueue.enqueueSync {}
+        metalJobQueue.markExiting()
+        metalJobQueue.enqueueSync {}
     }
 
     /*! IMixer::registerSource */
@@ -140,7 +123,7 @@ open class GLESVideoMixer: IVideoMixer {
 
     /*! IMixer::unregisterSource */
     open func unregisterSource(_ source: ISource) {
-        Logger.debug("GLESVideoMixer::unregisterSource")
+        Logger.debug("MetalVideoMixer::unregisterSource")
         releaseBuffer(WeakRefISource(value: source))
 
         let hashValue = hash(source)
@@ -164,7 +147,7 @@ open class GLESVideoMixer: IVideoMixer {
 
             for layerInnerIndex in stride(from: layerMap_i.count - 1, through: 0, by: -1)
                 where layerMap_i[layerInnerIndex] == hashValue {
-                layerMap[layerIndex]?.remove(at: layerInnerIndex)
+                    layerMap[layerIndex]?.remove(at: layerInnerIndex)
             }
         }
     }
@@ -207,7 +190,7 @@ open class GLESVideoMixer: IVideoMixer {
 
         let source = metaData.source
 
-        guard let textureCache = textureCache, let glesCtx = glesCtx, let hashValue = hashWeak(source) else {
+        guard let textureCache = textureCache, let hashValue = hashWeak(source) else {
             return Logger.debug("unexpected return")
         }
 
@@ -216,8 +199,7 @@ open class GLESVideoMixer: IVideoMixer {
         if sourceBuffers[hashValue] == nil {
             sourceBuffers[hashValue] = .init()
         }
-        sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache,
-                                            jobQueue: glJobQueue, glContext: glesCtx)
+        sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache, jobQueue: metalJobQueue)
         sourceBuffers[hashValue]?.blends = metaData.blends
 
         if layerMap[zIndex] == nil {
@@ -250,32 +232,5 @@ open class GLESVideoMixer: IVideoMixer {
 
     open func mixPaused(_ paused: Bool) {
         self.paused.value = paused
-    }
-}
-
-// Dispatch and execute synchronously
-func perfGLSync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
-    perfGL(isSync: true, glContext: glContext, jobQueue: jobQueue, execute: execute)
-}
-
-// Dispatch and execute asynchronously
-func perfGLAsync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
-    perfGL(isSync: false, glContext: glContext, jobQueue: jobQueue, execute: execute)
-}
-
-// Convenience function to dispatch an OpenGL ES job to the created JobQueue
-private func perfGL(isSync: Bool, glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
-    let cl = {
-        let context = EAGLContext.current()
-        if let glContext = glContext {
-            EAGLContext.setCurrent(glContext)
-        }
-        execute()
-        EAGLContext.setCurrent(context)
-    }
-    if isSync {
-        jobQueue.enqueueSync(cl)
-    } else {
-        jobQueue.enqueue(cl)
     }
 }

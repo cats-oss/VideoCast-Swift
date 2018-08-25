@@ -91,10 +91,14 @@ class CRC {
                 while buffer < end - 3 {
                     crc ^= CFSwapInt32LittleToHost(UnsafeRawPointer(buffer).load(as: UInt32.self))
                     buffer += 4
-                    let c1 = ctx[Int(3 * 256 + ( crc        & 0xFF))]
-                    let c2 = ctx[Int(2 * 256 + ((crc >> 8 ) & 0xFF))]
-                    let c3 = ctx[Int(1 * 256 + ((crc >> 16) & 0xFF))]
-                    let c4 = ctx[Int(0 * 256 + ((crc >> 24)       ))]
+                    let t1 = crc        & 0xFF
+                    let c1 = ctx[Int(3 * 256 + t1)]
+                    let t2 = (crc >> 8 ) & 0xFF
+                    let c2 = ctx[Int(2 * 256 + t2)]
+                    let t3 = (crc >> 16) & 0xFF
+                    let c3 = ctx[Int(1 * 256 + t3)]
+                    let t4 = (crc >> 24)
+                    let c4 = ctx[Int(0 * 256 + t4)]
                     crc = c1 ^ c2 ^ c3 ^ c4
                 }
             }

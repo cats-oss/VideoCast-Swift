@@ -1,19 +1,18 @@
 //
-//  GLESVideoMixerImpl.swift
+//  MetalVideoMixerImpl.swift
 //  VideoCast
 //
-//  Created by Tomohiro Matsuzawa on 7/29/18.
+//  Created by Tomohiro Matsuzawa on 2018/08/23.
 //  Copyright © 2018 CyberAgent, Inc. All rights reserved.
 //
 
 import Foundation
+import Metal
 import GLKit
-import CoreVideo
-import CoreMedia
 
-extension GLESVideoMixer {
-    final class GLESObjCCallback: NSObject {
-        weak var mixer: GLESVideoMixer?
+extension MetalVideoMixer {
+    final class MetalObjCCallback: NSObject {
+        weak var mixer: MetalVideoMixer?
 
         override init() {
             super.init()
@@ -41,7 +40,7 @@ extension GLESVideoMixer {
     final class SourceBuffer {
         private class BufferContainer {
             var buffer: PixelBuffer
-            var texture: CVOpenGLESTexture?
+            var texture: CVMetalTexture?
             var time = Date()
 
             init(_ buf: PixelBuffer) {
@@ -53,15 +52,14 @@ extension GLESVideoMixer {
             }
         }
 
-        var currentTexture: CVOpenGLESTexture?
+        var currentTexture: CVMetalTexture?
         var currentBuffer: PixelBuffer?
         var blends = false
 
         private var pixelBuffers = [CVPixelBuffer: BufferContainer]()
 
         // swiftlint:disable:next function_body_length
-        func setBuffer(_ pixelBuffer: PixelBuffer, textureCache: CVOpenGLESTextureCache,
-                       jobQueue: JobQueue, glContext: EAGLContext) {
+        func setBuffer(_ pixelBuffer: PixelBuffer, textureCache: CVMetalTextureCache, jobQueue: JobQueue) {
             var flush = false
             let now = Date()
 
@@ -73,7 +71,7 @@ extension GLESVideoMixer {
                 currentTexture = bufferContainer.texture
                 bufferContainer.time = now
             } else {
-                perfGLAsync(glContext: glContext, jobQueue: jobQueue) { [weak self] in
+                jobQueue.enqueue { [weak self] in
                     guard let strongSelf = self else { return }
 
                     pixelBuffer.lock(true)
@@ -81,18 +79,15 @@ extension GLESVideoMixer {
                     let format = pixelBuffer.pixelFormat
                     let is32bit = format != kCVPixelFormatType_16LE565
 
-                    var texture: CVOpenGLESTexture?
-                    let ret = CVOpenGLESTextureCacheCreateTextureFromImage(
+                    var texture: CVMetalTexture?
+                    let ret = CVMetalTextureCacheCreateTextureFromImage(
                         kCFAllocatorDefault,
                         textureCache,
                         pixelBuffer.cvBuffer,
                         nil,
-                        GLenum(GL_TEXTURE_2D),
-                        is32bit ? GL_RGBA : GL_RGB,
-                        GLsizei(pixelBuffer.width),
-                        GLsizei(pixelBuffer.height),
-                        GLenum(is32bit ? GL_BGRA : GL_RGB),
-                        GLenum(is32bit ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5),
+                        is32bit ? MTLPixelFormat.bgra8Unorm : MTLPixelFormat.b5g6r5Unorm,
+                        pixelBuffer.width,
+                        pixelBuffer.height,
                         0,
                         &texture
                     )
@@ -100,12 +95,6 @@ extension GLESVideoMixer {
                     pixelBuffer.unlock(true)
 
                     if ret == noErr, let texture = texture {
-                        glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
-                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GL_LINEAR)
-                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GL_LINEAR)
-                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GL_CLAMP_TO_EDGE)
-                        glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GL_CLAMP_TO_EDGE)
-
                         let bufferContainer = BufferContainer(pixelBuffer)
                         strongSelf.pixelBuffers[pixelBuffer.cvBuffer] = bufferContainer
                         bufferContainer.texture = texture
@@ -121,16 +110,17 @@ extension GLESVideoMixer {
                 flush = true
             }
 
-            perfGLAsync(glContext: glContext, jobQueue: jobQueue) {
-                for (pixelBuffer, bufferContainer) in self.pixelBuffers
+            jobQueue.enqueue { [weak self] in
+                guard let strongSelf = self else { return }
+                for (pixelBuffer, bufferContainer) in strongSelf.pixelBuffers
                     where bufferContainer.buffer.isTemporary &&
-                        bufferContainer.buffer.cvBuffer != self.currentBuffer?.cvBuffer {
+                        bufferContainer.buffer.cvBuffer != strongSelf.currentBuffer?.cvBuffer {
                             // Buffer is temporary, release it.
-                            self.pixelBuffers[pixelBuffer] = nil
+                            strongSelf.pixelBuffers[pixelBuffer] = nil
                 }
 
                 if flush {
-                    CVOpenGLESTextureCacheFlush(textureCache, 0)
+                    CVMetalTextureCacheFlush(textureCache, 0)
                 }
             }
         }
@@ -195,81 +185,106 @@ extension GLESVideoMixer {
                 locked[currentFb] = true
 
                 mixing.value = true
-                perfGLAsync(glContext: glesCtx, jobQueue: glJobQueue) {
-                    glPushGroupMarkerEXT(0, "Videocast.Mix")
-                    glBindFramebuffer(GLenum(GL_FRAMEBUFFER), self.fbo[currentFb])
-
+                metalJobQueue.enqueue { [weak self] in
+                    guard let strongSelf = self else { return }
                     var currentFilter: IVideoFilter?
-                    glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
-                    var layerKey = self.zRange.0
 
-                    while layerKey <= self.zRange.1 {
-                        guard let layerMap = self.layerMap[layerKey] else {
-                            Logger.debug("unexpected return")
+                    // create a new command buffer for each renderpass to the current drawable
+                    guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
+
+                    guard let destinationTexture = strongSelf.metalTexture[currentFb] else { return }
+                    strongSelf.setupRenderPassDescriptorForTexture(destinationTexture)
+
+                    // create a render command encoder so we can render into something
+                    guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
+                        descriptor: strongSelf.renderPassDescriptor) else { return }
+
+                    for layerKey in (strongSelf.zRange.0...strongSelf.zRange.1) {
+                        guard let layerMap = strongSelf.layerMap[layerKey] else {
                             continue
                         }
 
                         for key in layerMap {
-                            var texture: CVOpenGLESTexture?
-                            let filter = self.sourceFilters.index(forKey: key)
+                            var texture: CVMetalTexture?
+                            let filter = strongSelf.sourceFilters.index(forKey: key)
 
                             if filter == nil {
                                 let newFilter =
-                                    self.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
-                                self.sourceFilters[key] = newFilter as? IVideoFilter
+                                    strongSelf.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
+                                strongSelf.sourceFilters[key] = newFilter as? IVideoFilter
                             }
 
-                            if currentFilter !== self.sourceFilters[key] {
+                            if currentFilter !== strongSelf.sourceFilters[key] {
                                 if let currentFilter = currentFilter {
                                     currentFilter.unbind()
                                 }
-                                currentFilter = self.sourceFilters[key]
+                                currentFilter = strongSelf.sourceFilters[key]
 
                                 if let currentFilter = currentFilter, !currentFilter.initialized {
                                     currentFilter.initialize()
                                 }
                             }
 
-                            guard let iTex = self.sourceBuffers[key] else {
+                            guard let iTex = strongSelf.sourceBuffers[key] else {
                                 Logger.debug("unexpected return")
                                 continue
                             }
 
                             texture = iTex.currentTexture
 
-                            // TODO: Add blending.
-                            if iTex.blends {
-                                glEnable(GLenum(GL_BLEND))
-                                glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
-                            }
-                            if let texture = texture, let currentFilter = currentFilter {
-                                currentFilter.matrix = self.sourceMats[key] ?? GLKMatrix4Identity
+                            if let texture = texture,
+                                let sourceTexture = CVMetalTextureGetTexture(texture),
+                                let vertexBuffer = strongSelf.vertexBuffer,
+                                let currentFilter = currentFilter {
+
+                                // setup for GPU debugger
+                                renderEncoder.pushDebugGroup("VideoCast.Mix \(layerKey):\(key)")
+
+                                let mat = strongSelf.sourceMats[key] ?? GLKMatrix4Identity
+
+                                // flip y
+                                let flip = GLKVector3Make(1, -1, 1)
+                                currentFilter.matrix = GLKMatrix4ScaleWithVector3(mat, flip)
+
                                 currentFilter.bind()
-                                glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
-                                glDrawArrays(GLenum(GL_TRIANGLES), 0, 6)
+                                currentFilter.render(renderEncoder)
+
+                                // set the static vertex buffers
+                                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+
+                                // fragment texture for environment
+                                renderEncoder.setFragmentTexture(sourceTexture, index: 0)
+
+                                renderEncoder.setFragmentSamplerState(strongSelf.colorSamplerState, index: 0)
+
+                                // tell the render context we want to draw our primitives
+                                renderEncoder.drawPrimitives(type: .triangle,
+                                                             vertexStart: 0,
+                                                             vertexCount: s_vertexData.count)
+
+                                renderEncoder.popDebugGroup()
                             } else {
                                 Logger.error("Null texture!")
                             }
-                            if iTex.blends {
-                                glDisable(GLenum(GL_BLEND))
-                            }
                         }
-                        layerKey += 1
                     }
-                    glFlush()
-                    glPopGroupMarkerEXT()
 
-                    if let lout = self.output {
-                        let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(self.epoch),
+                    renderEncoder.endEncoding()
+
+                    // finalize rendering here. this will push the command buffer to the GPU
+                    commandBuffer.commit()
+
+                    if let lout = strongSelf.output {
+                        let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(strongSelf.epoch),
                                                                preferredTimescale: VC_TIME_BASE))
                         let nextFb = (currentFb + 1) % 2
-                        if self.pixelBuffer[nextFb] != nil {
-                            lout.pushBuffer(&self.pixelBuffer[nextFb]!,
+                        if strongSelf.pixelBuffer[nextFb] != nil {
+                            lout.pushBuffer(&strongSelf.pixelBuffer[nextFb]!,
                                             size: MemoryLayout<CVPixelBuffer>.size, metadata: md)
                         }
                     }
 
-                    self.mixing.value = false
+                    strongSelf.mixing.value = false
                 }
 
                 currentFb = (currentFb + 1) % 2
@@ -282,39 +297,10 @@ extension GLESVideoMixer {
     /*!
      * Setup the OpenGL ES context, shaders, and state.
      *
-     * \param excludeContext An optional lambda method that is called when the mixer generates its GL ES context.
-     *                       The parameter of this method will be a pointer to its EAGLContext.  This is useful for
-     *                       applications that may be capturing GLES data and do not wish to capture the mixer.
      */
     // swiftlint:disable:next function_body_length
-    func setupGLES(excludeContext: (() -> Void)?) {
-        glesCtx = EAGLContext(api: .openGLES3)
-        if glesCtx == nil {
-            glesCtx = EAGLContext(api: .openGLES2)
-        }
-
-        guard let glesCtx = glesCtx else {
-            return Logger.error("Error! Unable to create an OpenGL ES 2.0 or 3.0 Context!")
-        }
-        EAGLContext.setCurrent(nil)
-        EAGLContext.setCurrent(glesCtx)
-        excludeContext?()
-
-        //
-        // Shared-memory FBOs
-        //
-        // What we are doing here is creating a couple of shared-memory textures to double-buffer the mixer and give us
-        // direct access to the framebuffer data.
-        //
-        // There are several steps in this process:
-        // 1. Create CVPixelBuffers that are created as IOSurfaces.  This is mandatory and only
-        //    requires specifying the kCVPixelBufferIOSurfacePropertiesKey.
-        // 2. Create a CVOpenGLESTextureCache
-        // 3. Create a CVOpenGLESTextureRef for each CVPixelBuffer.
-        // 4. Create an OpenGL ES Framebuffer for each CVOpenGLESTextureRef and
-        //    set that texture as the color attachment.
-        //
-        // We may now attach these FBOs as the render target and avoid using the costly glGetPixels.
+    func setupMetal() {
+        commandQueue = device.makeCommandQueue()
 
         autoreleasepool {
             if let pixelBufferPool = pixelBufferPool {
@@ -335,13 +321,15 @@ extension GLESVideoMixer {
                                     pixelBufferOptions as NSDictionary?, &pixelBuffer[1])
             }
         }
-        CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, nil, glesCtx, nil, &textureCache)
+        CVMetalTextureCacheCreate(kCFAllocatorDefault,
+                                  nil,
+                                  device,
+                                  nil,
+                                  &textureCache)
 
         guard let textureCache = textureCache else {
-            return Logger.debug("unexpected return")
+            fatalError("textureCache creation failed")
         }
-
-        glGenFramebuffers(2, &fbo)
 
         for i in (0 ... 1) {
             guard let pixelBuffer = pixelBuffer[i] else {
@@ -349,47 +337,47 @@ extension GLESVideoMixer {
                 break
             }
 
-            CVOpenGLESTextureCacheCreateTextureFromImage(
-                kCFAllocatorDefault,
-                textureCache, pixelBuffer,
-                nil,
-                GLenum(GL_TEXTURE_2D),
-                GL_RGBA,
-                GLsizei(frameW),
-                GLsizei(frameH),
-                GLenum(GL_BGRA),
-                GLenum(GL_UNSIGNED_BYTE),
-                0,
-                &texture[i]
-            )
+            CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                      textureCache,
+                                                      pixelBuffer,
+                                                      nil,
+                                                      MTLPixelFormat.bgra8Unorm,
+                                                      frameW,
+                                                      frameH,
+                                                      0,
+                                                      &texture[i])
 
             guard let texture = texture[i] else {
                 Logger.debug("unexpected return")
                 break
             }
 
-            glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
-            glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLfloat(GL_LINEAR))
-            glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLfloat(GL_LINEAR))
-            glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_S), GLfloat(GL_CLAMP_TO_EDGE))
-            glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_WRAP_T), GLfloat(GL_CLAMP_TO_EDGE))
-            glBindFramebuffer(GLenum(GL_FRAMEBUFFER), fbo[i])
-            glFramebufferTexture2D(GLenum(GL_FRAMEBUFFER), GLenum(GL_COLOR_ATTACHMENT0),
-                                   GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture), 0)
+            metalTexture[i] = CVMetalTextureGetTexture(texture)
         }
 
-        glFramebufferStatus()
+        // setup the vertex, texCoord buffers
+        vertexBuffer = device.makeBuffer(bytes: s_vertexData,
+                                         length: MemoryLayout<Vertex>.size * s_vertexData.count,
+                                         options: [])
+        vertexBuffer?.label = "VideoMixerVertexBuffer"
 
-        glGenBuffers(1, &vbo)
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), s_vbo.count * MemoryLayout<GLfloat>.size * s_vbo.count, s_vbo,
-                     GLenum(GL_STATIC_DRAW))
+        let samplerDescriptor = MTLSamplerDescriptor()
+        samplerDescriptor.minFilter = .linear
+        samplerDescriptor.magFilter = .linear
+        samplerDescriptor.sAddressMode = .clampToEdge
+        samplerDescriptor.tAddressMode = .clampToEdge
+        colorSamplerState = device.makeSamplerState(descriptor: samplerDescriptor)
+    }
 
-        glDisable(GLenum(GL_BLEND))
-        glDisable(GLenum(GL_DEPTH_TEST))
-        glDisable(GLenum(GL_SCISSOR_TEST))
-        glViewport(0, 0, GLsizei(frameW), GLsizei(frameH))
-        glClearColor(0.05, 0.05, 0.07, 1)
-        CVOpenGLESTextureCacheFlush(textureCache, 0)
+    private func setupRenderPassDescriptorForTexture(_ texture: MTLTexture) {
+        // create a color attachment every frame since we have to recreate the texture every frame
+        renderPassDescriptor.colorAttachments[0].texture = texture
+
+        // make sure to clear every frame for best performance
+        renderPassDescriptor.colorAttachments[0].loadAction = .clear
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.05, 0.05, 0.07, 1.0)
+
+        // store only attachments that will be presented to the screen
+        renderPassDescriptor.colorAttachments[0].storeAction = .store
     }
 }

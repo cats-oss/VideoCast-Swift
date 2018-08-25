@@ -16,6 +16,10 @@ open class BasicVideoFilterBGRA: BasicVideoFilter {
         return "jp.co.cyberagent.VideoCast.filters.bgra"
     }
 
+    open override var piplineDescripter: String? {
+        return "bgraPiplineState"
+    }
+
     private static func registerFilter() -> Bool {
         FilterFactory.register(
             name: "jp.co.cyberagent.VideoCast.filters.bgra",
