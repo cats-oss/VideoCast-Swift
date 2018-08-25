@@ -2,7 +2,7 @@
 //  SRTStatsManager.swift
 //  VideoCast
 //
-//  Created by 松澤 友弘 on 2018/08/16.
+//  Created by Tomohiro Matsuzawa on 2018/08/16.
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
