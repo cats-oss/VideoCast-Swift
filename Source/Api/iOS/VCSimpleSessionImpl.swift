@@ -46,9 +46,7 @@ extension VCSimpleSession {
         audioMixer.setMinimumBufferDuration(frameDuration * 2)
 
         // Add video mixer
-        /*videoMixer = MetalVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height),
-                                     frameDuration: frameDuration)*/
-        videoMixer = GLESVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height),
+        videoMixer = MetalVideoMixer(frame_w: Int(videoSize.width), frame_h: Int(videoSize.height),
                                      frameDuration: frameDuration)
 
         let videoSplit = Split()
@@ -276,7 +274,6 @@ extension VCSimpleSession {
         outputSession.setSessionParameters(sessionParameters)
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func startRtmpSessionInternal(url: String, streamKey: String) {
         let uri = url + "/" + streamKey
 

@@ -2,7 +2,7 @@
 //  ShaderDefinitions.h
 //  VideoCast
 //
-//  Created by 松澤 友弘 on 2018/08/24.
+//  Created by Tomohiro Matsuzawa on 2018/08/24.
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 

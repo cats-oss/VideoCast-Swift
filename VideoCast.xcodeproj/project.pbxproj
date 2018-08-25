@@ -83,7 +83,6 @@
 		8196E2992046A08100A59BA1 /* PutBits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8196E2972046A08100A59BA1 /* PutBits.swift */; };
 		819AEC952050CE70006D76A3 /* SRTSocketOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819AEC942050CE70006D76A3 /* SRTSocketOptions.swift */; };
 		819AEC962050CE70006D76A3 /* SRTSocketOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819AEC942050CE70006D76A3 /* SRTSocketOptions.swift */; };
-		81ABC9472005E437006676E1 /* GLESVideoMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ABC9462005E437006676E1 /* GLESVideoMixer.swift */; };
 		81B8CD6F204F943F00B581F6 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 81B8CD6E204F943E00B581F6 /* libc++.tbd */; };
 		81BE3D8F20523F1C0040707D /* SRTLogSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BE3D8E20523F1C0040707D /* SRTLogSupport.swift */; };
 		81BE3D9020523F1C0040707D /* SRTLogSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BE3D8E20523F1C0040707D /* SRTLogSupport.swift */; };
@@ -138,8 +137,8 @@
 		81DD02A02004E1FF0064A203 /* AudioMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD029F2004E1FF0064A203 /* AudioMixer.swift */; };
 		81DFAE85212FE504002F5DAB /* MetalUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DFAE84212FE504002F5DAB /* MetalUtil.swift */; };
 		81DFAE86212FE504002F5DAB /* MetalUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DFAE84212FE504002F5DAB /* MetalUtil.swift */; };
-		81DFAE89212FEBDE002F5DAB /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 81DFAE88212FEBDE002F5DAB /* shaders.metal */; };
-		81DFAE8A212FEBDE002F5DAB /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 81DFAE88212FEBDE002F5DAB /* shaders.metal */; };
+		81DFAE89212FEBDE002F5DAB /* basic.metal in Sources */ = {isa = PBXBuildFile; fileRef = 81DFAE88212FEBDE002F5DAB /* basic.metal */; };
+		81DFAE8A212FEBDE002F5DAB /* basic.metal in Sources */ = {isa = PBXBuildFile; fileRef = 81DFAE88212FEBDE002F5DAB /* basic.metal */; };
 		81DFAE8F2130375C002F5DAB /* ShaderDefinitions.h in Headers */ = {isa = PBXBuildFile; fileRef = 81DFAE8E2130375C002F5DAB /* ShaderDefinitions.h */; };
 		81DFAE902130375C002F5DAB /* ShaderDefinitions.h in Headers */ = {isa = PBXBuildFile; fileRef = 81DFAE8E2130375C002F5DAB /* ShaderDefinitions.h */; };
 		81E2E085200897B000DE5465 /* PixelBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E2E084200897B000DE5465 /* PixelBuffer.swift */; };
@@ -170,10 +169,10 @@
 		B126AC32210DF02E00E1EEF3 /* VCTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC30210DF02E00E1EEF3 /* VCTypes.swift */; };
 		B126AC34210DF0E400E1EEF3 /* VCSimpleSessionImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC33210DF0E400E1EEF3 /* VCSimpleSessionImpl.swift */; };
 		B126AC35210DF0E400E1EEF3 /* VCSimpleSessionImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC33210DF0E400E1EEF3 /* VCSimpleSessionImpl.swift */; };
-		B126AC37210DF48600E1EEF3 /* GLESVideoMixerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC36210DF48600E1EEF3 /* GLESVideoMixerImpl.swift */; };
-		B126AC38210DF48600E1EEF3 /* GLESVideoMixerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC36210DF48600E1EEF3 /* GLESVideoMixerImpl.swift */; };
 		B126AC3A210DF77C00E1EEF3 /* AudioMixerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC39210DF77C00E1EEF3 /* AudioMixerImpl.swift */; };
 		B126AC3B210DF77C00E1EEF3 /* AudioMixerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC39210DF77C00E1EEF3 /* AudioMixerImpl.swift */; };
+		B1401A1021318D8400D04494 /* MetalVideoMixerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1401A0F21318D8400D04494 /* MetalVideoMixerImpl.swift */; };
+		B1401A1121318D8400D04494 /* MetalVideoMixerImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1401A0F21318D8400D04494 /* MetalVideoMixerImpl.swift */; };
 		B1429468210C38BB00B17FC2 /* RTMPSessionSendPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1429467210C38BB00B17FC2 /* RTMPSessionSendPacket.swift */; };
 		B1429469210C38BB00B17FC2 /* RTMPSessionSendPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1429467210C38BB00B17FC2 /* RTMPSessionSendPacket.swift */; };
 		B142946B210C44B300B17FC2 /* RTMPSessionHandshake.swift in Sources */ = {isa = PBXBuildFile; fileRef = B142946A210C44B300B17FC2 /* RTMPSessionHandshake.swift */; };
@@ -260,7 +259,6 @@
 		8196E2942046A07200A59BA1 /* GetBits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetBits.swift; sourceTree = "<group>"; };
 		8196E2972046A08100A59BA1 /* PutBits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PutBits.swift; sourceTree = "<group>"; };
 		819AEC942050CE70006D76A3 /* SRTSocketOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTSocketOptions.swift; sourceTree = "<group>"; };
-		81ABC9462005E437006676E1 /* GLESVideoMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLESVideoMixer.swift; sourceTree = "<group>"; };
 		81B8CD69204F687C00B581F6 /* module.map */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.map; sourceTree = "<group>"; };
 		81B8CD6A204F93B000B581F6 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = Libraries/libssl.a; sourceTree = "<group>"; };
 		81B8CD6C204F93D700B581F6 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = Libraries/libcrypto.a; sourceTree = "<group>"; };
@@ -300,7 +298,7 @@
 		81DD0298200492B80064A203 /* RTMPTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMPTypes.swift; sourceTree = "<group>"; };
 		81DD029F2004E1FF0064A203 /* AudioMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMixer.swift; sourceTree = "<group>"; };
 		81DFAE84212FE504002F5DAB /* MetalUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalUtil.swift; sourceTree = "<group>"; };
-		81DFAE88212FEBDE002F5DAB /* shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = shaders.metal; sourceTree = "<group>"; };
+		81DFAE88212FEBDE002F5DAB /* basic.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = basic.metal; sourceTree = "<group>"; };
 		81DFAE8E2130375C002F5DAB /* ShaderDefinitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderDefinitions.h; sourceTree = "<group>"; };
 		81E2E084200897B000DE5465 /* PixelBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBuffer.swift; sourceTree = "<group>"; };
 		81E2E0882008981A00DE5465 /* IPixelBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPixelBuffer.swift; sourceTree = "<group>"; };
@@ -316,8 +314,8 @@
 		B126AC2D210DD62400E1EEF3 /* CameraSourceCallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSourceCallback.swift; sourceTree = "<group>"; };
 		B126AC30210DF02E00E1EEF3 /* VCTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCTypes.swift; sourceTree = "<group>"; };
 		B126AC33210DF0E400E1EEF3 /* VCSimpleSessionImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCSimpleSessionImpl.swift; sourceTree = "<group>"; };
-		B126AC36210DF48600E1EEF3 /* GLESVideoMixerImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLESVideoMixerImpl.swift; sourceTree = "<group>"; };
 		B126AC39210DF77C00E1EEF3 /* AudioMixerImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioMixerImpl.swift; sourceTree = "<group>"; };
+		B1401A0F21318D8400D04494 /* MetalVideoMixerImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalVideoMixerImpl.swift; sourceTree = "<group>"; };
 		B1429467210C38BB00B17FC2 /* RTMPSessionSendPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMPSessionSendPacket.swift; sourceTree = "<group>"; };
 		B142946A210C44B300B17FC2 /* RTMPSessionHandshake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMPSessionHandshake.swift; sourceTree = "<group>"; };
 		B142946D210C471900B17FC2 /* RTMPSessionHandlePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMPSessionHandlePacket.swift; sourceTree = "<group>"; };
@@ -511,7 +509,7 @@
 				814265CF1FFF6DD1001258F2 /* IMixer.swift */,
 				814265D21FFF6EBD001258F2 /* IVideoMixer.swift */,
 				81278855212EBC0B008776B6 /* MetalVideoMixer.swift */,
-				81ABC9452005E420006676E1 /* iOS */,
+				B1401A0F21318D8400D04494 /* MetalVideoMixerImpl.swift */,
 			);
 			path = Mixers;
 			sourceTree = "<group>";
@@ -634,15 +632,6 @@
 			path = Tests;
 			sourceTree = "<group>";
 		};
-		81ABC9452005E420006676E1 /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				81ABC9462005E437006676E1 /* GLESVideoMixer.swift */,
-				B126AC36210DF48600E1EEF3 /* GLESVideoMixerImpl.swift */,
-			);
-			path = iOS;
-			sourceTree = "<group>";
-		};
 		81B8CD68204ECF8700B581F6 /* SRT */ = {
 			isa = PBXGroup;
 			children = (
@@ -691,7 +680,7 @@
 		81DFAE87212FEB1D002F5DAB /* shaders */ = {
 			isa = PBXGroup;
 			children = (
-				81DFAE88212FEBDE002F5DAB /* shaders.metal */,
+				81DFAE88212FEBDE002F5DAB /* basic.metal */,
 			);
 			path = shaders;
 			sourceTree = "<group>";
@@ -977,7 +966,6 @@
 				8183EA0F20075A3900E5A4AE /* AACEncode.swift in Sources */,
 				81CE06F5204E89C300E71AB6 /* SRTSession.swift in Sources */,
 				81C3C9FD2022F4E0007E05A1 /* Logger.swift in Sources */,
-				81ABC9472005E437006676E1 /* GLESVideoMixer.swift in Sources */,
 				811531852021647900919F9F /* IThroughputAdaptation.swift in Sources */,
 				816ECEB11FFF4DFC002AE4F9 /* IFilter.swift in Sources */,
 				816ECEAB1FFF4A7F002AE4F9 /* ISource.swift in Sources */,
@@ -988,6 +976,7 @@
 				B1429468210C38BB00B17FC2 /* RTMPSessionSendPacket.swift in Sources */,
 				811D4B971FFF1B2E004EC189 /* VCSimpleSession.swift in Sources */,
 				B126AC2B210DCB7800E1EEF3 /* SRTCommon.swift in Sources */,
+				B1401A1021318D8400D04494 /* MetalVideoMixerImpl.swift in Sources */,
 				8115318820216A7F00919F9F /* TCPThroughputAdaptation.swift in Sources */,
 				8183EA1520075D9C00E5A4AE /* AACPacketizer.swift in Sources */,
 				8115318B2021744600919F9F /* PreallocBuffer.swift in Sources */,
@@ -1004,13 +993,12 @@
 				81D1C1F42032913E0087F23E /* InvertColorsVideoFilter.swift in Sources */,
 				81FACD5E20208B50001FFD6B /* StreamSession.swift in Sources */,
 				81DD028320047BB80064A203 /* CameraSource.swift in Sources */,
-				81DFAE89212FEBDE002F5DAB /* shaders.metal in Sources */,
+				81DFAE89212FEBDE002F5DAB /* basic.metal in Sources */,
 				8196E2952046A07200A59BA1 /* GetBits.swift in Sources */,
 				8196E28F2046393700A59BA1 /* AnnexbEncode.swift in Sources */,
 				81D1C1E5203289860087F23E /* BasicVideoFilterBGRAinYUVAout.swift in Sources */,
 				81D1C1F1203290D80087F23E /* GrayscaleVideoFilter.swift in Sources */,
 				B126AC28210DB9F500E1EEF3 /* SRTModel.swift in Sources */,
-				B126AC37210DF48600E1EEF3 /* GLESVideoMixerImpl.swift in Sources */,
 				8196E2982046A08100A59BA1 /* PutBits.swift in Sources */,
 				814265CD1FFF6783001258F2 /* IOutputSession.swift in Sources */,
 				814265D61FFF6F35001258F2 /* IAudioMixer.swift in Sources */,
@@ -1085,7 +1073,6 @@
 				816ECEB21FFF4DFC002AE4F9 /* IFilter.swift in Sources */,
 				81C583212040006200BDE428 /* CRC.swift in Sources */,
 				81C3C9FE2022F4E0007E05A1 /* Logger.swift in Sources */,
-				B126AC38210DF48600E1EEF3 /* GLESVideoMixerImpl.swift in Sources */,
 				81E2E086200897B000DE5465 /* PixelBuffer.swift in Sources */,
 				8196E2932046397100A59BA1 /* ADTSEncode.swift in Sources */,
 				81CA5F27203675A00050059A /* Atomic.swift in Sources */,
@@ -1093,7 +1080,7 @@
 				8196E2902046393700A59BA1 /* AnnexbEncode.swift in Sources */,
 				81D1C1E6203289860087F23E /* BasicVideoFilterBGRAinYUVAout.swift in Sources */,
 				B126AC2F210DD62400E1EEF3 /* CameraSourceCallback.swift in Sources */,
-				81DFAE8A212FEBDE002F5DAB /* shaders.metal in Sources */,
+				81DFAE8A212FEBDE002F5DAB /* basic.metal in Sources */,
 				81CA5F2A2036E1300050059A /* VTEncode.swift in Sources */,
 				81DD028D2004822B0064A203 /* PositionTransform.swift in Sources */,
 				B1429472210C4E1500B17FC2 /* NalType.swift in Sources */,
@@ -1105,6 +1092,7 @@
 				8115318920216A7F00919F9F /* TCPThroughputAdaptation.swift in Sources */,
 				814265CE1FFF6783001258F2 /* IOutputSession.swift in Sources */,
 				B142946F210C471900B17FC2 /* RTMPSessionHandlePacket.swift in Sources */,
+				B1401A1121318D8400D04494 /* MetalVideoMixerImpl.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

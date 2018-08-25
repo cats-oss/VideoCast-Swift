@@ -10,33 +10,17 @@ import Foundation
 import GLKit
 
 open class BasicVideoFilter: IVideoFilter {
-    open var vertexKernel: String? {
-        return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
-attribute vec2 aPos;
-attribute vec2 aCoord;
-varying vec2   vCoord;
-uniform mat4   uMat;
-void main(void) {
-    gl_Position = uMat * vec4(aPos,0.,1.);
-    vCoord = aCoord;
-}
-""")
+    open var vertexFunc: String {
+        return "basic_vertex"
     }
 
-    open var pixelKernel: String? {
-        return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
-precision mediump float;
-varying vec2      vCoord;
-uniform sampler2D uTex0;
-void main(void) {
-    gl_FragData[0] = texture2D(uTex0, vCoord);
-}
-""")
+    open var fragmentFunc: String {
+        return "bgra_fragment"
     }
 
-    open var filterLanguage: FilterLanguage = .GL_ES2_3
+    open var renderPipelineState: MTLRenderPipelineState?
 
-    open var program: GLuint = 0
+    open var renderEncoder: MTLRenderCommandEncoder?
 
     open var matrix = GLKMatrix4Identity
 
@@ -48,7 +32,11 @@ void main(void) {
         return ""
     }
 
-    private var vao: GLuint = 0
+    open var piplineDescripter: String? {
+        return nil
+    }
+
+    private var device = DeviceManager.device
     private var uMatrix: Int32 = 0
     private var bound = false
 
@@ -57,56 +45,64 @@ void main(void) {
     }
 
     deinit {
-        glDeleteProgram(program)
-        glDeleteVertexArraysOES(1, &vao)
     }
 
     open func initialize() {
-        switch filterLanguage {
-        case .GL_ES2_3, .GL_2:
-            guard let vertexKernel = vertexKernel, let pixelKernel = pixelKernel else {
-                Logger.debug("unexpected return")
-                break
-            }
+        let defaultLibrary: MTLLibrary!
+        let bundle = Bundle(for: type(of: self))
+        do {
+            try defaultLibrary = device.makeDefaultLibrary(bundle: bundle)
+        } catch {
+            fatalError(">> ERROR: Couldnt create a default shader library")
+        }
 
-            program = buildProgram(vertex: vertexKernel, fragment: pixelKernel)
-            glGenVertexArraysOES(1, &vao)
-            glBindVertexArrayOES(vao)
-            uMatrix = glGetUniformLocation(program, "uMat")
-            let attrpos = glGetAttribLocation(program, "aPos")
-            let attrtex = glGetAttribLocation(program, "aCoord")
-            let unitex = glGetUniformLocation(program, "uTex0")
-            glUniform1i(unitex, 0)
-            glEnableVertexAttribArray(GLuint(attrpos))
-            glEnableVertexAttribArray(GLuint(attrtex))
-            glVertexAttribPointer(
-                GLuint(attrpos), GLint(BUFFER_SIZE_POSITION),
-                GLenum(GL_FLOAT), GLboolean(GL_FALSE),
-                GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_POSITION)
-            glVertexAttribPointer(
-                GLuint(attrtex), GLint(BUFFER_SIZE_POSITION),
-                GLenum(GL_FLOAT), GLboolean(GL_FALSE),
-                GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_TEXTURE)
-            initialized = true
-        case .GL_3:
-            break
+        // read the vertex and fragment shader functions from the library
+        let vertexProgram = defaultLibrary.makeFunction(name: vertexFunc)
+        let fragmentprogram = defaultLibrary.makeFunction(name: fragmentFunc)
+
+        //  create a pipeline state descriptor
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        if let piplineDescripter = piplineDescripter {
+            renderPipelineDescriptor.label = piplineDescripter
+        }
+
+        // set pixel formats that match the framebuffer we are drawing into
+        renderPipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+
+        // set the vertex and fragment programs
+        renderPipelineDescriptor.vertexFunction = vertexProgram
+        renderPipelineDescriptor.fragmentFunction = fragmentprogram
+
+        do {
+            // generate the pipeline state
+            try renderPipelineState = device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+        } catch {
+            fatalError("failed to generate the pipeline state \(error)")
         }
     }
 
     open func bind() {
-        switch filterLanguage {
-        case .GL_ES2_3, .GL_2:
-            if !bound {
-                if !initialized {
-                    initialize()
-                }
-                glUseProgram(program)
-                glBindVertexArrayOES(vao)
+        if !bound {
+            if !initialized {
+                initialize()
             }
-            glUniformMatrix4fv(uMatrix, 1, GLboolean(GL_FALSE), matrix.array)
-        case .GL_3:
-            break
         }
+    }
+
+    open func render(_ renderEncoder: MTLRenderCommandEncoder) {
+        guard let renderPipelineState = renderPipelineState else { return }
+        // set the pipeline state object which contains its precompiled shaders
+        renderEncoder.setRenderPipelineState(renderPipelineState)
+
+        var uniforms = Uniforms(modelViewProjectionMatrix: matrix)
+
+        guard let uniformsBuffer = device.makeBuffer(
+            bytes: &uniforms,
+            length: MemoryLayout<Uniforms>.size,
+            options: []) else { return }
+
+        // set the model view project matrix data
+        renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: 1)
     }
 
     open func unbind() {

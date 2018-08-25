@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import MetalKit
+import Metal
 import GLKit
 
 open class VCPreviewView: UIView {
@@ -22,7 +22,7 @@ open class VCPreviewView: UIView {
     private var texture = [CVMetalTexture?](repeating: nil, count: 2)
     private var cache: CVMetalTextureCache?
 
-    private let device = MTLCreateSystemDefaultDevice()!
+    private let device = DeviceManager.device
     private var commandQueue: MTLCommandQueue!
     private weak var metalLayer: CAMetalLayer!
     private var _currentDrawable: CAMetalDrawable?
@@ -66,7 +66,7 @@ open class VCPreviewView: UIView {
         renderPassDescriptor.colorAttachments[0].loadAction = .clear
         renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1.0)
 
-        // store only attachments that will be presented to the screen, as in this case
+        // store only attachments that will be presented to the screen
         renderPassDescriptor.colorAttachments[0].storeAction = .store
     }
 
@@ -111,17 +111,6 @@ open class VCPreviewView: UIView {
         guard !paused.value else { return }
 
         autoreleasepool {
-            if layerSizeDidUpdate {
-                // set the metal layer to the drawable size in case orientation or size changes
-                var drawableSize = bounds.size
-                drawableSize.width *= contentScaleFactor
-                drawableSize.height *= contentScaleFactor
-
-                metalLayer.drawableSize = drawableSize
-
-                layerSizeDidUpdate = false
-            }
-
             var updateTexture = false
 
             if pixelBuffer != current[currentBuffer] {
@@ -139,8 +128,24 @@ open class VCPreviewView: UIView {
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
 
+                guard let renderPassDescriptor = strongSelf.renderPassDescriptor,
+                    let vertexBuffer = strongSelf.vertexBuffer,
+                    let renderPipelineState = strongSelf.renderPipelineState,
+                    let colorSamplerState = strongSelf.colorSamplerState else { return }
+
                 guard let buffer = strongSelf.current[_currentBuffer], let cache = strongSelf.cache else {
                     fatalError("unexpected return")
+                }
+
+                if strongSelf.layerSizeDidUpdate {
+                    // set the metal layer to the drawable size in case orientation or size changes
+                    var drawableSize = strongSelf.bounds.size
+                    drawableSize.width *= strongSelf.contentScaleFactor
+                    drawableSize.height *= strongSelf.contentScaleFactor
+
+                    strongSelf.metalLayer.drawableSize = drawableSize
+
+                    strongSelf.layerSizeDidUpdate = false
                 }
 
                 if updateTexture {
@@ -201,10 +206,6 @@ open class VCPreviewView: UIView {
                 guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
 
                 // create a render command encoder so we can render into something
-                guard let renderPassDescriptor = strongSelf.renderPassDescriptor,
-                    let vertexBuffer = strongSelf.vertexBuffer,
-                    let renderPipelineState = strongSelf.renderPipelineState,
-                    let colorSamplerState = strongSelf.colorSamplerState else { return }
                 guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
                     descriptor: renderPassDescriptor) else { return }
 
@@ -214,13 +215,10 @@ open class VCPreviewView: UIView {
                 // set the pipeline state object which contains its precompiled shaders
                 renderEncoder.setRenderPipelineState(renderPipelineState)
 
-                //renderEncoder.setFrontFacing(.counterClockwise)
-                //renderEncoder.setCullMode(.back)
-
                 // set the static vertex buffers
                 renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
-                // read the model view project matrix data from the constant buffer
+                // set the model view project matrix data
                 renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: 1)
 
                 // fragment texture for environment
@@ -254,7 +252,7 @@ open class VCPreviewView: UIView {
 private extension VCPreviewView {
     func configure() {
         guard let metalLayer = layer as? CAMetalLayer else {
-            fatalError("layer is not CAEGLLayer")
+            fatalError("layer is not CAMetalLayer")
         }
         self.metalLayer = metalLayer
 
@@ -301,7 +299,7 @@ private extension VCPreviewView {
         }
 
         // read the vertex and fragment shader functions from the library
-        let vertexProgram = defaultLibrary.makeFunction(name: "preview_vertex")
+        let vertexProgram = defaultLibrary.makeFunction(name: "basic_vertex")
         let fragmentprogram = defaultLibrary.makeFunction(name: "preview_fragment")
 
         //  create a pipeline state descriptor
