@@ -421,21 +421,24 @@ open class CameraSource: ISource {
             return
         }
 
-        let orientation: UIInterfaceOrientation
-        if useInterfaceOrientation {
-            orientation = UIApplication.shared.statusBarOrientation
-        } else {
-            switch UIDevice.current.orientation {
-            case .portrait:
-                orientation = .portrait
-            case .portraitUpsideDown:
-                orientation = .portraitUpsideDown
-            case .landscapeLeft:
-                orientation = .landscapeLeft
-            case .landscapeRight:
-                orientation = .landscapeRight
-            default:
+        var orientation: UIInterfaceOrientation = .unknown
+
+        DispatchQueue.main.sync {
+            if useInterfaceOrientation {
                 orientation = UIApplication.shared.statusBarOrientation
+            } else {
+                switch UIDevice.current.orientation {
+                case .portrait:
+                    orientation = .portrait
+                case .portraitUpsideDown:
+                    orientation = .portraitUpsideDown
+                case .landscapeLeft:
+                    orientation = .landscapeLeft
+                case .landscapeRight:
+                    orientation = .landscapeRight
+                default:
+                    orientation = UIApplication.shared.statusBarOrientation
+                }
             }
         }
 
