@@ -188,7 +188,6 @@ extension MetalVideoMixer {
                 metalJobQueue.enqueue { [weak self] in
                     guard let strongSelf = self else { return }
                     var currentFilter: IVideoFilter?
-                    var layerKey = strongSelf.zRange.0
 
                     // create a new command buffer for each renderpass to the current drawable
                     guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
@@ -200,9 +199,8 @@ extension MetalVideoMixer {
                     guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
                         descriptor: strongSelf.renderPassDescriptor) else { return }
 
-                    while layerKey <= strongSelf.zRange.1 {
+                    for layerKey in (strongSelf.zRange.0...strongSelf.zRange.1) {
                         guard let layerMap = strongSelf.layerMap[layerKey] else {
-                            Logger.debug("unexpected return")
                             continue
                         }
 
@@ -269,7 +267,6 @@ extension MetalVideoMixer {
                                 Logger.error("Null texture!")
                             }
                         }
-                        layerKey += 1
                     }
 
                     renderEncoder.endEncoding()

@@ -38,7 +38,7 @@ open class PixelBufferSource: ISource {
             ret = CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelFormat,
                                       pixelBufferOptions as NSDictionary, &pb)
         }
-        if ret != 0 {
+        if ret == 0 {
             pixelBuffer = pb
         } else {
             fatalError("PixelBuffer creation failed")
@@ -66,7 +66,7 @@ open class PixelBufferSource: ISource {
         let mat = GLKMatrix4Identity
         let md = VideoBufferMetadata()
         md.data = (4, mat, true, WeakRefISource(value: self))
-        var pb = PixelBuffer(pixelBuffer, temporary: false)
+        var pb: IPixelBuffer = PixelBuffer(pixelBuffer, temporary: false)
         outp.pushBuffer(&pb, size: MemoryLayout<PixelBuffer>.size, metadata: md)
     }
 }
