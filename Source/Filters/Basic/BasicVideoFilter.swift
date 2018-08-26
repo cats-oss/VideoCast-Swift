@@ -79,6 +79,7 @@ open class BasicVideoFilter: IVideoFilter {
         } catch {
             fatalError("failed to generate the pipeline state \(error)")
         }
+        initialized = true
     }
 
     open func bind() {
