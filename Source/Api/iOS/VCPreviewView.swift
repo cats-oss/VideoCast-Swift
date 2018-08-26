@@ -193,14 +193,7 @@ open class VCPreviewView: UIView {
                 wfac = width * mult / Float(strongSelf.bounds.width)
                 hfac = height * mult / Float(strongSelf.bounds.height)
 
-                let matrix = GLKMatrix4ScaleWithVector3(GLKMatrix4Identity, GLKVector3Make(1 * wfac, -1 * hfac, 1))
-
-                var uniforms = Uniforms(modelViewProjectionMatrix: matrix)
-
-                guard let uniformsBuffer = strongSelf.device.makeBuffer(
-                    bytes: &uniforms,
-                    length: MemoryLayout<Uniforms>.size,
-                    options: []) else { return }
+                var matrix = GLKMatrix4MakeScale(1 * wfac, -1 * hfac, 1)
 
                 // create a new command buffer for each renderpass to the current drawable
                 guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
@@ -219,7 +212,7 @@ open class VCPreviewView: UIView {
                 renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
                 // set the model view project matrix data
-                renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: 1)
+                renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
 
                 // fragment texture for environment
                 renderEncoder.setFragmentTexture(metalTexture, index: 0)

@@ -10,10 +10,6 @@ import Foundation
 import Metal
 import GLKit
 
-struct Uniforms {
-    var modelViewProjectionMatrix: GLKMatrix4
-}
-
 let s_vertexData = [
     Vertex(position: [-1, -1, 0, 1], texcoords: [0, 0]),   // 0
     Vertex(position: [ 1, -1, 0, 1], texcoords: [1, 0]),   // 1
