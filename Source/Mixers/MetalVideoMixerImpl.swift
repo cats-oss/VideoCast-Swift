@@ -368,8 +368,7 @@ extension MetalVideoMixer {
         renderPassDescriptor.colorAttachments[0].texture = texture
 
         // make sure to clear every frame for best performance
-        renderPassDescriptor.colorAttachments[0].loadAction = .clear
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.05, 0.05, 0.07, 1.0)
+        renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
 
         // store only attachments that will be presented to the screen
         renderPassDescriptor.colorAttachments[0].storeAction = .store

@@ -122,16 +122,15 @@ open class VCPreviewView: UIView {
                 current[currentBuffer] = pixelBuffer
                 updateTexture = true
             }
-            let _currentBuffer = self.currentBuffer
 
-            DispatchQueue.main.async { [weak self] in
+            DispatchQueue.main.async { [weak self, currentBuffer] in
                 guard let strongSelf = self else { return }
 
                 guard let vertexBuffer = strongSelf.vertexBuffer,
                     let renderPipelineState = strongSelf.renderPipelineState,
                     let colorSamplerState = strongSelf.colorSamplerState else { return }
 
-                guard let buffer = strongSelf.current[_currentBuffer], let cache = strongSelf.cache else {
+                guard let buffer = strongSelf.current[currentBuffer], let cache = strongSelf.cache else {
                     fatalError("unexpected return")
                 }
 
@@ -157,10 +156,10 @@ open class VCPreviewView: UIView {
                                                               CVPixelBufferGetWidth(buffer),
                                                               CVPixelBufferGetHeight(buffer),
                                                               0,
-                                                              &strongSelf.texture[_currentBuffer]
+                                                              &strongSelf.texture[currentBuffer]
                     )
 
-                    if let texture = strongSelf.texture[_currentBuffer] {
+                    if let texture = strongSelf.texture[currentBuffer] {
                         CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
                     } else {
                         fatalError("could not create texture")
@@ -171,7 +170,7 @@ open class VCPreviewView: UIView {
                     CVMetalTextureCacheFlush(cache, 0)
                 }
 
-                guard let texture = strongSelf.texture[_currentBuffer] else {
+                guard let texture = strongSelf.texture[currentBuffer] else {
                     fatalError("texture doesn't exist in currentBuffer")
                 }
 

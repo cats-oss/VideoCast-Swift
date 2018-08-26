@@ -52,13 +52,12 @@ extension VCSimpleSession {
         let videoSplit = Split()
 
         self.videoSplit = videoSplit
-        let preview = previewView
 
-        let pbOutput = PixelBufferOutput(callback: { [weak self] (data: UnsafeRawPointer, _: Int)  in
+        let pbOutput = PixelBufferOutput(callback: { [weak self, previewView] (data: UnsafeRawPointer, _: Int)  in
             guard let strongSelf = self else { return }
 
             let pixelBuffer = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
-            preview.drawFrame(pixelBuffer)
+            previewView.drawFrame(pixelBuffer)
 
             if strongSelf.sessionState == .none {
                 strongSelf.sessionState = .previewStarted
