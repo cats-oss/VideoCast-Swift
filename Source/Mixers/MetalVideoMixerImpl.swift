@@ -71,9 +71,7 @@ extension MetalVideoMixer {
                 currentTexture = bufferContainer.texture
                 bufferContainer.time = now
             } else {
-                jobQueue.enqueue { [weak self] in
-                    guard let strongSelf = self else { return }
-
+                jobQueue.enqueue {
                     pixelBuffer.lock(true)
 
                     let format = pixelBuffer.pixelFormat
@@ -96,11 +94,11 @@ extension MetalVideoMixer {
 
                     if ret == noErr, let texture = texture {
                         let bufferContainer = BufferContainer(pixelBuffer)
-                        strongSelf.pixelBuffers[pixelBuffer.cvBuffer] = bufferContainer
+                        self.pixelBuffers[pixelBuffer.cvBuffer] = bufferContainer
                         bufferContainer.texture = texture
 
-                        strongSelf.currentBuffer = pixelBuffer
-                        strongSelf.currentTexture = texture
+                        self.currentBuffer = pixelBuffer
+                        self.currentTexture = texture
                         bufferContainer.time = now
                     } else {
                         Logger.error("Error creating texture! \(ret)")
@@ -110,13 +108,12 @@ extension MetalVideoMixer {
                 flush = true
             }
 
-            jobQueue.enqueue { [weak self] in
-                guard let strongSelf = self else { return }
-                for (pixelBuffer, bufferContainer) in strongSelf.pixelBuffers
+            jobQueue.enqueue {
+                for (pixelBuffer, bufferContainer) in self.pixelBuffers
                     where bufferContainer.buffer.isTemporary &&
-                        bufferContainer.buffer.cvBuffer != strongSelf.currentBuffer?.cvBuffer {
+                        bufferContainer.buffer.cvBuffer != self.currentBuffer?.cvBuffer {
                             // Buffer is temporary, release it.
-                            strongSelf.pixelBuffers[pixelBuffer] = nil
+                            self.pixelBuffers[pixelBuffer] = nil
                 }
 
                 if flush {
@@ -185,47 +182,46 @@ extension MetalVideoMixer {
                 locked[currentFb] = true
 
                 mixing.value = true
-                metalJobQueue.enqueue { [weak self] in
-                    guard let strongSelf = self else { return }
+                metalJobQueue.enqueue {
                     var currentFilter: IVideoFilter?
 
                     // create a new command buffer for each renderpass to the current drawable
-                    guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
+                    guard let commandBuffer = self.commandQueue.makeCommandBuffer() else { return }
 
-                    guard let destinationTexture = strongSelf.metalTexture[currentFb] else { return }
-                    strongSelf.setupRenderPassDescriptorForTexture(destinationTexture)
+                    guard let destinationTexture = self.metalTexture[currentFb] else { return }
+                    self.setupRenderPassDescriptorForTexture(destinationTexture)
 
                     // create a render command encoder so we can render into something
                     guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
-                        descriptor: strongSelf.renderPassDescriptor) else { return }
+                        descriptor: self.renderPassDescriptor) else { return }
 
-                    for layerKey in (strongSelf.zRange.0...strongSelf.zRange.1) {
-                        guard let layerMap = strongSelf.layerMap[layerKey] else {
+                    for layerKey in (self.zRange.0...self.zRange.1) {
+                        guard let layerMap = self.layerMap[layerKey] else {
                             continue
                         }
 
                         for key in layerMap {
                             var texture: CVMetalTexture?
-                            let filter = strongSelf.sourceFilters.index(forKey: key)
+                            let filter = self.sourceFilters.index(forKey: key)
 
                             if filter == nil {
                                 let newFilter =
-                                    strongSelf.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
-                                strongSelf.sourceFilters[key] = newFilter as? IVideoFilter
+                                    self.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
+                                self.sourceFilters[key] = newFilter as? IVideoFilter
                             }
 
-                            if currentFilter !== strongSelf.sourceFilters[key] {
+                            if currentFilter !== self.sourceFilters[key] {
                                 if let currentFilter = currentFilter {
                                     currentFilter.unbind()
                                 }
-                                currentFilter = strongSelf.sourceFilters[key]
+                                currentFilter = self.sourceFilters[key]
 
                                 if let currentFilter = currentFilter, !currentFilter.initialized {
                                     currentFilter.initialize()
                                 }
                             }
 
-                            guard let iTex = strongSelf.sourceBuffers[key] else {
+                            guard let iTex = self.sourceBuffers[key] else {
                                 Logger.debug("unexpected return")
                                 continue
                             }
@@ -234,13 +230,13 @@ extension MetalVideoMixer {
 
                             if let texture = texture,
                                 let sourceTexture = CVMetalTextureGetTexture(texture),
-                                let vertexBuffer = strongSelf.vertexBuffer,
+                                let vertexBuffer = self.vertexBuffer,
                                 let currentFilter = currentFilter {
 
                                 // setup for GPU debugger
                                 renderEncoder.pushDebugGroup("VideoCast.Mix \(layerKey):\(key)")
 
-                                let mat = strongSelf.sourceMats[key] ?? GLKMatrix4Identity
+                                let mat = self.sourceMats[key] ?? GLKMatrix4Identity
 
                                 // flip y
                                 let flip = GLKVector3Make(1, -1, 1)
@@ -255,7 +251,7 @@ extension MetalVideoMixer {
                                 // fragment texture for environment
                                 renderEncoder.setFragmentTexture(sourceTexture, index: 0)
 
-                                renderEncoder.setFragmentSamplerState(strongSelf.colorSamplerState, index: 0)
+                                renderEncoder.setFragmentSamplerState(self.colorSamplerState, index: 0)
 
                                 // tell the render context we want to draw our primitives
                                 renderEncoder.drawPrimitives(type: .triangle,
@@ -274,17 +270,17 @@ extension MetalVideoMixer {
                     // finalize rendering here. this will push the command buffer to the GPU
                     commandBuffer.commit()
 
-                    if let lout = strongSelf.output {
-                        let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(strongSelf.epoch),
+                    if let lout = self.output {
+                        let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(self.epoch),
                                                                preferredTimescale: VC_TIME_BASE))
                         let nextFb = (currentFb + 1) % 2
-                        if strongSelf.pixelBuffer[nextFb] != nil {
-                            lout.pushBuffer(&strongSelf.pixelBuffer[nextFb]!,
+                        if self.pixelBuffer[nextFb] != nil {
+                            lout.pushBuffer(&self.pixelBuffer[nextFb]!,
                                             size: MemoryLayout<CVPixelBuffer>.size, metadata: md)
                         }
                     }
 
-                    strongSelf.mixing.value = false
+                    self.mixing.value = false
                 }
 
                 currentFb = (currentFb + 1) % 2

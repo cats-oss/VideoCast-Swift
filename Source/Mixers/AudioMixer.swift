@@ -121,9 +121,9 @@ open class AudioMixer: IAudioMixer {
 
     /*! IMixer::unregisterSource */
     open func unregisterSource(_ source: ISource) {
-        mixQueue.enqueue { [weak self] in
-            if let strongSelf = self, let index = strongSelf.inGain.index(forKey: hash(source)) {
-                strongSelf.inGain.remove(at: index)
+        mixQueue.enqueue {
+            if let index = self.inGain.index(forKey: hash(source)) {
+                self.inGain.remove(at: index)
             }
         }
     }
@@ -148,16 +148,15 @@ open class AudioMixer: IAudioMixer {
             resampledBuffer.buffer.append(data, count: size)
         }
 
-        mixQueue.enqueue { [weak self] in
-            guard let strongSelf = self else { return }
+        mixQueue.enqueue {
             guard let lSource = inSource.value else { return }
 
             var mixTime = cMixTime
             let g: Float = 0.70710678118  // 1 / sqrt(2)
             let h = hash(lSource)
 
-            if let time = strongSelf.lastSampleTime[h],
-                mixTime.timeIntervalSince(time) < strongSelf.frameDuration * 0.25 {
+            if let time = self.lastSampleTime[h],
+                mixTime.timeIntervalSince(time) < self.frameDuration * 0.25 {
                 mixTime = time
             }
 
@@ -166,8 +165,8 @@ open class AudioMixer: IAudioMixer {
             let diff = mixTime.timeIntervalSince(currentWindow.start)
 
             if diff > 0 {
-                startOffset = Int(diff * Double(strongSelf.outFrequencyInHz) *
-                    Double(strongSelf.bytesPerSample)) & ~(strongSelf.bytesPerSample-1)
+                startOffset = Int(diff * Double(self.outFrequencyInHz) *
+                    Double(self.bytesPerSample)) & ~(self.bytesPerSample-1)
 
                 while let size = window?.size, startOffset >= size {
                     startOffset -= size
@@ -177,9 +176,9 @@ open class AudioMixer: IAudioMixer {
                 startOffset = 0
             }
 
-            let sampleDuration = Double(resampledBuffer.buffer.count) / Double(strongSelf.bytesPerSample *
-                strongSelf.outFrequencyInHz)
-            let mult = strongSelf.inGain[h].map { $0 * g } ?? 0
+            let sampleDuration = Double(resampledBuffer.buffer.count) / Double(self.bytesPerSample *
+                self.outFrequencyInHz)
+            let mult = self.inGain[h].map { $0 * g } ?? 0
 
             resampledBuffer.buffer.withUnsafeBytes { (p: UnsafePointer<Int16>) in
                 var mix = p
@@ -212,7 +211,7 @@ open class AudioMixer: IAudioMixer {
                 }
             }
 
-            strongSelf.lastSampleTime[h] = mixTime + sampleDuration
+            self.lastSampleTime[h] = mixTime + sampleDuration
         }
     }
 
