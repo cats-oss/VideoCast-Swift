@@ -60,7 +60,6 @@ open class SRTSession: IOutputSession {
     private var started: Bool = false
     private var ending: Atomic<Bool> = .init(false)
 
-    private var bandwidthCallback: BandwidthCallback?
     private let statsManager: SrtStatsManager = .init()
 
     public init(uri: String, callback: @escaping SRTSessionStateCallback) {
@@ -159,7 +158,6 @@ open class SRTSession: IOutputSession {
     }
 
     open func setBandwidthCallback(_ callback: @escaping BandwidthCallback) {
-        bandwidthCallback = callback
         statsManager.setThroughputCallback(callback)
     }
 

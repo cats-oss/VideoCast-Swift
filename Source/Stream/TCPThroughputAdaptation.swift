@@ -116,6 +116,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
 
     open func stop() {
         exiting.value = true
+        callback = nil
         cond.broadcast()
         if started {
             thread?.cancel()

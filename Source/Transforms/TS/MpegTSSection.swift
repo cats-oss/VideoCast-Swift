@@ -15,7 +15,7 @@ extension TSMultiplexer {
         var pid: Int = 0
         var cc: Int = 0
         var discontinuity: Bool = false
-        var parent: TSMultiplexer?
+        weak var parent: TSMultiplexer?
 
         init() {
         }
