@@ -41,7 +41,7 @@ open class MetalVideoMixer: IVideoMixer {
     private let callbackSession: MetalObjCCallback
 
     let device: MTLDevice = MTLCreateSystemDefaultDevice()!
-    var commandQueue: MTLCommandQueue!
+    let commandQueue = DeviceManager.commandQueue
 
     let frameW: Int
     let frameH: Int

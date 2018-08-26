@@ -22,8 +22,10 @@ let s_vertexData = [
 
 class DeviceManager {
     static var device: MTLDevice = { return DeviceManager.sharedManager.device }()
+    static var commandQueue: MTLCommandQueue = { return DeviceManager.sharedManager.commandQueue }()
 
     static var sharedManager = DeviceManager()
 
     lazy var device: MTLDevice = { return MTLCreateSystemDefaultDevice()! }()
+    lazy var commandQueue: MTLCommandQueue = { return device.makeCommandQueue()! } ()
 }

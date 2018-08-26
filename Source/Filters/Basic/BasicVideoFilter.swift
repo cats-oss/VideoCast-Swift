@@ -37,7 +37,6 @@ open class BasicVideoFilter: IVideoFilter {
     }
 
     private var device = DeviceManager.device
-    private var uMatrix: Int32 = 0
     private var bound = false
 
     public init() {
