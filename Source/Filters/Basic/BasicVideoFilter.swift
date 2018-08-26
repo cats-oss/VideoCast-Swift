@@ -37,7 +37,6 @@ open class BasicVideoFilter: IVideoFilter {
     }
 
     private var device = DeviceManager.device
-    private var uMatrix: Int32 = 0
     private var bound = false
 
     public init() {
@@ -79,6 +78,7 @@ open class BasicVideoFilter: IVideoFilter {
         } catch {
             fatalError("failed to generate the pipeline state \(error)")
         }
+        initialized = true
     }
 
     open func bind() {
@@ -94,15 +94,8 @@ open class BasicVideoFilter: IVideoFilter {
         // set the pipeline state object which contains its precompiled shaders
         renderEncoder.setRenderPipelineState(renderPipelineState)
 
-        var uniforms = Uniforms(modelViewProjectionMatrix: matrix)
-
-        guard let uniformsBuffer = device.makeBuffer(
-            bytes: &uniforms,
-            length: MemoryLayout<Uniforms>.size,
-            options: []) else { return }
-
         // set the model view project matrix data
-        renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: 1)
+        renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
     }
 
     open func unbind() {

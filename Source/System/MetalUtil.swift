@@ -10,10 +10,6 @@ import Foundation
 import Metal
 import GLKit
 
-struct Uniforms {
-    var modelViewProjectionMatrix: GLKMatrix4
-}
-
 let s_vertexData = [
     Vertex(position: [-1, -1, 0, 1], texcoords: [0, 0]),   // 0
     Vertex(position: [ 1, -1, 0, 1], texcoords: [1, 0]),   // 1
@@ -26,8 +22,10 @@ let s_vertexData = [
 
 class DeviceManager {
     static var device: MTLDevice = { return DeviceManager.sharedManager.device }()
+    static var commandQueue: MTLCommandQueue = { return DeviceManager.sharedManager.commandQueue }()
 
     static var sharedManager = DeviceManager()
 
     lazy var device: MTLDevice = { return MTLCreateSystemDefaultDevice()! }()
+    lazy var commandQueue: MTLCommandQueue = { return device.makeCommandQueue()! } ()
 }

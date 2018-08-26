@@ -84,7 +84,6 @@ open class PositionTransform: ITransform {
         }
 
         if positionIsDirty {
-            var mat = GLKMatrix4Identity
             let x = Float(posX),
             y = Float(posY),
             cw = Float(contextWidth),
@@ -92,19 +91,16 @@ open class PositionTransform: ITransform {
             w = Float(width),
             h = Float(height)
 
-            mat = GLKMatrix4TranslateWithVector3(
-                mat,
-                GLKVector3Make((x / cw) * 2 - 1,   // The compositor uses homogeneous coordinates.
-                    (y / ch) * 2 - 1,   // i.e. [ -1 .. 1 ]
-                    0))
+            let mat = GLKMatrix4MakeTranslation(
+                (x / cw) * 2 - 1,   // The compositor uses homogeneous coordinates.
+                (y / ch) * 2 - 1,   // i.e. [ -1 .. 1 ]
+                0)
 
-            mat = GLKMatrix4ScaleWithVector3(
+            matrix = GLKMatrix4ScaleWithVector3(
                 mat,
                 GLKVector3Make(w / cw, //
                     h / ch, // size is a percentage for scaling.
                     1))
-
-            matrix = mat
 
             positionIsDirty = false
         }

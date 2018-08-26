@@ -23,7 +23,7 @@ open class VCPreviewView: UIView {
     private var cache: CVMetalTextureCache?
 
     private let device = DeviceManager.device
-    private var commandQueue: MTLCommandQueue!
+    private let commandQueue = DeviceManager.commandQueue
     private weak var metalLayer: CAMetalLayer!
     private var _currentDrawable: CAMetalDrawable?
     private var _renderPassDescriptor: MTLRenderPassDescriptor?
@@ -62,9 +62,8 @@ open class VCPreviewView: UIView {
         // create a color attachment every frame since we have to recreate the texture every frame
         renderPassDescriptor.colorAttachments[0].texture = texture
 
-        // make sure to clear every frame for best performance
-        renderPassDescriptor.colorAttachments[0].loadAction = .clear
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1.0)
+        // all the render target pixels are rendered to, so dontCare
+        renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
 
         // store only attachments that will be presented to the screen
         renderPassDescriptor.colorAttachments[0].storeAction = .store
@@ -128,8 +127,7 @@ open class VCPreviewView: UIView {
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
 
-                guard let renderPassDescriptor = strongSelf.renderPassDescriptor,
-                    let vertexBuffer = strongSelf.vertexBuffer,
+                guard let vertexBuffer = strongSelf.vertexBuffer,
                     let renderPipelineState = strongSelf.renderPipelineState,
                     let colorSamplerState = strongSelf.colorSamplerState else { return }
 
@@ -193,51 +191,46 @@ open class VCPreviewView: UIView {
                 wfac = width * mult / Float(strongSelf.bounds.width)
                 hfac = height * mult / Float(strongSelf.bounds.height)
 
-                let matrix = GLKMatrix4ScaleWithVector3(GLKMatrix4Identity, GLKVector3Make(1 * wfac, -1 * hfac, 1))
-
-                var uniforms = Uniforms(modelViewProjectionMatrix: matrix)
-
-                guard let uniformsBuffer = strongSelf.device.makeBuffer(
-                    bytes: &uniforms,
-                    length: MemoryLayout<Uniforms>.size,
-                    options: []) else { return }
+                var matrix = GLKMatrix4MakeScale(1 * wfac, -1 * hfac, 1)
 
                 // create a new command buffer for each renderpass to the current drawable
                 guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
 
-                // create a render command encoder so we can render into something
-                guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
-                    descriptor: renderPassDescriptor) else { return }
+                if let renderPassDescriptor = strongSelf.renderPassDescriptor {
+                    // create a render command encoder so we can render into something
+                    guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(
+                        descriptor: renderPassDescriptor) else { return }
 
-                // setup for GPU debugger
-                renderEncoder.pushDebugGroup("preview")
+                    // setup for GPU debugger
+                    renderEncoder.pushDebugGroup("preview")
 
-                // set the pipeline state object which contains its precompiled shaders
-                renderEncoder.setRenderPipelineState(renderPipelineState)
+                    // set the pipeline state object which contains its precompiled shaders
+                    renderEncoder.setRenderPipelineState(renderPipelineState)
 
-                // set the static vertex buffers
-                renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+                    // set the static vertex buffers
+                    renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
-                // set the model view project matrix data
-                renderEncoder.setVertexBuffer(uniformsBuffer, offset: 0, index: 1)
+                    // set the model view project matrix data
+                    renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
 
-                // fragment texture for environment
-                renderEncoder.setFragmentTexture(metalTexture, index: 0)
+                    // fragment texture for environment
+                    renderEncoder.setFragmentTexture(metalTexture, index: 0)
 
-                renderEncoder.setFragmentSamplerState(colorSamplerState, index: 0)
+                    renderEncoder.setFragmentSamplerState(colorSamplerState, index: 0)
 
-                // tell the render context we want to draw our primitives
-                renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: s_vertexData.count)
+                    // tell the render context we want to draw our primitives
+                    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: s_vertexData.count)
 
-                renderEncoder.popDebugGroup()
+                    renderEncoder.popDebugGroup()
 
-                renderEncoder.endEncoding()
+                    renderEncoder.endEncoding()
 
-                if !strongSelf.paused.value {
-                    if let currentDrawable = strongSelf.currentDrawable {
-                        // schedule a present once the framebuffer is complete
-                        commandBuffer.present(currentDrawable)
-                        strongSelf._currentDrawable = nil
+                    if !strongSelf.paused.value {
+                        if let currentDrawable = strongSelf.currentDrawable {
+                            // schedule a present once the framebuffer is complete
+                            commandBuffer.present(currentDrawable)
+                            strongSelf._currentDrawable = nil
+                        }
                     }
                 }
 
@@ -287,8 +280,6 @@ private extension VCPreviewView {
         metalLayer.framebufferOnly = true
 
         CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &cache)
-
-        commandQueue = device.makeCommandQueue()
 
         let defaultLibrary: MTLLibrary!
         let bundle = Bundle(for: type(of: self))

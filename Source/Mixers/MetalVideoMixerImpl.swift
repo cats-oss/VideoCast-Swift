@@ -300,8 +300,6 @@ extension MetalVideoMixer {
      */
     // swiftlint:disable:next function_body_length
     func setupMetal() {
-        commandQueue = device.makeCommandQueue()
-
         autoreleasepool {
             if let pixelBufferPool = pixelBufferPool {
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, &pixelBuffer[0])
