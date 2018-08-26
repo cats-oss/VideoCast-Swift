@@ -42,7 +42,6 @@ open class RTMPSession: IOutputSession {
     let uri: URL
 
     private let callback: RTMPSessionStateCallback
-    private var bandwidthCallback: BandwidthCallback?
 
     let playPath: String
     let app: String
@@ -348,7 +347,6 @@ extension RTMPSession {
     }
 
     open func setBandwidthCallback(_ callback: @escaping BandwidthCallback) {
-        bandwidthCallback = callback
         throughputSession.setThroughputCallback(callback)
     }
 }

@@ -62,6 +62,7 @@ class SrtStatsManager {
     open func stop() {
         exiting.value = true
         cond.broadcast()
+        callback = nil
         if started {
             thread?.cancel()
             started = false
