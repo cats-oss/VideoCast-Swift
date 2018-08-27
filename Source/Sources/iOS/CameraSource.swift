@@ -160,7 +160,7 @@ open class CameraSource: ISource {
                             session.commitConfiguration()
                             session.startRunning()
 
-                            if strongSelf.orientationLocked {
+                            if !strongSelf.orientationLocked {
                                 if strongSelf.useInterfaceOrientation {
                                     NotificationCenter.default.addObserver(
                                         callbackSession,
