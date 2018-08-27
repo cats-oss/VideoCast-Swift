@@ -62,8 +62,9 @@ open class VCPreviewView: UIView {
         // create a color attachment every frame since we have to recreate the texture every frame
         renderPassDescriptor.colorAttachments[0].texture = texture
 
-        // all the render target pixels are rendered to, so dontCare
-        renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
+        // make sure to clear every frame for best performance
+        renderPassDescriptor.colorAttachments[0].loadAction = .clear
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
 
         // store only attachments that will be presented to the screen
         renderPassDescriptor.colorAttachments[0].storeAction = .store
@@ -183,7 +184,7 @@ open class VCPreviewView: UIView {
                 var wfac = Float(strongSelf.bounds.size.width) / width
                 var hfac = Float(strongSelf.bounds.size.height) / height
 
-                let aspectFit = false
+                let aspectFit = true
 
                 let mult = (aspectFit ? (wfac < hfac) : (wfac > hfac)) ? wfac : hfac
 

@@ -65,7 +65,7 @@ open class VCSimpleSession {
 
     open var previewView: VCPreviewView
 
-    open var videoSize: CGSize {
+    open var videoSize: CGSize = CGSize() {
         didSet {
             aspectTransform?.setBoundingSize(boundingWidth: Int(videoSize.width), boundingHeight: Int(videoSize.height))
             positionTransform?.setSize(
@@ -152,7 +152,7 @@ open class VCSimpleSession {
         }
     }
     open internal(set) var estimatedThroughput = 0    /* Bytes Per Second. */
-    open var aspectMode: VCAspectMode {
+    open var aspectMode: VCAspectMode = .fit {
         didSet {
             switch aspectMode {
             case .fill:
@@ -207,15 +207,24 @@ open class VCSimpleSession {
         self.delegate = delegate
 
         self.bitrate = bps
-        self.videoSize = videoSize
         self.fps = fps
         self.videoCodecType = videoCodecType
         self.useInterfaceOrientation = useInterfaceOrientation
-        self.aspectMode = aspectMode
 
         self.previewView = .init()
 
         self._cameraState = cameraState
+
+        // initialize videoSize and ascpectMode in internal function to call didSet
+        initInternal(videoSize: videoSize,
+                     aspectMode: aspectMode)
+    }
+
+    private func initInternal(
+        videoSize: CGSize,
+        aspectMode: VCAspectMode) {
+        self.videoSize = videoSize
+        self.aspectMode = aspectMode
 
         graphManagementQueue.async { [weak self] in
             self?.setupGraph()
