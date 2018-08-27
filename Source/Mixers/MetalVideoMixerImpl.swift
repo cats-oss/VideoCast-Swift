@@ -182,8 +182,13 @@ extension MetalVideoMixer {
                 locked[currentFb] = true
 
                 mixing.value = true
+                defer {
+                    mixing.value = false
+                }
                 metalJobQueue.enqueue {
                     var currentFilter: IVideoFilter?
+
+                    guard self.zRange.1 >= self.zRange.0 else { return }
 
                     // create a new command buffer for each renderpass to the current drawable
                     guard let commandBuffer = self.commandQueue.makeCommandBuffer() else { return }
@@ -279,8 +284,6 @@ extension MetalVideoMixer {
                                             size: MemoryLayout<CVPixelBuffer>.size, metadata: md)
                         }
                     }
-
-                    self.mixing.value = false
                 }
 
                 currentFb = (currentFb + 1) % 2
