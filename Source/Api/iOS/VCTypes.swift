@@ -36,7 +36,7 @@ public enum VCFilter {
     case glow
 }
 
-public enum VCVideoCodecType {
+public enum VCVideoCodecType: Int {
     case h264
     case hevc
 }

@@ -743,10 +743,10 @@
 			buildConfigurationList = 811BF9A81FFE2F7D00E90EEF /* Build configuration list for PBXNativeTarget "VideoCast iOS" */;
 			buildPhases = (
 				811BF9921FFE2F7D00E90EEF /* Sources */,
+				B1B608FD21068FB30028FCD1 /* ShellScript */,
 				811BF9931FFE2F7D00E90EEF /* Frameworks */,
 				811BF9941FFE2F7D00E90EEF /* Headers */,
 				811BF9951FFE2F7D00E90EEF /* Resources */,
-				B1B608FD21068FB30028FCD1 /* ShellScript */,
 			);
 			buildRules = (
 			);

@@ -6,36 +6,63 @@
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
-import VideoCast
 import UIKit
+import VideoCast
 
 class ViewController: UIViewController {
 
     @IBOutlet weak var previewView: UIView!
+    @IBOutlet weak var btnFlash: UIButton!
     @IBOutlet weak var btnConnect: UIButton!
+    @IBOutlet weak var lblBitrate: UILabel!
 
-    var session = VCSimpleSession(
-        videoSize: CGSize(width: 720, height: 408),
-        frameRate: 30,
-        bitrate: 1000000,
-        videoCodecType: .h264,
-        useInterfaceOrientation: false
-    )
+    let imgFlashOn = UIImage(named: "icons8-flash-on-50")
+    let imgFlashOff = UIImage(named: "icons8-flash-off-50")
+    let imgRecordStart = UIImage(named: "icon-record-start")
+    let imgRecordStop = UIImage(named: "icon-record-stop")
 
-    /*var session = VCSimpleSession(
-        videoSize: CGSize(width: 1280, height: 720),
-        frameRate: 30,
-        bitrate: 1500000,
-        videoCodecType: .hevc,
-        useInterfaceOrientation: false
-    )*/
+    var session: VCSimpleSession!
+
+    var _connecting = false
+    var connecting: Bool {
+        get {
+            return _connecting
+        }
+        set {
+            if !_connecting && newValue {
+                btnConnect.alpha = 1.0
+                UIView.animate(withDuration: 0.1, delay: 0.0,
+                               options: [.curveEaseInOut, .repeat, .autoreverse, .allowUserInteraction],
+                               animations: {() -> Void in
+                    self.btnConnect.alpha = 0.0
+                }, completion: {(_: Bool) -> Void in
+                })
+            } else if connecting && !newValue {
+                UIView.animate(withDuration: 0.1, delay: 0.0,
+                               options: [.curveEaseInOut, .beginFromCurrentState],
+                               animations: {() -> Void in
+                    self.btnConnect.alpha = 1.0
+                }, completion: {(_: Bool) -> Void in
+                })
+            }
+            _connecting = newValue
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-
+        session = VCSimpleSession(
+            videoSize: getVideoSize(),
+            frameRate: OptionsModel.shared.framerate,
+            bitrate: OptionsModel.shared.bitrate,
+            videoCodecType: OptionsModel.shared.videoCodec,
+            useInterfaceOrientation: true,
+            aspectMode: .fill
+        )
         previewView.addSubview(session.previewView)
         session.previewView.frame = previewView.bounds
+        lblBitrate.text = ""
 
         let delegate = session.delegate
 
@@ -44,15 +71,36 @@ class ViewController: UIViewController {
 
             switch strongSelf.session.sessionState {
             case .starting:
-                strongSelf.btnConnect.setTitle("Connecting", for: .normal)
+                strongSelf.connecting = true
+                strongSelf.btnConnect.setImage(strongSelf.imgRecordStop, for: .normal)
 
             case .started:
-                strongSelf.btnConnect.setTitle("Disconnect", for: .normal)
+                strongSelf.connecting = false
+                strongSelf.btnConnect.setImage(strongSelf.imgRecordStop, for: .normal)
 
             default:
-                strongSelf.btnConnect.setTitle("Connect", for: .normal)
+                strongSelf.connecting = false
+                strongSelf.btnConnect.setImage(strongSelf.imgRecordStart, for: .normal)
+                strongSelf.session.videoSize = strongSelf.getVideoSize()
+                strongSelf.lblBitrate.text = ""
             }
         }
+
+        delegate.bitrateChanged = { [weak self] videoBitrate, audioBitrate in
+            let bitrateText = """
+            video: \(videoBitrate / 1000) kbps
+            audio: \(audioBitrate / 1000) kbps
+            """
+            DispatchQueue.main.async { [weak self] in
+                guard let strongSelf = self else { return }
+
+                strongSelf.lblBitrate.text = bitrateText
+            }
+        }
+
+        btnFlash.setImage(imgFlashOff, for: .normal)
+        btnFlash.setImage(imgFlashOn, for: [.normal, .selected])
+        updateFlashBtn()
     }
 
     override func didReceiveMemoryWarning() {
@@ -65,17 +113,69 @@ class ViewController: UIViewController {
         previewView = nil
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        refreshVideoSize()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        navigationController?.setNavigationBarHidden(false, animated: false)
+    }
+
+    override func viewDidLayoutSubviews() {
+        session.previewView.frame = previewView.bounds
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        refreshVideoSize()
+    }
+
+    @IBAction func btnFlashTouch(_ sender: UIButton) {
+        session.torch = !sender.isSelected
+        updateFlashBtn()
+    }
+
+    @IBAction func btnSwitchCameraTouch(_ sender: UIButton) {
+        let newState: VCCameraState
+        switch session.cameraState {
+        case .back:
+            newState = .front
+        case .front:
+            newState = .back
+        }
+        session.cameraState = newState
+
+        // try to set current torch state
+        session.torch = session.torch
+        updateFlashBtn()
+    }
+
     @IBAction func btnConnectTouch(_ sender: AnyObject) {
         switch session.sessionState {
         case .none, .previewStarted, .ended, .error:
-            session.startRtmpSession(
-                url: "rtmp://localhost/live",
-                streamKey: "myStream"
-            )
-            /*session.startSRTSession(
-                url: "srt://localhost:5000?streamid=myStream"
-            )*/
+            session.bitrate = OptionsModel.shared.bitrate
+            session.fps = OptionsModel.shared.framerate
+            session.keyframeInterval = OptionsModel.shared.keyframeInterval
+            session.useAdaptiveBitrate = OptionsModel.shared.bitrateMode == .automatic
+            session.videoCodecType = OptionsModel.shared.videoCodec
+            let server = ServerModel.shared.server
 
+            if server.url.starts(with: "rtmp") {
+                session.startRtmpSession(
+                    url: server.url,
+                    streamKey: server.streamName
+                )
+            }
+            if server.url.starts(with: "srt") {
+                guard var urlComponents = URLComponents(string: server.url) else { return }
+                var items = urlComponents.queryItems ?? []
+                items.append(URLQueryItem(name: "streamid", value: server.streamName))
+                urlComponents.queryItems = items
+
+                session.startSRTSession(
+                    url: urlComponents.url!.absoluteString
+                )
+            }
         default:
             session.endSession()
         }
@@ -101,6 +201,26 @@ class ViewController: UIViewController {
 
         case .glow:
             self.session.filter = .normal
+        }
+    }
+
+    private func updateFlashBtn() {
+        btnFlash.isSelected = session.torch
+    }
+
+    private func getVideoSize() -> CGSize {
+        let (width, height) = OptionsModel.shared.videoSizes[OptionsModel.shared.videoSizeIndex]
+        return UIDevice.current.orientation.isLandscape ?
+            CGSize(width: width, height: height) :
+            CGSize(width: height, height: width)
+    }
+
+    private func refreshVideoSize() {
+        switch session.sessionState {
+        case .starting, .started:
+            break
+        default:
+            session.videoSize = getVideoSize()
         }
     }
 }
