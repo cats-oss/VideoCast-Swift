@@ -297,7 +297,6 @@ extension MetalVideoMixer {
      * Setup the OpenGL ES context, shaders, and state.
      *
      */
-    // swiftlint:disable:next function_body_length
     func setupMetal() {
         CVMetalTextureCacheCreate(kCFAllocatorDefault,
                                   nil,

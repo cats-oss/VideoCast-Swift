@@ -57,12 +57,10 @@ class OptionsViewController: UITableViewController, UITextFieldDelegate {
             if let cell = bitrateCellForRowAt(indexPath) {
                 return cell
             }
-            break
         case Section.video.rawValue:
             if let cell = videoCellForRowAt(indexPath) {
                 return cell
             }
-            break
         default:
             break
         }
