@@ -38,3 +38,13 @@ public class WeakRefIOutput {
         self.value = value
     }
 }
+
+func syncSafe<T>(_ work: () -> T) -> T {
+    if Thread.isMainThread {
+        return work()
+    } else {
+        return DispatchQueue.main.sync {
+            return work()
+        }
+    }
+}

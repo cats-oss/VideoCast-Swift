@@ -182,8 +182,13 @@ extension MetalVideoMixer {
                 locked[currentFb] = true
 
                 mixing.value = true
+                defer {
+                    mixing.value = false
+                }
                 metalJobQueue.enqueue {
                     var currentFilter: IVideoFilter?
+
+                    guard self.zRange.1 >= self.zRange.0 else { return }
 
                     // create a new command buffer for each renderpass to the current drawable
                     guard let commandBuffer = self.commandQueue.makeCommandBuffer() else { return }
@@ -279,8 +284,6 @@ extension MetalVideoMixer {
                                             size: MemoryLayout<CVPixelBuffer>.size, metadata: md)
                         }
                     }
-
-                    self.mixing.value = false
                 }
 
                 currentFb = (currentFb + 1) % 2
@@ -296,6 +299,29 @@ extension MetalVideoMixer {
      */
     // swiftlint:disable:next function_body_length
     func setupMetal() {
+        CVMetalTextureCacheCreate(kCFAllocatorDefault,
+                                  nil,
+                                  device,
+                                  nil,
+                                  &textureCache)
+
+        createTextures()
+
+        // setup the vertex, texCoord buffers
+        vertexBuffer = device.makeBuffer(bytes: s_vertexData,
+                                         length: MemoryLayout<Vertex>.size * s_vertexData.count,
+                                         options: [])
+        vertexBuffer?.label = "VideoMixerVertexBuffer"
+
+        let samplerDescriptor = MTLSamplerDescriptor()
+        samplerDescriptor.minFilter = .linear
+        samplerDescriptor.magFilter = .linear
+        samplerDescriptor.sAddressMode = .clampToEdge
+        samplerDescriptor.tAddressMode = .clampToEdge
+        colorSamplerState = device.makeSamplerState(descriptor: samplerDescriptor)
+    }
+
+    func createTextures() {
         autoreleasepool {
             if let pixelBufferPool = pixelBufferPool {
                 CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, &pixelBuffer[0])
@@ -315,11 +341,6 @@ extension MetalVideoMixer {
                                     pixelBufferOptions as NSDictionary?, &pixelBuffer[1])
             }
         }
-        CVMetalTextureCacheCreate(kCFAllocatorDefault,
-                                  nil,
-                                  device,
-                                  nil,
-                                  &textureCache)
 
         guard let textureCache = textureCache else {
             fatalError("textureCache creation failed")
@@ -348,19 +369,6 @@ extension MetalVideoMixer {
 
             metalTexture[i] = CVMetalTextureGetTexture(texture)
         }
-
-        // setup the vertex, texCoord buffers
-        vertexBuffer = device.makeBuffer(bytes: s_vertexData,
-                                         length: MemoryLayout<Vertex>.size * s_vertexData.count,
-                                         options: [])
-        vertexBuffer?.label = "VideoMixerVertexBuffer"
-
-        let samplerDescriptor = MTLSamplerDescriptor()
-        samplerDescriptor.minFilter = .linear
-        samplerDescriptor.magFilter = .linear
-        samplerDescriptor.sAddressMode = .clampToEdge
-        samplerDescriptor.tAddressMode = .clampToEdge
-        colorSamplerState = device.makeSamplerState(descriptor: samplerDescriptor)
     }
 
     private func setupRenderPassDescriptorForTexture(_ texture: MTLTexture) {
@@ -368,7 +376,8 @@ extension MetalVideoMixer {
         renderPassDescriptor.colorAttachments[0].texture = texture
 
         // make sure to clear every frame for best performance
-        renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
+        renderPassDescriptor.colorAttachments[0].loadAction = .clear
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.05, 0.05, 0.07, 1.0)
 
         // store only attachments that will be presented to the screen
         renderPassDescriptor.colorAttachments[0].storeAction = .store

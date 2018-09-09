@@ -43,8 +43,8 @@ open class MetalVideoMixer: IVideoMixer {
     let device: MTLDevice = MTLCreateSystemDefaultDevice()!
     let commandQueue = DeviceManager.commandQueue
 
-    let frameW: Int
-    let frameH: Int
+    var frameW: Int
+    var frameH: Int
 
     var zRange = (0, 0)
     var layerMap = [Int: [Int]]()
@@ -232,5 +232,16 @@ open class MetalVideoMixer: IVideoMixer {
 
     open func mixPaused(_ paused: Bool) {
         self.paused.value = paused
+    }
+
+    open func setFrameSize(width: Int, height: Int) {
+        if frameW != width || frameH != height {
+            frameW = width
+            frameH = height
+
+            metalJobQueue.enqueue {
+                self.createTextures()
+            }
+        }
     }
 }
