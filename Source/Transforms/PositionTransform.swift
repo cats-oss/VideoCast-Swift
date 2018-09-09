@@ -71,6 +71,18 @@ open class PositionTransform: ITransform {
         positionIsDirty = true
     }
 
+    /*!
+     *  Change the size of the video context.
+     *
+     *  \param width            The width of the video context.
+     *  \param height           The height of the video context.
+     */
+    open func setContextSize(width: Int, height: Int) {
+        self.contextWidth = width
+        self.contextHeight = height
+        positionIsDirty = true
+    }
+
     /*! ITransform::setOutput */
     open func setOutput(_ output: IOutput) {
         self.output = output
