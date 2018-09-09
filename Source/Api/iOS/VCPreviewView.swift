@@ -30,6 +30,8 @@ open class VCPreviewView: UIView {
 
     private var layerSizeDidUpdate = false
 
+    var flipX = false
+
     final public override class var layerClass: AnyClass {
         return CAMetalLayer.self
     }
@@ -191,7 +193,7 @@ open class VCPreviewView: UIView {
                 wfac = width * mult / Float(strongSelf.bounds.width)
                 hfac = height * mult / Float(strongSelf.bounds.height)
 
-                var matrix = GLKMatrix4MakeScale(1 * wfac, -1 * hfac, 1)
+                var matrix = GLKMatrix4MakeScale((strongSelf.flipX ? -1 : 1) * wfac, -1 * hfac, 1)
 
                 // create a new command buffer for each renderpass to the current drawable
                 guard let commandBuffer = strongSelf.commandQueue.makeCommandBuffer() else { return }
