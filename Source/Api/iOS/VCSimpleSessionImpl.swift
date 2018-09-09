@@ -142,6 +142,7 @@ extension VCSimpleSession {
             frame_h: Int(videoSize.height),
             fps: fps,
             bitrate: bitrate,
+            keyframeInterval: keyframeInterval,
             codecType: videoCodecType == .h264 ? kCMVideoCodecType_H264 : kCMVideoCodecType_HEVC,
             useBaseline: false,
             ctsOffset: ctsOffset
@@ -150,6 +151,8 @@ extension VCSimpleSession {
 
         audioMixer?.setOutput(aacEncoder)
         videoSplit?.setOutput(vtEncoder)
+
+        self.delegate.bitrateChanged?(vtEncoder.bitrate, aacEncoder.bitrate)
 
         let aacSplit = Split()
         self.aacSplit = aacSplit
@@ -323,7 +326,7 @@ extension VCSimpleSession {
         bpsCeiling = bitrate
 
         if useAdaptiveBitrate {
-            bitrate = 500000
+            bitrate = min(500000, bpsCeiling)
         }
 
         outputSession.setBandwidthCallback {[weak self] vector, predicted, _ in
@@ -341,6 +344,9 @@ extension VCSimpleSession {
             guard vector != 0 else { return bytesPerSec() }
 
             let vector = vector < 0 ? -1 : 1
+
+            let videoBR = video.bitrate
+            let audioBR = audio.bitrate
 
             let setAudioBitrate = { (videoBr: Int) in
                 switch videoBr {
@@ -379,6 +385,9 @@ extension VCSimpleSession {
                 }
             }
 
+            if videoBR != video.bitrate || audioBR != audio.bitrate {
+                strongSelf.delegate.bitrateChanged?(video.bitrate, audio.bitrate)
+            }
             Logger.info("\n(\(vector)) AudioBR: \(audio.bitrate) VideoBR: \(video.bitrate) (\(predicted))")
 
             return bytesPerSec()

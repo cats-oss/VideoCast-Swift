@@ -30,4 +30,6 @@ public protocol IVideoMixer: IMixer {
     func sync()
 
     func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData)
+
+    func setFrameSize(width: Int, height: Int)
 }
