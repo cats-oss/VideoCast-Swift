@@ -18,6 +18,7 @@ open class VTEncode: IEncoder {
     private let frameW: Int
     private let frameH: Int
     private let fps: Int
+    private let keyframeInterval: Int
     private var _bitrate: Int
     private let codecType: CMVideoCodecType
 
@@ -179,12 +180,14 @@ open class VTEncode: IEncoder {
          frame_h: Int,
          fps: Int,
          bitrate: Int,
+         keyframeInterval: Int,
          codecType: CMVideoCodecType,
          useBaseline: Bool = true,
          ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
         self.frameW = frame_w
         self.frameH = frame_h
         self.fps = fps
+        self.keyframeInterval = keyframeInterval
         self._bitrate = bitrate
         self.codecType = codecType
         self.ctsOffset = ctsOffset
@@ -323,9 +326,8 @@ open class VTEncode: IEncoder {
             if err == noErr {
                 compressionSession = session
 
-                let v = Int32(fps * 2) // 2-second kfi
-
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval, NSNumber(value: v))
+                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval,
+                                           NSNumber(value: keyframeInterval))
             }
 
             if err == noErr {
