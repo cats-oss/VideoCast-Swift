@@ -275,7 +275,7 @@ open class CameraSource: ISource {
                     ret = false
                 }
             } else {
-                Logger.error("Torch not available in current camera input")
+                Logger.info("Torch not available in current camera input")
             }
 
         }
@@ -423,7 +423,7 @@ open class CameraSource: ISource {
 
         var orientation: UIInterfaceOrientation = .unknown
 
-        DispatchQueue.main.sync {
+        syncSafe {
             if useInterfaceOrientation {
                 orientation = UIApplication.shared.statusBarOrientation
             } else {
