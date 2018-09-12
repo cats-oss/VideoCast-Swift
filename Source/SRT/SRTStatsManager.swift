@@ -54,7 +54,7 @@ class SrtStatsManager {
         if !started {
             started = true
             self.sock = sock
-            thread = Thread(block: sampleThread)
+            thread = Thread(target: self, selector: #selector(sampleThread), object: nil)
             thread?.start()
         }
     }
@@ -74,7 +74,7 @@ class SrtStatsManager {
     }
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    private func sampleThread() {
+    @objc private func sampleThread() {
         let clear_stats: Int32 = 1
         var perf: CBytePerfMon = .init()
 

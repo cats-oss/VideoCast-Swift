@@ -47,7 +47,6 @@
 		814265D71FFF6F35001258F2 /* IAudioMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814265D51FFF6F35001258F2 /* IAudioMixer.swift */; };
 		814EA591205AD18D002D4657 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 814EA590205AD18D002D4657 /* LICENSE */; };
 		814EA593205AD199002D4657 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 814EA592205AD199002D4657 /* README.md */; };
-		815B0992201723D500DA6AF5 /* GLESUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815B0991201723D500DA6AF5 /* GLESUtil.swift */; };
 		8161D57E2057A82800813B7A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8161D57B20578A2B00813B7A /* libcrypto.a */; };
 		8161D57F2057A82800813B7A /* libsrt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 81BFD40920578428002E90D8 /* libsrt.a */; };
 		816E872D1FFE34EB005ACB46 /* VideoCast.h in Headers */ = {isa = PBXBuildFile; fileRef = 818C0AFA1FFE1B62008CF132 /* VideoCast.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -237,7 +236,6 @@
 		814EA592205AD199002D4657 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		814EA594205AD1EB002D4657 /* VideoCast.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = VideoCast.podspec; sourceTree = "<group>"; };
 		814EA595205AD32E002D4657 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		815B0991201723D500DA6AF5 /* GLESUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLESUtil.swift; sourceTree = "<group>"; };
 		8161D57B20578A2B00813B7A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
 		816ECE9F1FFF27D4002AE4F9 /* VCSessionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCSessionDelegate.swift; sourceTree = "<group>"; };
 		816ECEAA1FFF4A7F002AE4F9 /* ISource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ISource.swift; sourceTree = "<group>"; };
@@ -671,7 +669,6 @@
 			children = (
 				81DD028220047BB80064A203 /* CameraSource.swift */,
 				B126AC2D210DD62400E1EEF3 /* CameraSourceCallback.swift */,
-				815B0991201723D500DA6AF5 /* GLESUtil.swift */,
 				81DD028020047B960064A203 /* MicSource.swift */,
 			);
 			path = iOS;
@@ -981,7 +978,6 @@
 				8183EA1520075D9C00E5A4AE /* AACPacketizer.swift in Sources */,
 				8115318B2021744600919F9F /* PreallocBuffer.swift in Sources */,
 				81DD0296200491A90064A203 /* RTMPSession.swift in Sources */,
-				815B0992201723D500DA6AF5 /* GLESUtil.swift in Sources */,
 				B126AC3A210DF77C00E1EEF3 /* AudioMixerImpl.swift in Sources */,
 				81D1C1F72032917D0087F23E /* SepiaVideoFilter.swift in Sources */,
 				B1429471210C4E1500B17FC2 /* NalType.swift in Sources */,
@@ -1263,8 +1259,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -1319,8 +1315,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_INCLUDE_PATHS = "${SRCROOT}/SRT";

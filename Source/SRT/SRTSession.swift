@@ -86,7 +86,7 @@ open class SRTSession: IOutputSession {
     open func start() {
         if !started {
             started = true
-            thread = Thread(block: transmitThread)
+            thread = Thread(target: self, selector: #selector(transmitThread), object: nil)
             thread?.start()
         }
     }
@@ -162,7 +162,7 @@ open class SRTSession: IOutputSession {
     }
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    private func transmitThread() {
+    @objc private func transmitThread() {
         loglevel.setLogLevel()
         logfa.setLogFA()
 

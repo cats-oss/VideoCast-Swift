@@ -53,7 +53,7 @@ open class FileSink: IOutputSession {
 
         if !started {
             started = true
-            thread = Thread(block: writingThread)
+            thread = Thread(target: self, selector: #selector(writingThread), object: nil)
             thread?.start()
         }
     }
@@ -73,7 +73,7 @@ open class FileSink: IOutputSession {
 
     }
 
-    private func writingThread() {
+    @objc private func writingThread() {
         let fh: FileHandle
         let fileUrl = URL(fileURLWithPath: filename)
         let fileManager = FileManager()

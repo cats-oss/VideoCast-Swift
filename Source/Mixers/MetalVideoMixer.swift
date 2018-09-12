@@ -220,7 +220,7 @@ open class MetalVideoMixer: IVideoMixer {
     }
 
     open func start() {
-        _mixThread = Thread(block: mixThread)
+        _mixThread = Thread(target: self, selector: #selector(mixThread), object: nil)
         _mixThread?.start()
     }
 

@@ -234,7 +234,7 @@ extension AudioMixer {
     /*!
      *  Start the mixer thread.
      */
-    func mixThread() {
+    @objc func mixThread() {
         let duration = frameDuration
         let start = epoch
 
