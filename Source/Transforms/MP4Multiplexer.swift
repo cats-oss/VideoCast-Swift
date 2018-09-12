@@ -94,7 +94,7 @@ open class MP4Multiplexer: IOutputSession {
 
         if !started {
             started = true
-            thread = Thread(block: writingThread)
+            thread = Thread(target: self, selector: #selector(writingThread), object: nil)
             thread?.start()
         }
     }
@@ -264,7 +264,7 @@ extension MP4Multiplexer {
         }
     }
 
-    private func writingThread() {
+    @objc private func writingThread() {
         let fileUrl = URL(fileURLWithPath: filename)
         do {
             let writer = try AVAssetWriter(url: fileUrl, fileType: .mp4)

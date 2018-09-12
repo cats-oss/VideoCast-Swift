@@ -48,9 +48,11 @@ open class BasicVideoFilter: IVideoFilter {
 
     open func initialize() {
         let defaultLibrary: MTLLibrary!
-        let bundle = Bundle(for: type(of: self))
+        guard let libraryFile = Bundle(for: type(of: self)).path(forResource: "default", ofType: "metallib") else {
+            fatalError(">> ERROR: Couldnt find a default shader library path")
+        }
         do {
-            try defaultLibrary = device.makeDefaultLibrary(bundle: bundle)
+            try defaultLibrary = device.makeLibrary(filepath: libraryFile)
         } catch {
             fatalError(">> ERROR: Couldnt create a default shader library")
         }
@@ -95,7 +97,14 @@ open class BasicVideoFilter: IVideoFilter {
         renderEncoder.setRenderPipelineState(renderPipelineState)
 
         // set the model view project matrix data
-        renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
+        if #available(iOS 8.3, *) {
+            renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
+        } else {
+            let buffer = device.makeBuffer(bytes: &matrix,
+                                                      length: MemoryLayout<GLKMatrix4>.size,
+                                                      options: [])
+            renderEncoder.setVertexBuffer(buffer, offset: 0, index: 1)
+        }
     }
 
     open func unbind() {

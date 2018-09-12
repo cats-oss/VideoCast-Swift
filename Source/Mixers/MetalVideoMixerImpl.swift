@@ -147,7 +147,7 @@ extension MetalVideoMixer {
 
     /*! Start the compositor thread */
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    func mixThread() {
+    @objc func mixThread() {
         let us = TimeInterval(bufferDuration)
         let us_25 = TimeInterval(bufferDuration * 0.25)
         us25 = us_25

@@ -110,8 +110,8 @@ open class CameraSource: ISource {
 
                     let position: AVCaptureDevice.Position = useFront ? .front : .back
 
-                    if let d = AVCaptureDevice.default(.builtInWideAngleCamera,
-                                                       for: AVMediaType.video, position: position) {
+                    let devices = AVCaptureDevice.devices()
+                    for d in devices where d.hasMediaType(.video) && d.position == position {
                         strongSelf.captureDevice = d
                         do {
                             try d.lockForConfiguration()
@@ -481,6 +481,10 @@ open class CameraSource: ISource {
      * \return the camera device, if found.
      */
     private func cameraWithPosition(_ position: AVCaptureDevice.Position) -> AVCaptureDevice? {
-        return AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: position)
+        let devices = AVCaptureDevice.devices(for: .video)
+        for device in devices where device.position == position {
+            return device
+        }
+        return nil
     }
 }

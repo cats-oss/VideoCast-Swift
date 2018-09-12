@@ -213,7 +213,14 @@ open class VCPreviewView: UIView {
                     renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
                     // set the model view project matrix data
-                    renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
+                    if #available(iOS 8.3, *) {
+                        renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
+                    } else {
+                        let buffer = strongSelf.device.makeBuffer(bytes: &matrix,
+                                                       length: MemoryLayout<GLKMatrix4>.size,
+                                                       options: [])
+                        renderEncoder.setVertexBuffer(buffer, offset: 0, index: 1)
+                    }
 
                     // fragment texture for environment
                     renderEncoder.setFragmentTexture(metalTexture, index: 0)
@@ -284,9 +291,11 @@ private extension VCPreviewView {
         CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &cache)
 
         let defaultLibrary: MTLLibrary!
-        let bundle = Bundle(for: type(of: self))
+        guard let libraryFile = Bundle(for: type(of: self)).path(forResource: "default", ofType: "metallib") else {
+                fatalError(">> ERROR: Couldnt find a default shader library path")
+        }
         do {
-            try defaultLibrary = device.makeDefaultLibrary(bundle: bundle)
+            try defaultLibrary = device.makeLibrary(filepath: libraryFile)
         } catch {
             fatalError(">> ERROR: Couldnt create a default shader library")
         }

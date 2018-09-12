@@ -6,7 +6,7 @@
 #  Created by Tomohiro Matsuzawa on 2018/03/13.
 #  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 
-export IPHONEOS_DEPLOYMENT_TARGET=10.0
+export IPHONEOS_DEPLOYMENT_TARGET=8.0
 SDKVERSION=11.4
 
 build_srt() {

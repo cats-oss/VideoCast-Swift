@@ -109,7 +109,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
     open func start() {
         if !started {
             started = true
-            thread = Thread(block: sampleThread)
+            thread = Thread(target: self, selector: #selector(sampleThread), object: nil)
             thread?.start()
         }
     }
@@ -125,7 +125,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
     }
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    private func sampleThread() {
+    @objc private func sampleThread() {
         var prev: Date = .init()
 
         Thread.current.name = "jp.co.cyberagent.VideoCast.tcp.adaptation"

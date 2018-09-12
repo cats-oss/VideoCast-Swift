@@ -253,7 +253,7 @@ open class AudioMixer: IAudioMixer {
     }
 
     open func start() {
-        _mixThread = Thread(block: mixThread)
+        _mixThread = Thread(target: self, selector: #selector(mixThread), object: nil)
         _mixThread?.name = "jp.co.cyberagent.VideoCast.audiomixer"
         _mixThread?.start()
     }
