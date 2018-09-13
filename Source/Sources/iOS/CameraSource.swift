@@ -15,7 +15,7 @@ open class CameraSource: ISource {
         return ObjectIdentifier(self).hashValue
     }
 
-    open static func == (lhs: CameraSource, rhs: CameraSource) -> Bool {
+    public static func == (lhs: CameraSource, rhs: CameraSource) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
 

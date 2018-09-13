@@ -109,9 +109,9 @@ open class VTEncode: IEncoder {
                 var spsSize: Int = 0
                 var ppsSize: Int = 0
                 var parmCount: Int = 0
-                var vps: UnsafePointer<UInt8>? = nil
-                var sps: UnsafePointer<UInt8>? = nil
-                var pps: UnsafePointer<UInt8>? = nil
+                var vps: UnsafePointer<UInt8>?
+                var sps: UnsafePointer<UInt8>?
+                var pps: UnsafePointer<UInt8>?
 
                 switch enc.codecType {
                 case kCMVideoCodecType_H264:
@@ -226,7 +226,7 @@ open class VTEncode: IEncoder {
             let dur: CMTime = .init(value: 1, timescale: Int32(fps))
             var flags: VTEncodeInfoFlags = .init()
 
-            var frameProps: [String: Any]? = nil
+            var frameProps: [String: Any]?
 
             if forceKeyframe {
                 VTEncode.s_forcedKeyframePTS = pts.value
@@ -273,7 +273,7 @@ open class VTEncode: IEncoder {
 
         encodeQueue.sync {
             var err: OSStatus = noErr
-            var encoderSpecifications: [String: Any]? = nil
+            var encoderSpecifications: [String: Any]?
 
             #if !os(iOS)
                 /** iOS is always hardware-accelerated **/

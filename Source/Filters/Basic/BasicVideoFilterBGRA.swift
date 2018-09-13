@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import GLKit
 
 open class BasicVideoFilterBGRA: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
@@ -16,9 +15,11 @@ open class BasicVideoFilterBGRA: BasicVideoFilter {
         return "jp.co.cyberagent.VideoCast.filters.bgra"
     }
 
+    #if !targetEnvironment(simulator)
     open override var piplineDescripter: String? {
         return "bgraPiplineState"
     }
+    #endif
 
     private static func registerFilter() -> Bool {
         FilterFactory.register(
