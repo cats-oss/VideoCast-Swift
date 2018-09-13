@@ -84,7 +84,7 @@ open class VCSimpleSession {
     open var fps: Int                           // Change will not take place until the next Session
     open var keyframeInterval: Int              // Change will not take place until the next Session
     open var videoCodecType: VCVideoCodecType   // Change will not take place until the next Session
-    open let useInterfaceOrientation: Bool
+    public let useInterfaceOrientation: Bool
     open var cameraState: VCCameraState {
         get { return _cameraState }
         set {
@@ -205,7 +205,7 @@ open class VCSimpleSession {
     }
 
     // swiftlint:disable:next weak_delegate
-    open let delegate: VCSessionDelegate
+    public let delegate: VCSessionDelegate
 
     public init(
         videoSize: CGSize,
@@ -327,7 +327,7 @@ open class VCSimpleSession {
             kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
         ]
 
-        var pixelBuffer: CVPixelBuffer? = nil
+        var pixelBuffer: CVPixelBuffer?
 
         CVPixelBufferCreate(kCFAllocatorDefault, width, height,
                             kCVPixelFormatType_32BGRA, options as CFDictionary?, &pixelBuffer)

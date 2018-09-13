@@ -86,7 +86,7 @@ open class TSMultiplexer: ITransform {
         self.ctsOffset = ctsOffset
         self.streams = streams
 
-        var pcr_st: Stream? = nil
+        var pcr_st: Stream?
 
         self.ts.pes_payload_size = (ts.pes_payload_size + 14 + 183) / 184 * 184 - 14
 

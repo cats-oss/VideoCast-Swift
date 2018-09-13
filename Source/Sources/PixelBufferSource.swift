@@ -24,7 +24,7 @@ open class PixelBufferSource: ISource {
         self.height = height
         self.pixelFormat = pixelFormat
 
-        var pb: CVPixelBuffer? = nil
+        var pb: CVPixelBuffer?
         var ret: CVReturn = kCVReturnSuccess
         autoreleasepool {
             let pixelBufferOptions: [String: Any] =

@@ -35,7 +35,7 @@ open class FilterFactory {
         return nil
     }
 
-    open static func register(name: String, instantiation: @escaping InstantiateFilter) {
+    public static func register(name: String, instantiation: @escaping InstantiateFilter) {
         registration[name] = instantiation
     }
 }
