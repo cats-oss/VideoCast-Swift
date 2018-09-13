@@ -63,7 +63,7 @@ cd SRT
 ## Version History
 
 * 0.0.2
-        * Metal videomixing and preview.
+	* Metal videomixing and preview.
 	* SRT Adaptive bitrate
 	* New iOS Example
 	* Bugfixes
