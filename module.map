@@ -1,6 +1,6 @@
 module VideoCast [system] {
     header "SRT/Includes/srt.h"
-    header "SRT/udt_wrapper.h"
+    header "SRT/Includes/udt_wrapper.h"
     header "Source/System/ShaderDefinitions.h"
     export *
 }

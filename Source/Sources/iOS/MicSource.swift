@@ -18,7 +18,7 @@ open class MicSource: ISource {
         return ObjectIdentifier(self).hashValue
     }
 
-    open static func == (lhs: MicSource, rhs: MicSource) -> Bool {
+    public static func == (lhs: MicSource, rhs: MicSource) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
 

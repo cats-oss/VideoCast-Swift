@@ -6,9 +6,10 @@
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
+#if !targetEnvironment(simulator)
 import Foundation
-import Metal
 import GLKit
+import Metal
 
 let s_vertexData = [
     Vertex(position: [-1, -1, 0, 1], texcoords: [0, 0]),   // 0
@@ -29,3 +30,4 @@ class DeviceManager {
     lazy var device: MTLDevice = { return MTLCreateSystemDefaultDevice()! }()
     lazy var commandQueue: MTLCommandQueue = { return device.makeCommandQueue()! } ()
 }
+#endif
