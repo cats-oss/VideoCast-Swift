@@ -14,8 +14,8 @@ VideoCast-Swift is a framework for broadcasting live video. It is based on [Vide
 
 Create a `Podfile` with the contents
 ``` ruby
-platform :ios, '10.0'
-pod 'VideoCast', '~> 0.0.1'
+platform :ios, '8.0'
+pod 'VideoCast', '~> 0.0.2'
 use_frameworks!
 ```
 Next, run `pod install` and open the `xcworkspace` file that is created.
@@ -30,11 +30,12 @@ e.g. Source (Camera) -> Transform (Composite) -> Transform (H.264 Encode) -> Tra
 
  - Streaming protocols
    - RTMP publish
-   - SRT
+   - SRT (caller mode)
  - Encoders
    - H.264
    - HEVC
    - AAC
+ - Adaptive bitrate
  - Multiplexers
    - MPEG-2 TS
    - MP4 for recording
@@ -61,5 +62,10 @@ cd SRT
 
 ## Version History
 
-* 0.1.0 
+* 0.0.2
+        * Metal videomixing and preview.
+	* SRT Adaptive bitrate
+	* New iOS Example
+	* Bugfixes
+* 0.0.1 
 	* Initial CocoaPods version
