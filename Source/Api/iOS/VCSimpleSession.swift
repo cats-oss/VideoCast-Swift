@@ -227,6 +227,7 @@ open class VCSimpleSession {
         self.previewView = .init()
 
         self._cameraState = cameraState
+        previewView.flipX = _cameraState == .front
 
         // initialize videoSize and ascpectMode in internal function to call didSet
         initInternal(videoSize: videoSize,
