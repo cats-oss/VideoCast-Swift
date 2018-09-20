@@ -48,7 +48,7 @@ open class SRTSession: IOutputSession {
 
     private var tar: SrtTarget?
 
-    private var sendBuf: Buffer?
+    private var sendBuf: [Buffer] = .init()
 
     private var wroteBytes: Int = 0
     private var lostBytes: Int = 0
@@ -104,26 +104,36 @@ open class SRTSession: IOutputSession {
     // swiftlint:disable:next cyclomatic_complexity
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending.value else { return }
+        assert (size % 188 == 0)
 
         var bufReady: Buffer?
+
+        var len = size
+        var offset = 0
+
         if size == 0 {
-            bufReady = sendBuf
-            sendBuf = nil
-        } else {
-            if let buf = sendBuf, size + buf.buffer.count <= SrtConf.transmit_chunk_size {
-                buf.buffer.append(data.assumingMemoryBound(to: UInt8.self), count: size)
-                if buf.buffer.count == SrtConf.transmit_chunk_size {
-                    bufReady = buf
-                    sendBuf = nil
-                }
-            } else {
-                bufReady = sendBuf
-                let newBuf = Buffer()
-                newBuf.buffer.append(data.assumingMemoryBound(to: UInt8.self), count: size)
-                sendBuf = newBuf
-            }
+            return
         }
-        if let buf = bufReady {
+        while len > 0 {
+            let buf: Buffer
+            if let last = sendBuf.last, last.buffer.count < SrtConf.transmit_chunk_size {
+                buf = last
+            } else {
+                buf = Buffer()
+                sendBuf.append(buf)
+            }
+            let copyLen = min(Int(SrtConf.transmit_chunk_size) - buf.buffer.count, size)
+            buf.buffer.append(data.assumingMemoryBound(to: UInt8.self) + offset,
+                               count: copyLen)
+            len -= copyLen
+            offset += copyLen
+        }
+
+        while sendBuf.count > 0 {
+            guard let buf = sendBuf.first, buf.buffer.count >= SrtConf.transmit_chunk_size else { break }
+            assert(buf.buffer.count == SrtConf.transmit_chunk_size)
+            sendBuf.remove(at: 0)
+
             // make the lamdba capture the data
             jobQueue.enqueue {
                 if !self.ending.value {
