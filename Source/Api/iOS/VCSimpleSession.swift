@@ -324,7 +324,7 @@ open class VCSimpleSession {
             strongSelf.addPixelBufferSourceInternal(image: image, rect: rect, aspectMode: aspectMode)
         }
     }
-    
+
     open func resetPixelBufferSource() {
         graphManagementQueue.async { [weak self] in
             guard let strongSelf = self else { return }

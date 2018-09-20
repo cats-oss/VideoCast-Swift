@@ -194,14 +194,14 @@ open class MicSource: ISource {
     deinit {
         stop()
     }
-    
+
     open func stop() {
         if let audioUnit = _audioUnit {
             if let interruptionHandler = interruptionHandler {
                 NotificationCenter.default.removeObserver(interruptionHandler)
                 interruptionHandler.source = nil
             }
-            
+
             AudioOutputUnitStop(audioUnit)
             AudioComponentInstanceDispose(audioUnit)
             _audioUnit = nil
