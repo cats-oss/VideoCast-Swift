@@ -201,7 +201,6 @@ open class MetalVideoMixer: IVideoMixer {
 
         for layerIndex in zRange.0...zRange.1 {
             guard let layerMap_i = layerMap[layerIndex] else {
-                Logger.debug("unexpected return")
                 continue
             }
 
