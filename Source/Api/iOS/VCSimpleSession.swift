@@ -48,7 +48,8 @@ open class VCSimpleSession {
     private var _audioChannelCount = 1
     private var _audioSampleRate: Float = 48000
     private var _micGain: Float = 1
-    private var _cameraState: VCCameraState
+    var _cameraState: VCCameraState
+    var _mirrorPreview = true
 
     open var sessionState = VCSessionState.none {
         didSet {
@@ -91,7 +92,16 @@ open class VCSimpleSession {
             if _cameraState != newValue {
                 _cameraState = newValue
                 cameraSource?.toggleCamera()
-                previewView.flipX = _cameraState == .front
+                updatePreview()
+            }
+        }
+    }
+    open var mirrorPreview: Bool {
+        get { return _mirrorPreview }
+        set {
+            if _mirrorPreview != newValue {
+                _mirrorPreview = newValue
+                updatePreview()
             }
         }
     }
@@ -227,6 +237,7 @@ open class VCSimpleSession {
         self.previewView = .init()
 
         self._cameraState = cameraState
+        updatePreview()
 
         // initialize videoSize and ascpectMode in internal function to call didSet
         initInternal(videoSize: videoSize,
@@ -253,9 +264,11 @@ open class VCSimpleSession {
         videoSplit = nil
         aspectTransform = nil
         positionTransform = nil
+        micSource?.stop()
         micSource = nil
         cameraSource = nil
         pbOutput = nil
+        resetPixelBufferSourceInternal()
     }
 
     open func startRtmpSession(url: String, streamKey: String) {
@@ -305,72 +318,17 @@ open class VCSimpleSession {
         }
     }
 
-    // swiftlint:disable:next function_body_length
-    open func addPixelBufferSource(image: UIImage, rect: CGRect) {
-        guard let cgImage = image.cgImage, let videoMixer = videoMixer else {
-            return Logger.debug("unexpected return")
+    open func addPixelBufferSource(image: UIImage, rect: CGRect, aspectMode: VCAspectMode = .fit) {
+        graphManagementQueue.async { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.addPixelBufferSourceInternal(image: image, rect: rect, aspectMode: aspectMode)
         }
-
-        let pixelBufferSource = PixelBufferSource(
-            width: cgImage.width,
-            height: cgImage.height,
-            pixelFormat: kCVPixelFormatType_32BGRA
-        )
-        self.pixelBufferSource = pixelBufferSource
-
-        let width = cgImage.width
-        let height = cgImage.height
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-
-        let options: [String: Any] = [
-            kCVPixelBufferCGImageCompatibilityKey as String: true,
-            kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
-        ]
-
-        var pixelBuffer: CVPixelBuffer?
-
-        CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                            kCVPixelFormatType_32BGRA, options as CFDictionary?, &pixelBuffer)
-
-        CVPixelBufferLockBaseAddress(pixelBuffer!, [])
-
-        let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer!)
-
-        let bytesPerPixel = 4
-        let bytesPerRow = bytesPerPixel * width
-        let bitsPerComponent = 8
-        let context = CGContext(
-            data: pixelData,
-            width: width,
-            height: height,
-            bitsPerComponent: bitsPerComponent,
-            bytesPerRow: bytesPerRow,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-        )
-
-        context?.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-
-        let pbAspect = AspectTransform(boundingWidth: Int(rect.size.width),
-                                       boundingHeight: Int(rect.size.height), aspectMode: .fit)
-        self.pbAspect = pbAspect
-
-        let pbPosition = PositionTransform(
-            x: Int(rect.origin.x),
-            y: Int(rect.origin.y),
-            width: Int(rect.size.width),
-            height: Int(rect.size.height),
-            contextWidth: Int(videoSize.width),
-            contextHeight: Int(videoSize.height)
-        )
-        self.pbPosition = pbPosition
-
-        pixelBufferSource.setOutput(pbAspect)
-        pbAspect.setOutput(pbPosition)
-        pbPosition.setOutput(videoMixer)
-        videoMixer.registerSource(pixelBufferSource)
-        pixelBufferSource.pushPixelBuffer(data: pixelData!, size: width * height * 4)
-
-        CVPixelBufferUnlockBaseAddress(pixelBuffer!, [])
+    }
+    
+    open func resetPixelBufferSource() {
+        graphManagementQueue.async { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.resetPixelBufferSourceInternal()
+        }
     }
 }

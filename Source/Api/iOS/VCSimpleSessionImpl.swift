@@ -393,4 +393,90 @@ extension VCSimpleSession {
             return bytesPerSec()
         }
     }
+    
+    func updatePreview() {
+        previewView.flipX = _mirrorPreview ? _cameraState == .front : false
+    }
+    
+    // swiftlint:disable:next function_body_length
+    func addPixelBufferSourceInternal(image: UIImage, rect: CGRect, aspectMode: VCAspectMode = .fit) {
+        guard let cgImage = image.cgImage, let videoMixer = videoMixer else {
+            return Logger.debug("unexpected return")
+        }
+        
+        resetPixelBufferSourceInternal()
+        
+        let pixelBufferSource = PixelBufferSource(
+            width: cgImage.width,
+            height: cgImage.height,
+            pixelFormat: kCVPixelFormatType_32BGRA
+        )
+        self.pixelBufferSource = pixelBufferSource
+        
+        let width = cgImage.width
+        let height = cgImage.height
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        
+        let options: [String: Any] = [
+            kCVPixelBufferCGImageCompatibilityKey as String: true,
+            kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
+        ]
+        
+        var pixelBuffer: CVPixelBuffer?
+        
+        CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                            kCVPixelFormatType_32BGRA, options as CFDictionary?, &pixelBuffer)
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer!, [])
+        
+        let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer!)
+        
+        let bytesPerPixel = 4
+        let bytesPerRow = bytesPerPixel * width
+        let bitsPerComponent = 8
+        let context = CGContext(
+            data: pixelData,
+            width: width,
+            height: height,
+            bitsPerComponent: bitsPerComponent,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        )
+        
+        context?.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        let aspectMode: AspectTransform.AspectMode = aspectMode == .fit ? .fit : .fill
+        let pbAspect = AspectTransform(boundingWidth: Int(rect.size.width),
+                                       boundingHeight: Int(rect.size.height), aspectMode: aspectMode)
+        self.pbAspect = pbAspect
+        
+        let pbPosition = PositionTransform(
+            x: Int(rect.origin.x),
+            y: Int(rect.origin.y),
+            width: Int(rect.size.width),
+            height: Int(rect.size.height),
+            contextWidth: Int(videoSize.width),
+            contextHeight: Int(videoSize.height)
+        )
+        self.pbPosition = pbPosition
+        
+        pixelBufferSource.setOutput(pbAspect)
+        pbAspect.setOutput(pbPosition)
+        pbPosition.setOutput(videoMixer)
+        videoMixer.registerSource(pixelBufferSource)
+        pixelBufferSource.pushPixelBuffer(data: pixelData!, size: width * height * 4)
+        
+        CVPixelBufferUnlockBaseAddress(pixelBuffer!, [])
+    }
+    
+    func resetPixelBufferSourceInternal() {
+        if let pixelBufferSource = self.pixelBufferSource {
+            videoMixer?.unregisterSource(pixelBufferSource)
+        }
+        
+        pbPosition = nil
+        pbAspect = nil
+        self.pixelBufferSource = nil
+    }
 }
