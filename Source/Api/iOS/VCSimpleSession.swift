@@ -142,7 +142,7 @@ open class VCSimpleSession {
         get { return _micGain }
         set {
             if let audioMixer = audioMixer, let micSource = micSource {
-                audioMixer.setSourceGain(WeakRefISource(value: micSource), gain: micGain)
+                audioMixer.setSourceGain(WeakRefISource(value: micSource), gain: newValue)
             }
             _micGain = newValue
         }
