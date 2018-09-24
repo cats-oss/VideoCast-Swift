@@ -8,6 +8,7 @@
 
 import Foundation
 
+@objc(Server)
 class Server: NSObject, NSCoding {
     var desc: String
     var url: String
@@ -37,7 +38,7 @@ class Server: NSObject, NSCoding {
 class ServerModel {
     static let shared = ServerModel()
 
-    private let userDefaults = UserDefaults.standard
+    private let userDefaults = UserDefaults(suiteName: Constants.appGroup)!
     private let serversKey = "Server.Servers"
     private let selectedKey = "Server.Selected"
 
