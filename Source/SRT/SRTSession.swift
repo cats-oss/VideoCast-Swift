@@ -101,12 +101,10 @@ open class SRTSession: IOutputSession {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending.value else { return }
         assert (size % 188 == 0)
-
-        var bufReady: Buffer?
 
         var len = size
         var offset = 0
@@ -129,38 +127,42 @@ open class SRTSession: IOutputSession {
             offset += copyLen
         }
 
-        while sendBuf.count > 0 {
-            guard let buf = sendBuf.first, buf.buffer.count >= SrtConf.transmit_chunk_size else { break }
-            assert(buf.buffer.count == SrtConf.transmit_chunk_size)
-            sendBuf.remove(at: 0)
+        // SRT bandwidth estimation requires that most packets are sent bursty
+        // https://github.com/Haivision/srt/blob/v1.3.1/srtcore/window.cpp#L201-L222
+        if sendBuf.count >= 10 {
+            while !sendBuf.isEmpty {
+                guard let buf = sendBuf.first, buf.buffer.count >= SrtConf.transmit_chunk_size else { break }
+                assert(buf.buffer.count == SrtConf.transmit_chunk_size)
+                sendBuf.remove(at: 0)
 
-            // make the lamdba capture the data
-            jobQueue.enqueue {
-                if !self.ending.value {
-                    do {
-                        guard let tar = self.tar else { return }
+                // make the lamdba capture the data
+                jobQueue.enqueue {
+                    if !self.ending.value {
+                        do {
+                            guard let tar = self.tar else { return }
 
-                        try buf.buffer.withUnsafeBytes { (data: UnsafePointer<Int8>) in
-                            let size = buf.buffer.count
-                            if !tar.isOpen {
-                                self.lostBytes += size
-                            } else if try !tar.write(data, size: size) {
-                                self.lostBytes += size
-                            } else {
-                                self.wroteBytes += size
+                            try buf.buffer.withUnsafeBytes { (data: UnsafePointer<Int8>) in
+                                let size = buf.buffer.count
+                                if !tar.isOpen {
+                                    self.lostBytes += size
+                                } else if try !tar.write(data, size: size) {
+                                    self.lostBytes += size
+                                } else {
+                                    self.wroteBytes += size
+                                }
                             }
-                        }
 
-                        if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes) {
-                            let now: Date = .init()
-                            if now.timeIntervalSince(self.writeErrorLogTimer) >= 5 {
-                                Logger.debug("\(self.lostBytes) bytes lost, \(self.wroteBytes) bytes sent")
-                                self.writeErrorLogTimer = now
-                                self.lastReportedtLostBytes = self.lostBytes
+                            if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes) {
+                                let now: Date = .init()
+                                if now.timeIntervalSince(self.writeErrorLogTimer) >= 5 {
+                                    Logger.debug("\(self.lostBytes) bytes lost, \(self.wroteBytes) bytes sent")
+                                    self.writeErrorLogTimer = now
+                                    self.lastReportedtLostBytes = self.lostBytes
+                                }
                             }
+                        } catch {
+                            Logger.error("ERROR: \(error)")
                         }
-                    } catch {
-                        Logger.error("ERROR: \(error)")
                     }
                 }
             }
@@ -312,10 +314,10 @@ open class SRTSession: IOutputSession {
                                     Logger.debug("SRT target disconnected")
                                 }
                                 tarConnected = false
-                                setClientState(.notConnected)
                             }
 
                             if !autoreconnect {
+                                setClientState(.notConnected)
                                 doabort = true
                             } else {
                                 // force re-connection
