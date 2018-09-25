@@ -330,7 +330,12 @@ extension RTMPSession {
                 props[propName] = propVal
             } else {
                 // treat non-string property values as empty
-                p = p.dropFirst(Int(amfPrimitiveObjectSize(p)))
+                let size = Int(amfPrimitiveObjectSize(p))
+                if size > 0 {
+                    p = p.dropFirst(size)
+                } else {
+                    break
+                }
                 props[propName] = ""
             }
             // Fix large AMF object may break to multiple packets
