@@ -8,6 +8,7 @@
 
 import UIKit
 import VideoCast
+import ReplayKit.RPBroadcast
 
 class ViewController: UIViewController {
 
@@ -15,6 +16,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var btnFlash: UIButton!
     @IBOutlet weak var btnConnect: UIButton!
     @IBOutlet weak var lblBitrate: UILabel!
+    @IBOutlet weak var pickerView: UIView!
 
     let imgFlashOn = UIImage(named: "icons8-flash-on-50")
     let imgFlashOff = UIImage(named: "icons8-flash-off-50")
@@ -52,17 +54,15 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        session = VCSimpleSession(
-            videoSize: getVideoSize(),
-            frameRate: OptionsModel.shared.framerate,
-            bitrate: OptionsModel.shared.bitrate,
-            videoCodecType: OptionsModel.shared.videoCodec,
-            useInterfaceOrientation: true,
-            aspectMode: .fill
-        )
-        previewView.addSubview(session.previewView)
-        session.previewView.frame = previewView.bounds
+        initSession()
         lblBitrate.text = ""
+
+        if #available(iOS 12.0, *) {
+            let broadcastPicker = RPSystemBroadcastPickerView(
+                frame: CGRect(origin: CGPoint(), size: pickerView.frame.size))
+            broadcastPicker.preferredExtension = Constants.screencastId
+            pickerView.addSubview(broadcastPicker)
+        }
 
         let delegate = session.delegate
 
@@ -204,13 +204,32 @@ class ViewController: UIViewController {
         }
     }
 
+    private func initSession() {
+        session = VCSimpleSession(
+            videoSize: getVideoSize(),
+            frameRate: OptionsModel.shared.framerate,
+            bitrate: OptionsModel.shared.bitrate,
+            videoCodecType: OptionsModel.shared.videoCodec,
+            useInterfaceOrientation: true,
+            aspectMode: .fill
+        )
+        previewView.addSubview(session.previewView)
+        session.previewView.frame = previewView.bounds
+    }
+
     private func updateFlashBtn() {
         btnFlash.isSelected = session.torch
     }
 
     private func getVideoSize() -> CGSize {
         let (width, height) = OptionsModel.shared.videoSizes[OptionsModel.shared.videoSizeIndex]
-        return UIDevice.current.orientation.isLandscape ?
+        let isLandscape: Bool
+        if OptionsModel.shared.orientation == .default {
+            isLandscape = UIDevice.current.orientation.isLandscape
+        } else {
+            isLandscape = OptionsModel.shared.orientation == .landscape
+        }
+        return isLandscape ?
             CGSize(width: width, height: height) :
             CGSize(width: height, height: width)
     }

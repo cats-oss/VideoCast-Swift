@@ -9,6 +9,7 @@
 import UIKit
 import CoreMedia
 
+// swiftlint:disable file_length
 extension VCSimpleSession {
     final class PixelBufferOutput: IOutput {
         typealias PixelBufferCallback = (_ data: UnsafeRawPointer, _ size: Int) -> Void
@@ -54,65 +55,102 @@ extension VCSimpleSession {
 
         self.videoSplit = videoSplit
 
-        let pbOutput = PixelBufferOutput(callback: { [weak self, previewView] (data: UnsafeRawPointer, _: Int)  in
-            guard let strongSelf = self else { return }
+        if !screencast {
+            let pbOutput = PixelBufferOutput(callback: { [weak self, previewView] (data: UnsafeRawPointer, _: Int)  in
+                guard let strongSelf = self else { return }
 
-            let pixelBuffer = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
-            previewView.drawFrame(pixelBuffer)
+                let pixelBuffer = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
+                previewView.drawFrame(pixelBuffer)
 
-            if strongSelf.sessionState == .none {
-                strongSelf.sessionState = .previewStarted
-            }
-        })
-        self.pbOutput = pbOutput
+                if strongSelf.sessionState == .none {
+                    strongSelf.sessionState = .previewStarted
+                }
+            })
+            self.pbOutput = pbOutput
 
-        videoSplit.setOutput(pbOutput)
+            videoSplit.setOutput(pbOutput)
+        }
 
         videoMixer?.setOutput(videoSplit)
 
         // Create sources
+        if screencast {
+            let videoSampleSource = VideoSampleSource()
+            self.videoSampleSource = videoSampleSource
+            let aspectTransform = AspectTransform(boundingWidth: Int(videoSize.width),
+                                                  boundingHeight: Int(videoSize.height), aspectMode: atAspectMode)
 
-        // Add camera source
-        let cameraSource = CameraSource()
-        self.cameraSource = cameraSource
-        cameraSource.orientationLocked = orientationLocked
-        let aspectTransform = AspectTransform(boundingWidth: Int(videoSize.width),
-                                              boundingHeight: Int(videoSize.height), aspectMode: atAspectMode)
+            let positionTransform = PositionTransform(
+                x: Int(videoSize.width / 2), y: Int(videoSize.height / 2),
+                width: Int(Float(videoSize.width) * videoZoomFactor),
+                height: Int(Float(videoSize.height) * videoZoomFactor),
+                contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height)
+            )
 
-        let positionTransform = PositionTransform(
-            x: Int(videoSize.width / 2), y: Int(videoSize.height / 2),
-            width: Int(Float(videoSize.width) * videoZoomFactor),
-            height: Int(Float(videoSize.height) * videoZoomFactor),
-            contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height)
-        )
+            self.videoSampleSource?.setOutput(aspectTransform)
 
-        cameraSource.setupCamera(fps: fps, useFront: cameraState == .front,
-                                 useInterfaceOrientation: useInterfaceOrientation, sessionPreset: nil) {
-                                    self.cameraSource?.setContinuousAutofocus(true)
-                                    self.cameraSource?.setContinuousExposure(true)
+            guard let videoMixer = self.videoMixer,
+                let filter = videoMixer.filterFactory.filter(
+                    name: "jp.co.cyberagent.VideoCast.filters.bgra") as? IVideoFilter else {
+                        return Logger.debug("unexpected return")
+            }
 
-                                    self.cameraSource?.setOutput(aspectTransform)
+            videoMixer.setSourceFilter(WeakRefISource(value: videoSampleSource), filter: filter)
+            self.filter = .normal
+            aspectTransform.setOutput(positionTransform)
+            positionTransform.setOutput(videoMixer)
+            self.aspectTransform = aspectTransform
+            self.positionTransform = positionTransform
 
-                                    guard let videoMixer = self.videoMixer,
-                                        let filter = videoMixer.filterFactory.filter(
-                                            name: "jp.co.cyberagent.VideoCast.filters.bgra") as? IVideoFilter else {
-                                                return Logger.debug("unexpected return")
-                                    }
+            // Add audio source
+            audioAppSampleSource = .init()
+            audioAppSampleSource?.setOutput(audioMixer)
 
-                                    videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: filter)
-                                    self.filter = .normal
-                                    aspectTransform.setOutput(positionTransform)
-                                    positionTransform.setOutput(videoMixer)
-                                    self.aspectTransform = aspectTransform
-                                    self.positionTransform = positionTransform
+            audioMicSampleSource = .init()
+            audioMicSampleSource?.setOutput(audioMixer)
+        } else {
+            // Add camera source
+            let cameraSource = CameraSource()
+            self.cameraSource = cameraSource
+            cameraSource.orientationLocked = orientationLocked
+            let aspectTransform = AspectTransform(boundingWidth: Int(videoSize.width),
+                                                  boundingHeight: Int(videoSize.height), aspectMode: atAspectMode)
 
-                                    // Inform delegate that camera source has been added
-                                    self.delegate.didAddCameraSource?(self)
+            let positionTransform = PositionTransform(
+                x: Int(videoSize.width / 2), y: Int(videoSize.height / 2),
+                width: Int(Float(videoSize.width) * videoZoomFactor),
+                height: Int(Float(videoSize.height) * videoZoomFactor),
+                contextWidth: Int(videoSize.width), contextHeight: Int(videoSize.height)
+            )
+
+            cameraSource.setupCamera(fps: fps, useFront: cameraState == .front,
+                                     useInterfaceOrientation: useInterfaceOrientation, sessionPreset: nil) {
+                                        self.cameraSource?.setContinuousAutofocus(true)
+                                        self.cameraSource?.setContinuousExposure(true)
+
+                                        self.cameraSource?.setOutput(aspectTransform)
+
+                                        guard let videoMixer = self.videoMixer,
+                                            let filter = videoMixer.filterFactory.filter(
+                                                name: "jp.co.cyberagent.VideoCast.filters.bgra") as? IVideoFilter else {
+                                                    return Logger.debug("unexpected return")
+                                        }
+
+                                        videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: filter)
+                                        self.filter = .normal
+                                        aspectTransform.setOutput(positionTransform)
+                                        positionTransform.setOutput(videoMixer)
+                                        self.aspectTransform = aspectTransform
+                                        self.positionTransform = positionTransform
+
+                                        // Inform delegate that camera source has been added
+                                        self.delegate.didAddCameraSource?(self)
+            }
+
+            // Add mic source
+            micSource = MicSource(sampleRate: Double(audioSampleRate), preferedChannelCount: audioChannelCount)
+            micSource?.setOutput(audioMixer)
         }
-
-        // Add mic source
-        micSource = MicSource(sampleRate: Double(audioSampleRate), preferedChannelCount: audioChannelCount)
-        micSource?.setOutput(audioMixer)
 
         let epoch = Date()
 

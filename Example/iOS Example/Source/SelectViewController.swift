@@ -20,6 +20,8 @@ class SelectViewController: UITableViewController {
             return OptionsModel.shared.videoSizes.count
         case .videoCodec:
             return 2
+        case .orientation:
+            return 3
         }
     }
 
@@ -36,6 +38,9 @@ class SelectViewController: UITableViewController {
         case .videoCodec:
             cell.textLabel?.text = OptionsUtil.getVideoCodecLabel(indexPath.row)
             cell.isSelected = OptionsModel.shared.videoCodec.rawValue == indexPath.row
+        case .orientation:
+            cell.textLabel?.text = OptionsUtil.getOrientationLabel(indexPath.row)
+            cell.isSelected = OptionsModel.shared.orientation.rawValue == indexPath.row
         }
         cell.accessoryType = cell.isSelected ? .checkmark : .none
 
@@ -50,6 +55,8 @@ class SelectViewController: UITableViewController {
             OptionsModel.shared.videoSizeIndex = indexPath.row
         case .videoCodec:
             OptionsModel.shared.videoCodec = VCVideoCodecType(rawValue: indexPath.row)!
+        case .orientation:
+            OptionsModel.shared.orientation = Orientation(rawValue: indexPath.row)!
         }
         tableView.reloadData()
     }

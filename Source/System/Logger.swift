@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import os.log
 
 class Logger {
     struct LogFlags: OptionSet {
@@ -29,6 +30,9 @@ class Logger {
         let rawValue: Int
 
     }
+
+    @available(iOS 10.0, *)
+    static let general = OSLog(subsystem: "jp.co.cyberagent.videocast", category: "general")
 
 #if DEBUG
     static let levelDef: LogFlags = .levelDebug
@@ -128,7 +132,27 @@ class Logger {
         if level.contains(flag) {
             let message = message()
             let logging = {
-                print("[\(Logger.dateToString(Date()))] [\(file)] [\(function)] [\(line)] : \(message)")
+                if #available(iOS 10.0, *) {
+                    let type: OSLogType
+                    switch flag {
+                    case .error:
+                        type = .error
+                    case .warn:
+                        type = .info
+                    case .info:
+                        type = .info
+                    case .debug:
+                        type = .debug
+                    case .verbose:
+                        type = .debug
+                    default:
+                        type = .default
+                    }
+                    os_log("%{public}@", log: general, type: type, "[\(file)] [\(function)] [\(line)] : \(message)")
+                    //NSLog("%@", "[\(file)] [\(function)] [\(line)] : \(message)")
+                } else {
+                    print("[\(Logger.dateToString(Date()))] [\(file)] [\(function)] [\(line)] : \(message)")
+                }
             }
             if synchronous {
                 queue.sync {

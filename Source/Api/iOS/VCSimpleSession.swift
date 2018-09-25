@@ -14,6 +14,9 @@ open class VCSimpleSession {
     var micSource: MicSource?
     var cameraSource: CameraSource?
     var pixelBufferSource: PixelBufferSource?
+    var videoSampleSource: VideoSampleSource?
+    var audioAppSampleSource: AudioSampleSource?
+    var audioMicSampleSource: AudioSampleSource?
     var pbAspect: AspectTransform?
     var pbPosition: PositionTransform?
 
@@ -214,6 +217,8 @@ open class VCSimpleSession {
         }
     }
 
+    let screencast: Bool
+
     // swiftlint:disable:next weak_delegate
     public let delegate: VCSessionDelegate
 
@@ -225,6 +230,7 @@ open class VCSimpleSession {
         useInterfaceOrientation: Bool = false,
         cameraState: VCCameraState = .back,
         aspectMode: VCAspectMode = .fit,
+        screencast: Bool = false,
         delegate: VCSessionDelegate = .init()) {
         self.delegate = delegate
 
@@ -233,6 +239,7 @@ open class VCSimpleSession {
         self.keyframeInterval = fps * 2 // default 2 sec
         self.videoCodecType = videoCodecType
         self.useInterfaceOrientation = useInterfaceOrientation
+        self.screencast = screencast
 
         self.previewView = .init()
 
@@ -330,5 +337,18 @@ open class VCSimpleSession {
             guard let strongSelf = self else { return }
             strongSelf.resetPixelBufferSourceInternal()
         }
+    }
+
+    @available(iOS 9.0, *)
+    open func pushVideo(_ sampleBuffer: CMSampleBuffer) {
+        videoSampleSource?.pushSample(sampleBuffer)
+    }
+
+    open func pushAudioApp(_ sampleBuffer: CMSampleBuffer) {
+        audioAppSampleSource?.pushSample(sampleBuffer)
+    }
+
+    open func pushAudioMic(_ sampleBuffer: CMSampleBuffer) {
+        audioMicSampleSource?.pushSample(sampleBuffer)
     }
 }
