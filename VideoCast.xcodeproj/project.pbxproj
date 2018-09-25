@@ -69,6 +69,8 @@
 		818C0B0B1FFE1CE3008CF132 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 818C0B011FFE1B6C008CF132 /* Info.plist */; };
 		818C0B0F1FFE1CF1008CF132 /* ValenciaVideoCastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818C0AFE1FFE1B6C008CF132 /* ValenciaVideoCastTests.swift */; };
 		818C0B101FFE1D1D008CF132 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 818C0AF31FFE1B4E008CF132 /* Info.plist */; };
+		818DA47D21550CBA004748E4 /* PixelFormatConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818DA47C21550CBA004748E4 /* PixelFormatConverter.swift */; };
+		818DA47E21550CBA004748E4 /* PixelFormatConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818DA47C21550CBA004748E4 /* PixelFormatConverter.swift */; };
 		818F9E34202D7BBF006F586F /* MP4Multiplexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F9E33202D7BBF006F586F /* MP4Multiplexer.swift */; };
 		818F9E35202D7BBF006F586F /* MP4Multiplexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F9E33202D7BBF006F586F /* MP4Multiplexer.swift */; };
 		8196BD2F204910E700BE2BC8 /* FileSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8196BD2E204910E700BE2BC8 /* FileSink.swift */; };
@@ -151,6 +153,12 @@
 		81EC5133212564600012F2F6 /* SRTStatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EC5131212564600012F2F6 /* SRTStatsManager.swift */; };
 		81F4DB62203A95DE00966662 /* TSMultiplexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F4DB61203A95DE00966662 /* TSMultiplexer.swift */; };
 		81F4DB63203A95DE00966662 /* TSMultiplexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F4DB61203A95DE00966662 /* TSMultiplexer.swift */; };
+		81FA47DB21549533002A2B1A /* VCSampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47DA21549533002A2B1A /* VCSampleHandler.swift */; };
+		81FA47DD2154A336002A2B1A /* VCScreencastConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47DC2154A336002A2B1A /* VCScreencastConfig.swift */; };
+		81FA47DF2154C9A0002A2B1A /* VideoSampleSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47DE2154C9A0002A2B1A /* VideoSampleSource.swift */; };
+		81FA47E02154C9A0002A2B1A /* VideoSampleSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47DE2154C9A0002A2B1A /* VideoSampleSource.swift */; };
+		81FA47E22154DCDC002A2B1A /* AudioSampleSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47E12154DCDC002A2B1A /* AudioSampleSource.swift */; };
+		81FA47E32154DCDC002A2B1A /* AudioSampleSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47E12154DCDC002A2B1A /* AudioSampleSource.swift */; };
 		81FACD5B20208773001FFD6B /* IStreamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FACD5A20208773001FFD6B /* IStreamSession.swift */; };
 		81FACD5C20208773001FFD6B /* IStreamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FACD5A20208773001FFD6B /* IStreamSession.swift */; };
 		81FACD5E20208B50001FFD6B /* StreamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FACD5D20208B50001FFD6B /* StreamSession.swift */; };
@@ -252,6 +260,7 @@
 		818C0B011FFE1B6C008CF132 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		818C0B0A1FFE1CC4008CF132 /* VideoCast macOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VideoCast macOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		818C0B121FFE1DDB008CF132 /* VideoCast.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VideoCast.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		818DA47C21550CBA004748E4 /* PixelFormatConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelFormatConverter.swift; sourceTree = "<group>"; };
 		818F9E33202D7BBF006F586F /* MP4Multiplexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MP4Multiplexer.swift; sourceTree = "<group>"; };
 		8196BD2E204910E700BE2BC8 /* FileSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSink.swift; sourceTree = "<group>"; };
 		8196E28E2046393700A59BA1 /* AnnexbEncode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnexbEncode.swift; sourceTree = "<group>"; };
@@ -305,6 +314,10 @@
 		81E2E08B2008BE2700DE5465 /* JobQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobQueue.swift; sourceTree = "<group>"; };
 		81EC5131212564600012F2F6 /* SRTStatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTStatsManager.swift; sourceTree = "<group>"; };
 		81F4DB61203A95DE00966662 /* TSMultiplexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TSMultiplexer.swift; sourceTree = "<group>"; };
+		81FA47DA21549533002A2B1A /* VCSampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCSampleHandler.swift; sourceTree = "<group>"; };
+		81FA47DC2154A336002A2B1A /* VCScreencastConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCScreencastConfig.swift; sourceTree = "<group>"; };
+		81FA47DE2154C9A0002A2B1A /* VideoSampleSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSampleSource.swift; sourceTree = "<group>"; };
+		81FA47E12154DCDC002A2B1A /* AudioSampleSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSampleSource.swift; sourceTree = "<group>"; };
 		81FACD5A20208773001FFD6B /* IStreamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IStreamSession.swift; sourceTree = "<group>"; };
 		81FACD5D20208B50001FFD6B /* StreamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamSession.swift; sourceTree = "<group>"; };
 		B126AC21210DB98F00E1EEF3 /* SRTTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTTarget.swift; sourceTree = "<group>"; };
@@ -414,6 +427,8 @@
 				811D4B961FFF1B2E004EC189 /* VCSimpleSession.swift */,
 				B126AC33210DF0E400E1EEF3 /* VCSimpleSessionImpl.swift */,
 				B126AC30210DF02E00E1EEF3 /* VCTypes.swift */,
+				81FA47DA21549533002A2B1A /* VCSampleHandler.swift */,
+				81FA47DC2154A336002A2B1A /* VCScreencastConfig.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -530,8 +545,10 @@
 		816ECEA61FFF4980002AE4F9 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				81FA47E12154DCDC002A2B1A /* AudioSampleSource.swift */,
 				816ECEAA1FFF4A7F002AE4F9 /* ISource.swift */,
 				81DD028520047C590064A203 /* PixelBufferSource.swift */,
+				81FA47DE2154C9A0002A2B1A /* VideoSampleSource.swift */,
 				81DD027F20047B590064A203 /* iOS */,
 			);
 			path = Sources;
@@ -690,6 +707,7 @@
 			children = (
 				81E2E0882008981A00DE5465 /* IPixelBuffer.swift */,
 				81E2E084200897B000DE5465 /* PixelBuffer.swift */,
+				818DA47C21550CBA004748E4 /* PixelFormatConverter.swift */,
 			);
 			path = PixelBuffer;
 			sourceTree = "<group>";
@@ -925,6 +943,7 @@
 				B142946B210C44B300B17FC2 /* RTMPSessionHandshake.swift in Sources */,
 				81278856212EBC0B008776B6 /* MetalVideoMixer.swift in Sources */,
 				816ECEA01FFF27D4002AE4F9 /* VCSessionDelegate.swift in Sources */,
+				81FA47DF2154C9A0002A2B1A /* VideoSampleSource.swift in Sources */,
 				811692302125591D0074EA71 /* SRTStats.swift in Sources */,
 				B126AC2E210DD62400E1EEF3 /* CameraSourceCallback.swift in Sources */,
 				B126AC22210DB98F00E1EEF3 /* SRTTarget.swift in Sources */,
@@ -933,10 +952,13 @@
 				81BE3D8F20523F1C0040707D /* SRTLogSupport.swift in Sources */,
 				81E2E085200897B000DE5465 /* PixelBuffer.swift in Sources */,
 				814265C71FFF57F2001258F2 /* IEncoder.swift in Sources */,
+				81FA47DD2154A336002A2B1A /* VCScreencastConfig.swift in Sources */,
 				81DD028120047B960064A203 /* MicSource.swift in Sources */,
+				81FA47DB21549533002A2B1A /* VCSampleHandler.swift in Sources */,
 				81DD027A200457210064A203 /* IVideoFilter.swift in Sources */,
 				814265CA1FFF5833001258F2 /* ITransform.swift in Sources */,
 				81DD028F2004825A0064A203 /* Split.swift in Sources */,
+				81FA47E22154DCDC002A2B1A /* AudioSampleSource.swift in Sources */,
 				81F4DB62203A95DE00966662 /* TSMultiplexer.swift in Sources */,
 				81DD028920047D330064A203 /* AspectTransform.swift in Sources */,
 				819AEC952050CE70006D76A3 /* SRTSocketOptions.swift in Sources */,
@@ -999,6 +1021,7 @@
 				81D1C1E5203289860087F23E /* BasicVideoFilterBGRAinYUVAout.swift in Sources */,
 				81D1C1F1203290D80087F23E /* GrayscaleVideoFilter.swift in Sources */,
 				B126AC28210DB9F500E1EEF3 /* SRTModel.swift in Sources */,
+				818DA47D21550CBA004748E4 /* PixelFormatConverter.swift in Sources */,
 				8196E2982046A08100A59BA1 /* PutBits.swift in Sources */,
 				814265CD1FFF6783001258F2 /* IOutputSession.swift in Sources */,
 				814265D61FFF6F35001258F2 /* IAudioMixer.swift in Sources */,
@@ -1037,6 +1060,7 @@
 				81DD029A200492B80064A203 /* RTMPTypes.swift in Sources */,
 				8196BD30204910E700BE2BC8 /* FileSink.swift in Sources */,
 				811531862021647900919F9F /* IThroughputAdaptation.swift in Sources */,
+				81FA47E32154DCDC002A2B1A /* AudioSampleSource.swift in Sources */,
 				81DD0297200491A90064A203 /* RTMPSession.swift in Sources */,
 				81CE06F9204EA85000E71AB6 /* SRTTransmit.swift in Sources */,
 				811692312125591D0074EA71 /* SRTStats.swift in Sources */,
@@ -1071,6 +1095,7 @@
 				B126AC32210DF02E00E1EEF3 /* VCTypes.swift in Sources */,
 				8183EA1A2007871B00E5A4AE /* AudioMixer.swift in Sources */,
 				816ECEB21FFF4DFC002AE4F9 /* IFilter.swift in Sources */,
+				818DA47E21550CBA004748E4 /* PixelFormatConverter.swift in Sources */,
 				81C583212040006200BDE428 /* CRC.swift in Sources */,
 				81C3C9FE2022F4E0007E05A1 /* Logger.swift in Sources */,
 				81E2E086200897B000DE5465 /* PixelBuffer.swift in Sources */,
@@ -1088,6 +1113,7 @@
 				8183EA1920075DAE00E5A4AE /* H264Packetizer.swift in Sources */,
 				816ECEAC1FFF4A7F002AE4F9 /* ISource.swift in Sources */,
 				81D330A020500EEC001E6AE7 /* SRTUtil.swift in Sources */,
+				81FA47E02154C9A0002A2B1A /* VideoSampleSource.swift in Sources */,
 				819AEC962050CE70006D76A3 /* SRTSocketOptions.swift in Sources */,
 				8115318920216A7F00919F9F /* TCPThroughputAdaptation.swift in Sources */,
 				814265CE1FFF6783001258F2 /* IOutputSession.swift in Sources */,
@@ -1125,10 +1151,11 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -1140,7 +1167,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/SRT",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = jp.co.cyberagent.VideoCast;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "${SRCROOT}";
@@ -1159,7 +1186,7 @@
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -1172,7 +1199,7 @@
 					"$(PROJECT_DIR)/SRT",
 				);
 				ONLY_ACTIVE_ARCH = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = jp.co.cyberagent.VideoCast;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "${SRCROOT}";
@@ -1340,7 +1367,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 5PN926HWK3;
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -1348,7 +1375,7 @@
 				INFOPLIST_FILE = Source/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = jp.co.cyberagent.VideoCast;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -1366,7 +1393,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 5PN926HWK3;
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -1374,7 +1401,7 @@
 				INFOPLIST_FILE = Source/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = jp.co.cyberagent.VideoCast;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
