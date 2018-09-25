@@ -14,10 +14,16 @@ enum BitrateMode: Int {
     case fixed
 }
 
+enum Orientation: Int {
+    case `default`
+    case landscape
+    case portrait
+}
+
 class OptionsModel {
     static let shared = OptionsModel()
 
-    private let userDefaults = UserDefaults.standard
+    private let userDefaults = UserDefaults(suiteName: Constants.appGroup)!
 
     private let bitrateModeKey = "Options.BitrateMode"
     private let maxBitrateIndexKey = "Options.MaxBitrateIndex"
@@ -26,6 +32,7 @@ class OptionsModel {
     private let keyframeIntervalKey = "Options.KeyframeInterval"
     private let videoSizeIndexKey = "Options.VideoSizeIndex"
     private let videoCodecKey = "Options.VideoCodec"
+    private let orientationKey = "Options.Orientation"
 
     private var _bitrateMode: BitrateMode
     private var _maxBitrateIndex: Int
@@ -34,6 +41,7 @@ class OptionsModel {
     private var _keyframeInterval: Int
     private var _videoSizeIndex: Int
     private var _videoCodec: VCVideoCodecType
+    private var _orientation: Orientation
 
     let bitrates = [200000, 400000, 800000, 1200000, 2400000, 4000000, 8000000, 12000000]
     let videoSizes: [(width: Int, height: Int)] = [
@@ -127,6 +135,14 @@ class OptionsModel {
         }
     }
 
+    var orientation: Orientation {
+        get { return _orientation }
+        set {
+            _orientation = newValue
+            userDefaults.set(_orientation.rawValue, forKey: orientationKey)
+        }
+    }
+
     private init() {
         userDefaults.register(defaults: [
             bitrateModeKey: 0,
@@ -135,7 +151,8 @@ class OptionsModel {
             framerateKey: 30,
             keyframeIntervalKey: 60,
             videoSizeIndexKey: 5,
-            videoCodecKey: VCVideoCodecType.h264.rawValue
+            videoCodecKey: VCVideoCodecType.h264.rawValue,
+            orientationKey: Orientation.default.rawValue
             ])
 
         _bitrateMode = BitrateMode(rawValue: userDefaults.integer(forKey: bitrateModeKey))!
@@ -145,5 +162,6 @@ class OptionsModel {
         _keyframeInterval = userDefaults.integer(forKey: keyframeIntervalKey)
         _videoSizeIndex = userDefaults.integer(forKey: videoSizeIndexKey)
         _videoCodec = VCVideoCodecType(rawValue: userDefaults.integer(forKey: videoCodecKey))!
+        _orientation = Orientation(rawValue: userDefaults.integer(forKey: orientationKey))!
     }
 }

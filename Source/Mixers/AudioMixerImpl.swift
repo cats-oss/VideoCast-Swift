@@ -151,11 +151,8 @@ extension AudioMixer {
         let asbdOut = converterInst.asbdOut
 
         let inSampleCount = inNumberFrames
-        let ratio = Double(inFrequncyInHz) / Double(outFrequencyInHz)
-
-        let outBufferSampleCount: Double = round(Double(inSampleCount) / ratio)
-
-        let outBufferSize = Int(Double(asbdOut.mBytesPerPacket) * outBufferSampleCount)
+        let outBufferSampleCount = (inSampleCount * outFrequencyInHz) / inFrequncyInHz
+        let outBufferSize = Int(asbdOut.mBytesPerPacket) * outBufferSampleCount
         let outBuffer = Buffer(outBufferSize)
 
         var userData = UserData(

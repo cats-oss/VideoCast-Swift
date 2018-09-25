@@ -160,8 +160,7 @@ extension MetalVideoMixer {
                 jobQueue.enqueue {
                     pixelBuffer.lock(true)
 
-                    let format = pixelBuffer.pixelFormat
-                    let is32bit = format != kCVPixelFormatType_16LE565
+                    let pixelFormat = PixcelFormatToMetal(pixelBuffer.pixelFormat)
 
                     var texture: CVMetalTexture?
                     let ret = CVMetalTextureCacheCreateTextureFromImage(
@@ -169,7 +168,7 @@ extension MetalVideoMixer {
                         textureCache,
                         pixelBuffer.cvBuffer,
                         nil,
-                        is32bit ? MTLPixelFormat.bgra8Unorm : MTLPixelFormat.b5g6r5Unorm,
+                        pixelFormat,
                         pixelBuffer.width,
                         pixelBuffer.height,
                         0,

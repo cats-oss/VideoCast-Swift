@@ -36,7 +36,7 @@ class OptionsViewController: UITableViewController, UITextFieldDelegate {
         case .bitrate:
             return 4
         case .video:
-            return 4
+            return 5
         }
     }
 
@@ -143,6 +143,11 @@ class OptionsViewController: UITableViewController, UITextFieldDelegate {
                                  label: "Video Codec",
                                  text: OptionsUtil.getVideoCodecLabel(OptionsModel.shared.videoCodec.rawValue),
                                  tag: OptionsUtil.SelectOption.videoCodec.rawValue)
+        case 4:
+            return getSelectCell(indexPath,
+                                 label: "Orientation",
+                                 text: OptionsUtil.getOrientationLabel(OptionsModel.shared.orientation.rawValue),
+                                 tag: OptionsUtil.SelectOption.orientation.rawValue)
         default:
             return nil
         }

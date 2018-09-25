@@ -17,11 +17,19 @@
 		8151F3A41FFF12F300615BF4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8151F3A31FFF12F300615BF4 /* AppDelegate.swift */; };
 		8151F3A61FFF12F300615BF4 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8151F3A51FFF12F300615BF4 /* ViewController.swift */; };
 		8151F3AB1FFF12F300615BF4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8151F3AA1FFF12F300615BF4 /* Assets.xcassets */; };
+		815FAAC521568AB80013661B /* ServersModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81651B042143B0B00069F6FF /* ServersModel.swift */; };
+		815FAAC621568ABD0013661B /* OptionsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812ACEAF214166AA0052CC7C /* OptionsModel.swift */; };
+		815FAACA21568FFF0013661B /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815FAAC921568FFF0013661B /* Constants.swift */; };
+		815FAACB21568FFF0013661B /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 815FAAC921568FFF0013661B /* Constants.swift */; };
 		81651AFC21438D720069F6FF /* SelectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81651AFB21438D720069F6FF /* SelectViewController.swift */; };
 		81651B0121439FE60069F6FF /* ServerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81651B0021439FE60069F6FF /* ServerViewController.swift */; };
 		81651B032143AA020069F6FF /* TextFiieldCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81651B022143AA020069F6FF /* TextFiieldCell.swift */; };
 		81651B052143B0B00069F6FF /* ServersModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81651B042143B0B00069F6FF /* ServersModel.swift */; };
 		819937142144B44D007D683F /* OptionsUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819937132144B44D007D683F /* OptionsUtil.swift */; };
+		81E65AB72156945D00979A0A /* VideoCast.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 811D4B781FFF153C004EC189 /* VideoCast.framework */; };
+		81FA47EB2154E4BA002A2B1A /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81FA47EA2154E4BA002A2B1A /* ReplayKit.framework */; };
+		81FA47EE2154E4BA002A2B1A /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47ED2154E4BA002A2B1A /* SampleHandler.swift */; };
+		81FA48012154E4BA002A2B1A /* Screencast.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 81FA47E82154E4BA002A2B1A /* Screencast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +68,13 @@
 			remoteGlobalIDString = 811BF9961FFE2F7D00E90EEF;
 			remoteInfo = "VideoCast iOS";
 		};
+		81FA47FF2154E4BA002A2B1A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8151F3981FFF12F300615BF4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 81FA47E72154E4BA002A2B1A;
+			remoteInfo = "Video Cast";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -72,6 +87,17 @@
 				811D4B851FFF15BF004EC189 /* VideoCast.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		81FA480B2154E4BA002A2B1A /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				81FA48012154E4BA002A2B1A /* Screencast.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -88,11 +114,19 @@
 		8151F3A51FFF12F300615BF4 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		8151F3AA1FFF12F300615BF4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../Resources/Assets.xcassets; sourceTree = "<group>"; };
 		8151F3AF1FFF12F300615BF4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../Resources/Info.plist; sourceTree = "<group>"; };
+		815FAAC721568CD70013661B /* iOS Example.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "iOS Example.entitlements"; sourceTree = "<group>"; };
+		815FAAC821568DED0013661B /* Screencast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Screencast.entitlements; sourceTree = "<group>"; };
+		815FAAC921568FFF0013661B /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		81651AFB21438D720069F6FF /* SelectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectViewController.swift; sourceTree = "<group>"; };
 		81651B0021439FE60069F6FF /* ServerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerViewController.swift; sourceTree = "<group>"; };
 		81651B022143AA020069F6FF /* TextFiieldCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFiieldCell.swift; sourceTree = "<group>"; };
 		81651B042143B0B00069F6FF /* ServersModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServersModel.swift; sourceTree = "<group>"; };
 		819937132144B44D007D683F /* OptionsUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsUtil.swift; sourceTree = "<group>"; };
+		81FA47E82154E4BA002A2B1A /* Screencast.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Screencast.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		81FA47EA2154E4BA002A2B1A /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
+		81FA47ED2154E4BA002A2B1A /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
+		81FA47EF2154E4BA002A2B1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		81FA47F62154E4BA002A2B1A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +135,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				811D4B841FFF15BF004EC189 /* VideoCast.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		81FA47E52154E4BA002A2B1A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81E65AB72156945D00979A0A /* VideoCast.framework in Frameworks */,
+				81FA47EB2154E4BA002A2B1A /* ReplayKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,7 +174,10 @@
 		8151F3971FFF12F300615BF4 = {
 			isa = PBXGroup;
 			children = (
+				815FAAC721568CD70013661B /* iOS Example.entitlements */,
 				811D4B701FFF153C004EC189 /* VideoCast.xcodeproj */,
+				81FA47EC2154E4BA002A2B1A /* Screencast */,
+				81FA47E92154E4BA002A2B1A /* Frameworks */,
 				8151F3A11FFF12F300615BF4 /* Products */,
 				8151F3A21FFF12F300615BF4 /* Source */,
 			);
@@ -141,6 +187,7 @@
 			isa = PBXGroup;
 			children = (
 				8151F3A01FFF12F300615BF4 /* iOS Example.app */,
+				81FA47E82154E4BA002A2B1A /* Screencast.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -150,6 +197,7 @@
 			children = (
 				8151F3A31FFF12F300615BF4 /* AppDelegate.swift */,
 				812ACEAD2140C6620052CC7C /* BroadcastsViewController.swift */,
+				815FAAC921568FFF0013661B /* Constants.swift */,
 				812ACEAF214166AA0052CC7C /* OptionsModel.swift */,
 				819937132144B44D007D683F /* OptionsUtil.swift */,
 				812ACEA82140C5050052CC7C /* OptionsViewController.swift */,
@@ -173,6 +221,25 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		81FA47E92154E4BA002A2B1A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				81FA47EA2154E4BA002A2B1A /* ReplayKit.framework */,
+				81FA47F62154E4BA002A2B1A /* UIKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		81FA47EC2154E4BA002A2B1A /* Screencast */ = {
+			isa = PBXGroup;
+			children = (
+				815FAAC821568DED0013661B /* Screencast.entitlements */,
+				81FA47ED2154E4BA002A2B1A /* SampleHandler.swift */,
+				81FA47EF2154E4BA002A2B1A /* Info.plist */,
+			);
+			path = Screencast;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -185,16 +252,35 @@
 				8151F39D1FFF12F300615BF4 /* Frameworks */,
 				8151F39E1FFF12F300615BF4 /* Resources */,
 				811D4B881FFF15BF004EC189 /* Embed Frameworks */,
+				81FA480B2154E4BA002A2B1A /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				811D4B871FFF15BF004EC189 /* PBXTargetDependency */,
+				81FA48002154E4BA002A2B1A /* PBXTargetDependency */,
 			);
 			name = "iOS Example";
 			productName = "iOS Example";
 			productReference = 8151F3A01FFF12F300615BF4 /* iOS Example.app */;
 			productType = "com.apple.product-type.application";
+		};
+		81FA47E72154E4BA002A2B1A /* Screencast */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 81FA480A2154E4BA002A2B1A /* Build configuration list for PBXNativeTarget "Screencast" */;
+			buildPhases = (
+				81FA47E42154E4BA002A2B1A /* Sources */,
+				81FA47E52154E4BA002A2B1A /* Frameworks */,
+				81FA47E62154E4BA002A2B1A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Screencast;
+			productName = "Video Cast";
+			productReference = 81FA47E82154E4BA002A2B1A /* Screencast.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -202,13 +288,27 @@
 		8151F3981FFF12F300615BF4 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0920;
+				LastSwiftUpdateCheck = 1000;
 				LastUpgradeCheck = 0920;
 				ORGANIZATIONNAME = "CyberAgent, Inc.";
 				TargetAttributes = {
 					8151F39F1FFF12F300615BF4 = {
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+					81FA47E72154E4BA002A2B1A = {
+						CreatedOnToolsVersion = 10.0;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -232,6 +332,7 @@
 			projectRoot = "";
 			targets = (
 				8151F39F1FFF12F300615BF4 /* iOS Example */,
+				81FA47E72154E4BA002A2B1A /* Screencast */,
 			);
 		};
 /* End PBXProject section */
@@ -278,6 +379,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		81FA47E62154E4BA002A2B1A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -302,6 +410,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				819937142144B44D007D683F /* OptionsUtil.swift in Sources */,
+				815FAACA21568FFF0013661B /* Constants.swift in Sources */,
 				812ACEB0214166AA0052CC7C /* OptionsModel.swift in Sources */,
 				81651B052143B0B00069F6FF /* ServersModel.swift in Sources */,
 				812ACEA92140C5050052CC7C /* OptionsViewController.swift in Sources */,
@@ -314,6 +423,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		81FA47E42154E4BA002A2B1A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				815FAAC521568AB80013661B /* ServersModel.swift in Sources */,
+				81FA47EE2154E4BA002A2B1A /* SampleHandler.swift in Sources */,
+				815FAAC621568ABD0013661B /* OptionsModel.swift in Sources */,
+				815FAACB21568FFF0013661B /* Constants.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -321,6 +441,11 @@
 			isa = PBXTargetDependency;
 			name = "VideoCast iOS";
 			targetProxy = 811D4B861FFF15BF004EC189 /* PBXContainerItemProxy */;
+		};
+		81FA48002154E4BA002A2B1A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 81FA47E72154E4BA002A2B1A /* Screencast */;
+			targetProxy = 81FA47FF2154E4BA002A2B1A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -454,13 +579,17 @@
 		8151F3B31FFF12F300615BF4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "iOS Example.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 5PN926HWK3;
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				INFOPLIST_FILE = Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "jp.co.cyberagent.iOS-Example";
+				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -469,14 +598,61 @@
 		8151F3B41FFF12F300615BF4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "iOS Example.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 5PN926HWK3;
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				INFOPLIST_FILE = Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "jp.co.cyberagent.iOS-Example";
+				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		81FA48022154E4BA002A2B1A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_ENTITLEMENTS = Screencast/Screencast.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
+				INFOPLIST_FILE = Screencast/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example.broadcast-upload-extension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		81FA48032154E4BA002A2B1A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_ENTITLEMENTS = Screencast/Screencast.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2YBG8BB5C7;
+				INFOPLIST_FILE = Screencast/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example.broadcast-upload-extension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -498,6 +674,15 @@
 			buildConfigurations = (
 				8151F3B31FFF12F300615BF4 /* Debug */,
 				8151F3B41FFF12F300615BF4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		81FA480A2154E4BA002A2B1A /* Build configuration list for PBXNativeTarget "Screencast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				81FA48022154E4BA002A2B1A /* Debug */,
+				81FA48032154E4BA002A2B1A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

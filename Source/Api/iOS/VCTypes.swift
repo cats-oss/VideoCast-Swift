@@ -22,7 +22,7 @@ public enum VCCameraState {
     case back
 }
 
-public enum VCAspectMode {
+public enum VCAspectMode: Int {
     case fit
     case fill
 }

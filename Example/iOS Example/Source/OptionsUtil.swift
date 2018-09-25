@@ -2,7 +2,7 @@
 //  OptionsUtil.swift
 //  iOS Example
 //
-//  Created by 松澤 友弘 on 2018/09/09.
+//  Created by Tomohiro Matsuzawa on 2018/09/09.
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
@@ -14,6 +14,7 @@ class OptionsUtil {
         case bitrate
         case videoSize
         case videoCodec
+        case orientation
     }
 
     static func getBitrateLabel(_ index: Int) -> String {
@@ -43,6 +44,18 @@ class OptionsUtil {
             return "H264"
         case .hevc:
             return "HEVC"
+        }
+    }
+
+    static func getOrientationLabel(_ index: Int) -> String {
+        guard let orientation = Orientation(rawValue: index) else { return "" }
+        switch orientation {
+        case .default:
+            return "Default"
+        case .landscape:
+            return "Landscape"
+        case .portrait:
+            return "Portrait"
         }
     }
 }
