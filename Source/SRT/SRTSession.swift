@@ -48,7 +48,7 @@ open class SRTSession: IOutputSession {
 
     private var tar: SrtTarget?
 
-    private var sendBuf: Buffer?
+    private var sendBuf: [Buffer] = .init()
 
     private var wroteBytes: Int = 0
     private var lostBytes: Int = 0
@@ -101,56 +101,68 @@ open class SRTSession: IOutputSession {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard !ending.value else { return }
+        assert (size % 188 == 0)
 
-        var bufReady: Buffer?
+        var len = size
+        var offset = 0
+
         if size == 0 {
-            bufReady = sendBuf
-            sendBuf = nil
-        } else {
-            if let buf = sendBuf, size + buf.buffer.count <= SrtConf.transmit_chunk_size {
-                buf.buffer.append(data.assumingMemoryBound(to: UInt8.self), count: size)
-                if buf.buffer.count == SrtConf.transmit_chunk_size {
-                    bufReady = buf
-                    sendBuf = nil
-                }
-            } else {
-                bufReady = sendBuf
-                let newBuf = Buffer()
-                newBuf.buffer.append(data.assumingMemoryBound(to: UInt8.self), count: size)
-                sendBuf = newBuf
-            }
+            return
         }
-        if let buf = bufReady {
-            // make the lamdba capture the data
-            jobQueue.enqueue {
-                if !self.ending.value {
-                    do {
-                        guard let tar = self.tar else { return }
+        while len > 0 {
+            let buf: Buffer
+            if let last = sendBuf.last, last.buffer.count < SrtConf.transmit_chunk_size {
+                buf = last
+            } else {
+                buf = Buffer()
+                sendBuf.append(buf)
+            }
+            let copyLen = min(Int(SrtConf.transmit_chunk_size) - buf.buffer.count, size)
+            buf.buffer.append(data.assumingMemoryBound(to: UInt8.self) + offset,
+                               count: copyLen)
+            len -= copyLen
+            offset += copyLen
+        }
 
-                        try buf.buffer.withUnsafeBytes { (data: UnsafePointer<Int8>) in
-                            let size = buf.buffer.count
-                            if !tar.isOpen {
-                                self.lostBytes += size
-                            } else if try !tar.write(data, size: size) {
-                                self.lostBytes += size
-                            } else {
-                                self.wroteBytes += size
-                            }
-                        }
+        // SRT bandwidth estimation requires that most packets are sent bursty
+        // https://github.com/Haivision/srt/blob/v1.3.1/srtcore/window.cpp#L201-L222
+        if sendBuf.count >= 10 {
+            while !sendBuf.isEmpty {
+                guard let buf = sendBuf.first, buf.buffer.count >= SrtConf.transmit_chunk_size else { break }
+                assert(buf.buffer.count == SrtConf.transmit_chunk_size)
+                sendBuf.remove(at: 0)
 
-                        if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes) {
-                            let now: Date = .init()
-                            if now.timeIntervalSince(self.writeErrorLogTimer) >= 5 {
-                                Logger.debug("\(self.lostBytes) bytes lost, \(self.wroteBytes) bytes sent")
-                                self.writeErrorLogTimer = now
-                                self.lastReportedtLostBytes = self.lostBytes
+                // make the lamdba capture the data
+                jobQueue.enqueue {
+                    if !self.ending.value {
+                        do {
+                            guard let tar = self.tar else { return }
+
+                            try buf.buffer.withUnsafeBytes { (data: UnsafePointer<Int8>) in
+                                let size = buf.buffer.count
+                                if !tar.isOpen {
+                                    self.lostBytes += size
+                                } else if try !tar.write(data, size: size) {
+                                    self.lostBytes += size
+                                } else {
+                                    self.wroteBytes += size
+                                }
                             }
+
+                            if !self.quiet && (self.lastReportedtLostBytes != self.lostBytes) {
+                                let now: Date = .init()
+                                if now.timeIntervalSince(self.writeErrorLogTimer) >= 5 {
+                                    Logger.debug("\(self.lostBytes) bytes lost, \(self.wroteBytes) bytes sent")
+                                    self.writeErrorLogTimer = now
+                                    self.lastReportedtLostBytes = self.lostBytes
+                                }
+                            }
+                        } catch {
+                            Logger.error("ERROR: \(error)")
                         }
-                    } catch {
-                        Logger.error("ERROR: \(error)")
                     }
                 }
             }
@@ -302,10 +314,10 @@ open class SRTSession: IOutputSession {
                                     Logger.debug("SRT target disconnected")
                                 }
                                 tarConnected = false
-                                setClientState(.notConnected)
                             }
 
                             if !autoreconnect {
+                                setClientState(.notConnected)
                                 doabort = true
                             } else {
                                 // force re-connection

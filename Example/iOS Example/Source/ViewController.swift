@@ -36,7 +36,7 @@ class ViewController: UIViewController {
                 UIView.animate(withDuration: 0.1, delay: 0.0,
                                options: [.curveEaseInOut, .repeat, .autoreverse, .allowUserInteraction],
                                animations: {() -> Void in
-                    self.btnConnect.alpha = 0.0
+                    self.btnConnect.alpha = 0.1
                 }, completion: {(_: Bool) -> Void in
                 })
             } else if connecting && !newValue {
