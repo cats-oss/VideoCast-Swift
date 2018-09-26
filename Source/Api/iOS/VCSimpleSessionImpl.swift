@@ -368,15 +368,17 @@ extension VCSimpleSession {
             bitrate = min(500000, bpsCeiling)
         }
 
-        outputSession.setBandwidthCallback {[weak self] vector, predicted, _ in
+        outputSession.setBandwidthCallback {[weak self] vector, predicted, byterate in
             guard let strongSelf = self else { return 0 }
 
             strongSelf.estimatedThroughput = Int(predicted)
 
-            guard let video = strongSelf.vtEncoder, let audio = strongSelf.aacEncoder,
-                strongSelf.useAdaptiveBitrate else { return 0 }
+            guard let video = strongSelf.vtEncoder else { return 0 }
 
-            strongSelf.delegate.detectedThroughput?(Int(predicted), video.bitrate)
+            strongSelf.delegate.detectedThroughput?(Int(predicted), video.bitrate, byterate * 8 )
+
+            guard let audio = strongSelf.aacEncoder,
+                strongSelf.useAdaptiveBitrate else { return 0 }
 
             let bytesPerSec = { (video.bitrate + audio.bitrate) / 8 }
 
