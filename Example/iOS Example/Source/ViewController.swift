@@ -24,6 +24,8 @@ class ViewController: UIViewController {
     let imgRecordStop = UIImage(named: "icon-record-stop")
 
     var session: VCSimpleSession!
+    var videoBitrate: Int = 0
+    var audioBitrate: Int = 0
 
     var _connecting = false
     var connecting: Bool {
@@ -51,6 +53,7 @@ class ViewController: UIViewController {
         }
     }
 
+    // swiftlint:disable function_body_length
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -88,16 +91,23 @@ class ViewController: UIViewController {
             }
         }
 
-        delegate.bitrateChanged = { [weak self] videoBitrate, audioBitrate in
+        delegate.detectedThroughput = { [weak self] throughputInBytesPerSecond, videorate, oBitrate in
+            guard let strongSelf = self else { return }
             let bitrateText = """
-            video: \(videoBitrate / 1000) kbps
-            audio: \(audioBitrate / 1000) kbps
+            bitrate: \(oBitrate / 1000) kbps
+            video:   \(strongSelf.videoBitrate / 1000) kbps
+            audio:   \(strongSelf.audioBitrate / 1000) kbps
             """
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
 
                 strongSelf.lblBitrate.text = bitrateText
             }
+        }
+
+        delegate.bitrateChanged = { [weak self] videoBitrate, audioBitrate in
+            self?.videoBitrate = videoBitrate
+            self?.audioBitrate = audioBitrate
         }
 
         btnFlash.setImage(imgFlashOff, for: .normal)
@@ -160,6 +170,10 @@ class ViewController: UIViewController {
             session.keyframeInterval = OptionsModel.shared.keyframeInterval
             session.useAdaptiveBitrate = OptionsModel.shared.bitrateMode == .automatic
             session.videoCodecType = OptionsModel.shared.videoCodec
+
+            videoBitrate = 0
+            audioBitrate = 0
+
             let server = ServerModel.shared.server
 
             if server.url.starts(with: "rtmp") {

@@ -19,9 +19,12 @@ class SrtStatsManager {
     private let kRampUpIncreaseDelta: TimeInterval = 2
     // seconds - number of seconds to wait between decrease vectors
     private let kDecreaseDelta: TimeInterval = 1
+    // seconds - number of seconds to wait between invoke callback
+    private let kCallbackInterval: TimeInterval = 2.0
 
     private var previousTurndown: Date = .init()
     private var previousIncrease: Date = .init()
+    private var previousCallback: Date = .init()
 
     private var thread: Thread?
     private let cond: NSCondition = .init()
@@ -36,7 +39,7 @@ class SrtStatsManager {
 
     private var sock: SRTSOCKET = SRT_INVALID_SOCK
     private var samples: [SrtStats] = .init()
-    private let sampleCount: Int = 30
+    private let sampleCount: Int = 20
     private var currentRate: Double = 0
 
     public init() {
@@ -105,6 +108,7 @@ class SrtStatsManager {
             let now = Date()
             let previousTurndownDiff = now.timeIntervalSince(previousTurndown)
             let previousIncreaseDiff = now.timeIntervalSince(previousIncrease)
+            let previousCallbackDiff = now.timeIntervalSince(previousCallback)
 
             var vec: Float = 1
 
@@ -147,15 +151,20 @@ class SrtStatsManager {
                 if vec > 0 {
                     previousIncrease = now
                 }
-                if vec != 0 {
+                if previousCallbackDiff > kCallbackInterval || vec != 0 {
+                    var mbitRate = Double(0)
+                    for sample in samples {
+                        mbitRate += sample.send.mbitRate
+                    }
+                    mbitRate /= Double(samples.count)
                     let currentByteRate =
                         callback(
                             vec, Float(current.link.bandwidth * 1000000 / 8),
-                            Int(current.send.mbitRate * 1000000 / 8))
+                            Int(mbitRate * 1000000 / 8))
+                    previousCallback = now
                     currentRate = Double(currentByteRate) * 8 / 1000000
                 }
             }
-
         }
     }
 }
