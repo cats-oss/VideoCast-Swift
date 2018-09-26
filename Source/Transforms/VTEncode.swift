@@ -62,9 +62,9 @@ open class VTEncode: IEncoder {
                 } else {
                     _bitrate = v
                 }
-                let bytes = _bitrate / 8
-                let duration = 1
-                let limit: NSArray = .init(array: [bytes, duration])
+                let bytes = Int64(_bitrate / 8)
+                let duration = Int64(1)
+                let limit = [bytes, duration] as CFArray
 
                 VTSessionSetProperty(compressionSession, kVTCompressionPropertyKey_DataRateLimits, limit)
             }
