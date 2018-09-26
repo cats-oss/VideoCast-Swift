@@ -41,7 +41,7 @@ extension MetalVideoMixer {
     final class SourceBuffer {
         private class BufferContainer {
             var buffer: PixelBuffer
-            #if targetEnvironment(simulator)
+            #if targetEnvironment(simulator) || arch(arm)
             var texture: CVOpenGLESTexture?
             #else
             var texture: CVMetalTexture?
@@ -57,7 +57,7 @@ extension MetalVideoMixer {
             }
         }
 
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         var currentTexture: CVOpenGLESTexture?
         #else
         var currentTexture: CVMetalTexture?
@@ -67,7 +67,7 @@ extension MetalVideoMixer {
 
         private var pixelBuffers = [CVPixelBuffer: BufferContainer]()
 
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         // swiftlint:disable:next function_body_length
         func setBuffer(_ pixelBuffer: PixelBuffer, textureCache: CVOpenGLESTextureCache,
                        jobQueue: JobQueue, glContext: EAGLContext) {
@@ -272,7 +272,7 @@ extension MetalVideoMixer {
                     mixing.value = false
                 }
 
-                #if targetEnvironment(simulator)
+                #if targetEnvironment(simulator) || arch(arm)
                 perfGLAsync(glContext: glesCtx, jobQueue: metalJobQueue) {
                     glPushGroupMarkerEXT(0, "Videocast.Mix")
                     glBindFramebuffer(GLenum(GL_FRAMEBUFFER), self.fbo[currentFb])
@@ -459,7 +459,7 @@ extension MetalVideoMixer {
         }
     }
 
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     /*!
      * Setup the OpenGL ES context, shaders, and state.
      *
@@ -482,9 +482,7 @@ extension MetalVideoMixer {
             fatalError("textureCache creation failed")
         }
 
-        glGenFramebuffers(2, &fbo)
-
-        glFramebufferStatus()
+        createTextures()
 
         glGenBuffers(1, &vbo)
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vbo)
@@ -532,8 +530,38 @@ extension MetalVideoMixer {
     }
     #endif
 
+    func deleteTextures() {
+        #if targetEnvironment(simulator) || arch(arm)
+        glDeleteFramebuffers(2, fbo)
+        fbo[0] = 0
+        fbo[1] = 0
+        #else
+        metalTexture[0] = nil
+        metalTexture[1] = nil
+        #endif
+
+        pixelBuffer[0] = nil
+        pixelBuffer[1] = nil
+
+        #if targetEnvironment(simulator) || arch(arm)
+        if let texture0 = self.texture[0], let texture1 = self.texture[1] {
+            let textures: [GLuint] = [
+                CVOpenGLESTextureGetName(texture0),
+                CVOpenGLESTextureGetName(texture1)
+            ]
+            glDeleteTextures(2, textures)
+        }
+        #endif
+
+        texture[0] = nil
+        texture[1] = nil
+    }
+
     // swiftlint:disable:next function_body_length
     func createTextures() {
+        if pixelBuffer[0] != nil {
+            deleteTextures()
+        }
         //
         // Shared-memory FBOs
         //
@@ -573,13 +601,16 @@ extension MetalVideoMixer {
             fatalError("textureCache creation failed")
         }
 
+        #if targetEnvironment(simulator) || arch(arm)
+        glGenFramebuffers(2, &fbo)
+        #endif
         for i in (0 ... 1) {
             guard let pixelBuffer = pixelBuffer[i] else {
                 Logger.debug("unexpected return")
                 break
             }
 
-            #if targetEnvironment(simulator)
+            #if targetEnvironment(simulator) || arch(arm)
             CVOpenGLESTextureCacheCreateTextureFromImage(
                 kCFAllocatorDefault,
                 textureCache, pixelBuffer,
@@ -610,7 +641,7 @@ extension MetalVideoMixer {
                 break
             }
 
-            #if targetEnvironment(simulator)
+            #if targetEnvironment(simulator) || arch(arm)
             glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
             glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLfloat(GL_LINEAR))
             glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GLfloat(GL_LINEAR))
@@ -623,9 +654,14 @@ extension MetalVideoMixer {
             metalTexture[i] = CVMetalTextureGetTexture(texture)
             #endif
         }
+
+        #if targetEnvironment(simulator) || arch(arm)
+        glFramebufferStatus()
+        glViewport(0, 0, GLsizei(frameW), GLsizei(frameH))
+        #endif
     }
 
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !arch(arm)
     private func setupRenderPassDescriptorForTexture(_ texture: MTLTexture) {
         // create a color attachment every frame since we have to recreate the texture every frame
         renderPassDescriptor.colorAttachments[0].texture = texture

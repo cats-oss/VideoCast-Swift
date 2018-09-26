@@ -8,12 +8,12 @@
 
 import Foundation
 import GLKit
-#if !targetEnvironment(simulator)
+#if !targetEnvironment(simulator) && !arch(arm)
 import Metal
 #endif
 
 open class BasicVideoFilter: IVideoFilter {
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     open var vertexKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
 attribute vec2 aPos;
@@ -65,7 +65,7 @@ void main(void) {
         return ""
     }
 
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     private var vao: GLuint = 0
     private var uMatrix: Int32 = 0
     #else
@@ -83,7 +83,7 @@ void main(void) {
     }
 
     deinit {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         glDeleteProgram(program)
         glDeleteVertexArraysOES(1, &vao)
         #endif
@@ -91,7 +91,7 @@ void main(void) {
 
     // swiftlint:disable:next function_body_length
     open func initialize() {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         switch filterLanguage {
         case .GL_ES2_3, .GL_2:
             guard let vertexKernel = vertexKernel, let pixelKernel = pixelKernel else {
@@ -160,7 +160,7 @@ void main(void) {
     }
 
     open func bind() {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         switch filterLanguage {
         case .GL_ES2_3, .GL_2:
             if !bound {
@@ -183,7 +183,7 @@ void main(void) {
         #endif
     }
 
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !arch(arm)
     open func render(_ renderEncoder: MTLRenderCommandEncoder) {
         guard let renderPipelineState = renderPipelineState else { return }
         // set the pipeline state object which contains its precompiled shaders

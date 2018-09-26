@@ -15,7 +15,7 @@ open class BasicVideoFilterBGRA: BasicVideoFilter {
         return "jp.co.cyberagent.VideoCast.filters.bgra"
     }
 
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !arch(arm)
     open override var piplineDescripter: String? {
         return "bgraPiplineState"
     }

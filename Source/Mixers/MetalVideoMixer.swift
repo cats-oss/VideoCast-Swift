@@ -8,7 +8,7 @@
 
 import Foundation
 import GLKit
-#if !targetEnvironment(simulator)
+#if !targetEnvironment(simulator) && !arch(arm)
 import Metal
 #endif
 
@@ -32,7 +32,7 @@ open class MetalVideoMixer: IVideoMixer {
 
     let pixelBufferPool: CVPixelBufferPool?
     var pixelBuffer = [CVPixelBuffer?](repeating: nil, count: 2)
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     var textureCache: CVOpenGLESTextureCache?
     var texture = [CVOpenGLESTexture?](repeating: nil, count: 2)
 
@@ -85,7 +85,7 @@ open class MetalVideoMixer: IVideoMixer {
      *  \param frameDuration    The duration of time a frame is presented, in seconds. 30 FPS would be (1/30)
      */
 
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     public init(
         frame_w: Int,
         frame_h: Int,
@@ -133,17 +133,10 @@ open class MetalVideoMixer: IVideoMixer {
     deinit {
         Logger.debug("MetalVideoMixer::deinit")
 
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         perfGLSync(glContext: glesCtx, jobQueue: metalJobQueue) {
-            glDeleteFramebuffers(2, self.fbo)
             glDeleteBuffers(1, &self.vbo)
-            if let texture0 = self.texture[0], let texture1 = self.texture[1] {
-                let textures: [GLuint] = [
-                    CVOpenGLESTextureGetName(texture0),
-                    CVOpenGLESTextureGetName(texture1)
-                ]
-                glDeleteTextures(2, textures)
-            }
+            self.deleteTextures()
 
             self.sourceBuffers.removeAll()
 
@@ -249,7 +242,7 @@ open class MetalVideoMixer: IVideoMixer {
 
         let source = metaData.source
 
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         guard let textureCache = textureCache, let glesCtx = glesCtx, let hashValue = hashWeak(source) else {
             return Logger.debug("unexpected return")
         }
@@ -264,7 +257,7 @@ open class MetalVideoMixer: IVideoMixer {
         if sourceBuffers[hashValue] == nil {
             sourceBuffers[hashValue] = .init()
         }
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache,
                                             jobQueue: metalJobQueue, glContext: glesCtx)
         #else
@@ -309,14 +302,21 @@ open class MetalVideoMixer: IVideoMixer {
             frameW = width
             frameH = height
 
+            #if targetEnvironment(simulator) || arch(arm)
+            perfGLAsync(glContext: glesCtx, jobQueue: metalJobQueue) { [weak self] in
+                guard let strongSelf = self else { return }
+                strongSelf.createTextures()
+            }
+            #else
             metalJobQueue.enqueue {
                 self.createTextures()
             }
+            #endif
         }
     }
 }
 
-#if targetEnvironment(simulator)
+#if targetEnvironment(simulator) || arch(arm)
 // Dispatch and execute synchronously
 func perfGLSync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
     perfGL(isSync: true, glContext: glContext, jobQueue: jobQueue, execute: execute)

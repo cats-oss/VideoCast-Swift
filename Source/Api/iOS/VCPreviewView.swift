@@ -8,7 +8,7 @@
 
 import UIKit
 import GLKit
-#if !targetEnvironment(simulator)
+#if !targetEnvironment(simulator) && !arch(arm)
 import Metal
 #endif
 
@@ -18,7 +18,7 @@ open class VCPreviewView: UIView {
     private var paused = Atomic(false)
 
     private var current = [CVPixelBuffer?](repeating: nil, count: 2)
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     private var renderBuffer: GLuint = 0
     private var shaderProgram: GLuint = 0
     private var vbo: GLuint = 0
@@ -51,7 +51,7 @@ open class VCPreviewView: UIView {
     var flipX = false
 
     final public override class var layerClass: AnyClass {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         return CAEAGLLayer.self
         #else
         return CAMetalLayer.self
@@ -71,7 +71,7 @@ open class VCPreviewView: UIView {
     deinit {
         NotificationCenter.default.removeObserver(self)
 
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         if shaderProgram != 0 {
             glDeleteProgram(shaderProgram)
         }
@@ -87,7 +87,7 @@ open class VCPreviewView: UIView {
         #endif
 
         if let cache = cache {
-            #if targetEnvironment(simulator)
+            #if targetEnvironment(simulator) || arch(arm)
             CVOpenGLESTextureCacheFlush(cache, 0)
             #else
             CVMetalTextureCacheFlush(cache, 0)
@@ -134,7 +134,7 @@ open class VCPreviewView: UIView {
             DispatchQueue.main.async { [weak self, currentBuffer] in
                 guard let strongSelf = self else { return }
 
-                #if !targetEnvironment(simulator)
+                #if !targetEnvironment(simulator) && !arch(arm)
                 guard let vertexBuffer = strongSelf.vertexBuffer,
                     let renderPipelineState = strongSelf.renderPipelineState,
                     let colorSamplerState = strongSelf.colorSamplerState else { return }
@@ -145,19 +145,20 @@ open class VCPreviewView: UIView {
                 }
 
                 if strongSelf.layerSizeDidUpdate {
-                    #if !targetEnvironment(simulator)
                     // set the metal layer to the drawable size in case orientation or size changes
                     var drawableSize = strongSelf.bounds.size
                     drawableSize.width *= strongSelf.contentScaleFactor
                     drawableSize.height *= strongSelf.contentScaleFactor
-
+                    #if targetEnvironment(simulator) || arch(arm)
+                    strongSelf.generateGLESBuffers(drawableSize)
+                    #else
                     strongSelf.metalLayer.drawableSize = drawableSize
                     #endif
 
                     strongSelf.layerSizeDidUpdate = false
                 }
 
-                #if targetEnvironment(simulator)
+                #if targetEnvironment(simulator) || arch(arm)
                 let current = EAGLContext.current()
                 EAGLContext.setCurrent(strongSelf.context)
                 #endif
@@ -165,7 +166,7 @@ open class VCPreviewView: UIView {
                 if updateTexture {
                     // create a new texture
                     CVPixelBufferLockBaseAddress(buffer, .readOnly)
-                    #if targetEnvironment(simulator)
+                    #if targetEnvironment(simulator) || arch(arm)
                     CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
                                                                  cache,
                                                                  buffer,
@@ -193,7 +194,7 @@ open class VCPreviewView: UIView {
                     #endif
 
                     if let texture = strongSelf.texture[currentBuffer] {
-                        #if targetEnvironment(simulator)
+                        #if targetEnvironment(simulator) || arch(arm)
                         glBindTexture(GLenum(GL_TEXTURE_2D),
                                       CVOpenGLESTextureGetName(texture))
                         glTexParameterf(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GLfloat(GL_LINEAR))
@@ -209,7 +210,7 @@ open class VCPreviewView: UIView {
                 }
 
                 defer {
-                    #if targetEnvironment(simulator)
+                    #if targetEnvironment(simulator) || arch(arm)
                     CVOpenGLESTextureCacheFlush(cache, 0)
                     #else
                     CVMetalTextureCacheFlush(cache, 0)
@@ -221,7 +222,7 @@ open class VCPreviewView: UIView {
                 }
 
                 // draw
-                #if targetEnvironment(simulator)
+                #if targetEnvironment(simulator) || arch(arm)
                 glBindFramebuffer(GLenum(GL_FRAMEBUFFER), strongSelf.fbo)
                 glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
                 glBindTexture(GLenum(GL_TEXTURE_2D), CVOpenGLESTextureGetName(texture))
@@ -244,7 +245,7 @@ open class VCPreviewView: UIView {
 
                 var matrix = GLKMatrix4MakeScale((strongSelf.flipX ? -1 : 1) * wfac, -1 * hfac, 1)
 
-                #if targetEnvironment(simulator)
+                #if targetEnvironment(simulator) || arch(arm)
                 glUniformMatrix4fv(GLint(strongSelf.matrixPos), 1, GLboolean(GL_FALSE), matrix.array)
                 glDrawArrays(GLenum(GL_TRIANGLES), 0, 6)
                 glErrors()
@@ -315,7 +316,7 @@ open class VCPreviewView: UIView {
 
 private extension VCPreviewView {
     func configure() {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || arch(arm)
         guard let glLayer = layer as? CAEAGLLayer else {
             fatalError("layer is not CAGLESLayer")
         }
@@ -335,7 +336,7 @@ private extension VCPreviewView {
         autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
         DispatchQueue.main.async { [weak self] in
-            #if targetEnvironment(simulator)
+            #if targetEnvironment(simulator) || arch(arm)
             self?.setupGLES()
             #else
             self?.setupMetal()
@@ -358,7 +359,7 @@ private extension VCPreviewView {
         paused.value = false
     }
 
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     func setupGLES() {
         guard let context = context else {
             return assert(false, "unexpected return")
@@ -396,7 +397,7 @@ private extension VCPreviewView {
         EAGLContext.setCurrent(current)
     }
 
-    func generateGLESBuffers() {
+    func generateGLESBuffers(_ size: CGSize) {
         let current = EAGLContext.current()
         EAGLContext.setCurrent(context)
 
@@ -430,7 +431,7 @@ private extension VCPreviewView {
 
         glClearColor(0, 0, 0, 1)
 
-        glViewport(0, 0, GLsizei(glLayer.bounds.size.width), GLsizei(glLayer.bounds.size.height))
+        glViewport(0, 0, GLsizei(size.width), GLsizei(size.height))
 
         EAGLContext.setCurrent(current)
     }
