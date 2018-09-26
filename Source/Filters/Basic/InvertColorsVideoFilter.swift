@@ -12,7 +12,7 @@ import GLKit
 open class InvertColorsVideoFilter: BasicVideoFilter {
     internal static let isRegistered = registerFilter()
 
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
                precision mediump float;
@@ -34,7 +34,7 @@ open class InvertColorsVideoFilter: BasicVideoFilter {
         return "jp.co.cyberagent.VideoCast.filters.invertColors"
     }
 
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !arch(arm)
     open override var piplineDescripter: String? {
         return "invertColorsPiplineState"
     }

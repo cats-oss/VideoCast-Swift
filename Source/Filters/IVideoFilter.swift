@@ -8,11 +8,11 @@
 
 import Foundation
 import GLKit
-#if !targetEnvironment(simulator)
+#if !targetEnvironment(simulator) && !arch(arm)
 import Metal
 #endif
 
-#if targetEnvironment(simulator)
+#if targetEnvironment(simulator) || arch(arm)
 func kernel(language: FilterLanguage, target: FilterLanguage, kernelstr: String) -> String? {
     return language == target ? kernelstr : nil
 }
@@ -25,7 +25,7 @@ public enum FilterLanguage {
 #endif
 
 public protocol IVideoFilter: IFilter {
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) || arch(arm)
     var vertexKernel: String? { get }
     var pixelKernel: String? { get }
 
@@ -42,7 +42,7 @@ public protocol IVideoFilter: IFilter {
     var matrix: GLKMatrix4 { get set }
     var dimensions: CGSize { get set }
 
-    #if !targetEnvironment(simulator)
+    #if !targetEnvironment(simulator) && !arch(arm)
     func render(_ renderEncoder: MTLRenderCommandEncoder)
     #endif
 }

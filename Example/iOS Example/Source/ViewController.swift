@@ -58,10 +58,12 @@ class ViewController: UIViewController {
         lblBitrate.text = ""
 
         if #available(iOS 12.0, *) {
+            #if !targetEnvironment(simulator)
             let broadcastPicker = RPSystemBroadcastPickerView(
                 frame: CGRect(origin: CGPoint(), size: pickerView.frame.size))
             broadcastPicker.preferredExtension = Constants.screencastId
             pickerView.addSubview(broadcastPicker)
+            #endif
         }
 
         let delegate = session.delegate

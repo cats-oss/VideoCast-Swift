@@ -6,7 +6,7 @@
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
-#if targetEnvironment(simulator)
+#if targetEnvironment(simulator) || arch(arm)
 import Foundation
 import OpenGLES
 
