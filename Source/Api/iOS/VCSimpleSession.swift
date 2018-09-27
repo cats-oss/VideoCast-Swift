@@ -15,8 +15,11 @@ open class VCSimpleSession {
     var cameraSource: CameraSource?
     var pixelBufferSource: PixelBufferSource?
     var videoSampleSource: VideoSampleSource?
+    var videoSampleSmoother: Smoother?
     var audioAppSampleSource: AudioSampleSource?
+    var audioAppSampleSmoother: Smoother?
     var audioMicSampleSource: AudioSampleSource?
+    var audioMicSampleSmoother: Smoother?
     var pbAspect: AspectTransform?
     var pbPosition: PositionTransform?
 
@@ -264,6 +267,12 @@ open class VCSimpleSession {
 
     deinit {
         endSession()
+        videoSampleSmoother?.stop()
+        videoSampleSmoother = nil
+        audioAppSampleSmoother?.stop()
+        audioAppSampleSmoother = nil
+        audioMicSampleSmoother?.stop()
+        audioMicSampleSmoother = nil
         audioMixer?.stop()
         audioMixer = nil
         videoMixer?.stop()

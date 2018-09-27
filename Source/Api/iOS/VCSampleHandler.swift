@@ -53,6 +53,7 @@ open class VCSampleHandler: RPBroadcastSampleHandler {
         self.session = session
         session.keyframeInterval = config.keyframeInterval
         session.useAdaptiveBitrate = config.useAdaptiveBitrate
+        session.audioSampleRate = 44100
 
         let url = config.broadcastURL.absoluteString
 

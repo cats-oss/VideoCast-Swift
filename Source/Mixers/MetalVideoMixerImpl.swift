@@ -338,8 +338,9 @@ extension MetalVideoMixer {
                     glPopGroupMarkerEXT()
 
                     if let lout = self.output {
-                        let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(self.epoch),
-                                                               preferredTimescale: VC_TIME_BASE))
+                        let md = VideoBufferMetadata(
+                            ts: .init(seconds: currentTime.timeIntervalSince(self.epoch) + delay,
+                                      preferredTimescale: VC_TIME_BASE))
                         let nextFb = (currentFb + 1) % 2
                         if self.pixelBuffer[nextFb] != nil {
                             lout.pushBuffer(&self.pixelBuffer[nextFb]!,
@@ -441,8 +442,9 @@ extension MetalVideoMixer {
                     commandBuffer.commit()
 
                     if let lout = self.output {
-                        let md = VideoBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(self.epoch),
-                                                               preferredTimescale: VC_TIME_BASE))
+                        let md = VideoBufferMetadata(
+                            ts: .init(seconds: currentTime.timeIntervalSince(self.epoch) + self.delay,
+                                      preferredTimescale: VC_TIME_BASE))
                         let nextFb = (currentFb + 1) % 2
                         if self.pixelBuffer[nextFb] != nil {
                             lout.pushBuffer(&self.pixelBuffer[nextFb]!,

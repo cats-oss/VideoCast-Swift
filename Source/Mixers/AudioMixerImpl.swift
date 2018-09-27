@@ -255,7 +255,7 @@ extension AudioMixer {
 
                 nextMixTime = currentWindow.start
 
-                let md = AudioBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(epoch),
+                let md = AudioBufferMetadata(ts: .init(seconds: currentTime.timeIntervalSince(epoch) + delay,
                                                        preferredTimescale: VC_TIME_BASE))
 
                 md.data = (outFrequencyInHz, outBitsPerChannel, outChannelCount, AudioFormatFlags(0), 0,
