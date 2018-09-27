@@ -59,6 +59,8 @@
 		816ECEAF1FFF4DD6002AE4F9 /* IOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 816ECEAD1FFF4DD6002AE4F9 /* IOutput.swift */; };
 		816ECEB11FFF4DFC002AE4F9 /* IFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 816ECEB01FFF4DFC002AE4F9 /* IFilter.swift */; };
 		816ECEB21FFF4DFC002AE4F9 /* IFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 816ECEB01FFF4DFC002AE4F9 /* IFilter.swift */; };
+		817B2FA2215C98140086DDF7 /* Smoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817B2FA1215C98140086DDF7 /* Smoother.swift */; };
+		817B2FA3215C98140086DDF7 /* Smoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817B2FA1215C98140086DDF7 /* Smoother.swift */; };
 		8183EA0F20075A3900E5A4AE /* AACEncode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8183EA0E20075A3900E5A4AE /* AACEncode.swift */; };
 		8183EA1520075D9C00E5A4AE /* AACPacketizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8183EA1420075D9C00E5A4AE /* AACPacketizer.swift */; };
 		8183EA1620075D9C00E5A4AE /* AACPacketizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8183EA1420075D9C00E5A4AE /* AACPacketizer.swift */; };
@@ -251,6 +253,7 @@
 		816ECEAA1FFF4A7F002AE4F9 /* ISource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ISource.swift; sourceTree = "<group>"; };
 		816ECEAD1FFF4DD6002AE4F9 /* IOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOutput.swift; sourceTree = "<group>"; };
 		816ECEB01FFF4DFC002AE4F9 /* IFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IFilter.swift; sourceTree = "<group>"; };
+		817B2FA1215C98140086DDF7 /* Smoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Smoother.swift; sourceTree = "<group>"; };
 		8183EA0E20075A3900E5A4AE /* AACEncode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AACEncode.swift; sourceTree = "<group>"; };
 		8183EA1420075D9C00E5A4AE /* AACPacketizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AACPacketizer.swift; sourceTree = "<group>"; };
 		8183EA1720075DAE00E5A4AE /* H264Packetizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Packetizer.swift; sourceTree = "<group>"; };
@@ -598,6 +601,7 @@
 				814265C91FFF5833001258F2 /* ITransform.swift */,
 				818F9E33202D7BBF006F586F /* MP4Multiplexer.swift */,
 				81DD028B2004822B0064A203 /* PositionTransform.swift */,
+				817B2FA1215C98140086DDF7 /* Smoother.swift */,
 				81DD028E2004825A0064A203 /* Split.swift */,
 				81CA5F282036E1300050059A /* VTEncode.swift */,
 				8183EA0C20075A1000E5A4AE /* iOS */,
@@ -937,6 +941,7 @@
 			files = (
 				81DD027D20046A8A0064A203 /* FilterFactory.swift in Sources */,
 				81DD0299200492B80064A203 /* RTMPTypes.swift in Sources */,
+				817B2FA2215C98140086DDF7 /* Smoother.swift in Sources */,
 				816ECEAE1FFF4DD6002AE4F9 /* IOutput.swift in Sources */,
 				81FACD5B20208773001FFD6B /* IStreamSession.swift in Sources */,
 				81CA5F26203675A00050059A /* Atomic.swift in Sources */,
@@ -1063,6 +1068,7 @@
 				81FA47E32154DCDC002A2B1A /* AudioSampleSource.swift in Sources */,
 				81DD0297200491A90064A203 /* RTMPSession.swift in Sources */,
 				81CE06F9204EA85000E71AB6 /* SRTTransmit.swift in Sources */,
+				817B2FA3215C98140086DDF7 /* Smoother.swift in Sources */,
 				811692312125591D0074EA71 /* SRTStats.swift in Sources */,
 				814265C81FFF57F2001258F2 /* IEncoder.swift in Sources */,
 				81BE3D9020523F1C0040707D /* SRTLogSupport.swift in Sources */,

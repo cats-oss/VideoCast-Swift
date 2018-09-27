@@ -68,6 +68,7 @@ open class MetalVideoMixer: IVideoMixer {
 
     var syncPoint = Date()
     var epoch = Date()
+    var delay = TimeInterval()
     var nextMixTime = Date()
     var us25 = TimeInterval()
 
@@ -291,6 +292,10 @@ open class MetalVideoMixer: IVideoMixer {
         output = nil
         exiting.value = true
         mixThreadCond.broadcast()
+    }
+
+    open func setDelay(delay: TimeInterval) {
+        self.delay = delay
     }
 
     open func mixPaused(_ paused: Bool) {

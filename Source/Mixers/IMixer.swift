@@ -32,6 +32,8 @@ public protocol IMixer: ITransform {
 
     func start()
     func stop()
+
+    func setDelay(delay: TimeInterval)
 }
 
 extension IMixer {

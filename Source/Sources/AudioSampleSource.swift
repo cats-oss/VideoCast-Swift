@@ -28,6 +28,7 @@ open class AudioSampleSource: ISource {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     open func pushSample(_ sampleBuffer: CMSampleBuffer) {
         guard let outp = output else {
             Logger.debug("unexpected return")
@@ -72,11 +73,18 @@ open class AudioSampleSource: ISource {
                    asbd.mFormatFlags,
                    Int(asbd.mBytesPerFrame),
                    numSamples,
-                   true,
+                   false,
                    false,
                    WeakRefISource(value: self)
         )
-        outp.pushBuffer(&audioBufferList,
-                        size: MemoryLayout<AudioBufferList>.size, metadata: md)
+        for i in 0..<Int(audioBufferList.mNumberBuffers) {
+            let abPtr = UnsafeMutableAudioBufferListPointer(&audioBufferList)
+            guard let data = abPtr[i].mData else {
+                Logger.debug("unexpected return")
+                continue
+            }
+            outp.pushBuffer(data,
+                            size: Int(abPtr[i].mDataByteSize), metadata: md)
+        }
     }
 }
