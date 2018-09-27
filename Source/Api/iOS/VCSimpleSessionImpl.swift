@@ -95,6 +95,8 @@ extension VCSimpleSession {
                         return Logger.debug("unexpected return")
             }
 
+            let delay = TimeInterval(0.5)
+
             videoMixer.setSourceFilter(WeakRefISource(value: videoSampleSource), filter: filter)
             self.filter = .normal
             aspectTransform.setOutput(positionTransform)
@@ -103,11 +105,28 @@ extension VCSimpleSession {
             self.positionTransform = positionTransform
 
             // Add audio source
-            audioAppSampleSource = .init()
-            audioAppSampleSource?.setOutput(audioMixer)
+            let audioAppSampleSource = AudioSampleSource()
+            self.audioAppSampleSource = audioAppSampleSource
+            let audioAppSampleSmoother = Smoother(delay: delay)
+            self.audioAppSampleSmoother = audioAppSampleSmoother
 
-            audioMicSampleSource = .init()
-            audioMicSampleSource?.setOutput(audioMixer)
+            let audioMicSampleSource = AudioSampleSource()
+            self.audioMicSampleSource = audioMicSampleSource
+            let audioMicSampleSmoother = Smoother(delay: delay)
+            self.audioMicSampleSmoother = audioMicSampleSmoother
+
+            audioAppSampleSource.setOutput(audioAppSampleSmoother)
+            audioAppSampleSmoother.setOutput(audioMixer)
+            audioMixer.registerSource(audioAppSampleSource)
+
+            audioMicSampleSource.setOutput(audioMicSampleSmoother)
+            audioMicSampleSmoother.setOutput(audioMixer)
+            audioMixer.registerSource(audioMicSampleSource)
+
+            audioAppSampleSmoother.start()
+            audioMicSampleSmoother.start()
+
+            videoMixer.setDelay(delay: delay)
         } else {
             // Add camera source
             let cameraSource = CameraSource()
@@ -394,9 +413,9 @@ extension VCSimpleSession {
                 case 500001...:
                     audio.bitrate = strongSelf.audioChannelCount > 1 ? 128000 : 108000
                 case 250001...500000:
-                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 86000 : 72000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 108000 : 80000
                 default:
-                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 57000 : 48000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 78000 : 52000
                 }
             }
 

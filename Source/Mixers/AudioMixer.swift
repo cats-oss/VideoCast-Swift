@@ -33,6 +33,7 @@ open class AudioMixer: IAudioMixer {
     private var mixQueue = JobQueue("jp.co.cyberagent.VideoCast.composite", priority: .high)
 
     var epoch = Date()
+    var delay = TimeInterval()
     var nextMixTime = Date()
     var lastMixTime = Date()
 
@@ -262,5 +263,9 @@ open class AudioMixer: IAudioMixer {
         exiting.value = true
         mixThreadCond.broadcast()
         _mixThread?.cancel()
+    }
+
+    open func setDelay(delay: TimeInterval) {
+        self.delay = delay
     }
 }
