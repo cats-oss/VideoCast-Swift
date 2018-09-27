@@ -339,7 +339,7 @@ extension MetalVideoMixer {
 
                     if let lout = self.output {
                         let md = VideoBufferMetadata(
-                            ts: .init(seconds: currentTime.timeIntervalSince(self.epoch) + delay,
+                            ts: .init(seconds: currentTime.timeIntervalSince(self.epoch) + self.delay,
                                       preferredTimescale: VC_TIME_BASE))
                         let nextFb = (currentFb + 1) % 2
                         if self.pixelBuffer[nextFb] != nil {
