@@ -91,7 +91,7 @@ open class AACEncode: IEncoder {
                     var propSize = UInt32(MemoryLayout<UInt32>.size)
 
                     guard result == noErr else {
-                        Logger.debug("unexpected return: \(result)")
+                        Logger.info("failed to set audio bitrate\(newValue): code: \(result)")
                         return
                     }
                     AudioConverterGetProperty(audioConverter, kAudioConverterEncodeBitRate, &propSize, &br)

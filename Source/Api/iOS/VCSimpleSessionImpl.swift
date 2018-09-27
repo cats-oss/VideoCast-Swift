@@ -394,9 +394,9 @@ extension VCSimpleSession {
                 case 500001...:
                     audio.bitrate = strongSelf.audioChannelCount > 1 ? 128000 : 108000
                 case 250001...500000:
-                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 86000 : 72000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 108000 : 80000
                 default:
-                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 57000 : 48000
+                    audio.bitrate = strongSelf.audioChannelCount > 1 ? 78000 : 52000
                 }
             }
 
