@@ -217,6 +217,7 @@ open class SRTSession: IOutputSession {
         }
 
         var tarConnected: Bool = false
+        var firstConnection: Bool = true
 
         let pollid: Int32 = srt_epoll_create()
         guard pollid >= 0 else {
@@ -325,6 +326,7 @@ open class SRTSession: IOutputSession {
                                 }
                                 tarConnected = true
                                 setClientState(.connected)
+                                firstConnection = false
                             }
                         case SRTS_BROKEN, SRTS_NONEXIST, SRTS_CLOSED:
                             if tarConnected {
@@ -334,7 +336,7 @@ open class SRTSession: IOutputSession {
                                 tarConnected = false
                             }
 
-                            if ending.value || !autoreconnect {
+                            if firstConnection || ending.value || !autoreconnect {
                                 setClientState(.notConnected)
                                 doabort = true
                             } else {
@@ -351,6 +353,7 @@ open class SRTSession: IOutputSession {
                                     Logger.debug("SRT target connected")
                                 }
                                 tarConnected = true
+                                firstConnection = false
                                 setClientState(.connected)
                                 if let tar = tar {
                                     statsManager.start(tar.sock)
