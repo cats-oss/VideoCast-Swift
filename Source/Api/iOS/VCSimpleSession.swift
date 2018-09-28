@@ -45,6 +45,8 @@ open class VCSimpleSession {
     var tsMuxer: TSMultiplexer?
     var fileSink: FileSink?
 
+    var sessionStarted = false
+
     let graphManagementQueue = DispatchQueue(label: "jp.co.cyberagent.VideoCast.session.graph")
     let minVideoBitrate = 32000
 
@@ -91,6 +93,8 @@ open class VCSimpleSession {
     open var fps: Int                           // Change will not take place until the next Session
     open var keyframeInterval: Int              // Change will not take place until the next Session
     open var videoCodecType: VCVideoCodecType   // Change will not take place until the next Session
+    open var autoreconnect: Bool = true
+    open var reconnectPeriod: TimeInterval = .init(5)
     public let useInterfaceOrientation: Bool
     open var cameraState: VCCameraState {
         get { return _cameraState }
@@ -300,6 +304,8 @@ open class VCSimpleSession {
     }
 
     open func endSession() {
+        sessionStarted = false
+
         h264Packetizer = nil
         aacPacketizer = nil
 
@@ -309,6 +315,9 @@ open class VCSimpleSession {
 
         vtEncoder = nil
         aacEncoder = nil
+
+        vtSplit = nil
+        aacSplit = nil
 
         muxer?.stop {
             self.muxer = nil

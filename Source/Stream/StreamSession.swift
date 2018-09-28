@@ -84,7 +84,6 @@ open class StreamSession: IStreamSession {
         var ret = 0
 
         guard let outputStream = outputStream else {
-            Logger.debug("unexpected return")
             return ret
         }
 

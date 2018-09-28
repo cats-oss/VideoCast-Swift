@@ -75,13 +75,16 @@ class ViewController: UIViewController {
             guard let strongSelf = self else { return }
 
             switch strongSelf.session.sessionState {
-            case .starting:
+            case .starting, .reconnecting:
                 strongSelf.connecting = true
                 strongSelf.btnConnect.setImage(strongSelf.imgRecordStop, for: .normal)
 
             case .started:
                 strongSelf.connecting = false
                 strongSelf.btnConnect.setImage(strongSelf.imgRecordStop, for: .normal)
+
+            case .previewStarted:
+                break
 
             default:
                 strongSelf.connecting = false
@@ -252,7 +255,7 @@ class ViewController: UIViewController {
 
     private func refreshVideoSize() {
         switch session.sessionState {
-        case .starting, .started:
+        case .starting, .started, .reconnecting:
             break
         default:
             session.videoSize = getVideoSize()

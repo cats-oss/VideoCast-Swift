@@ -300,18 +300,25 @@ extension VCSimpleSession {
 
             switch state {
             case .connecting:
-                strongSelf.sessionState = .starting
+                if strongSelf.sessionState != .reconnecting {
+                    strongSelf.sessionState = .starting
+                }
             case .connected:
-                strongSelf.graphManagementQueue.async { [weak strongSelf] in
-                    strongSelf?.addEncodersAndPacketizers()
+                if strongSelf.sessionState != .reconnecting {
+                    strongSelf.graphManagementQueue.async { [weak strongSelf] in
+                        strongSelf?.addEncodersAndPacketizers()
+                    }
                 }
                 strongSelf.sessionState = .started
+                strongSelf.sessionStarted = true
             case .error:
                 strongSelf.sessionState = .error
                 strongSelf.endSession()
             case .notConnected:
                 strongSelf.sessionState = .ended
                 strongSelf.endSession()
+            case .reconnecting:
+                strongSelf.sessionState = .reconnecting
             case .none:
                 break
             }
@@ -327,15 +334,33 @@ extension VCSimpleSession {
             logfa: .general,
             logfile: "",
             internal_log: true,
-            autoreconnect: false,
+            autoreconnect: autoreconnect,
+            reconnectPeriod: reconnectPeriod,
             quiet: false
         )
 
         outputSession.setSessionParameters(sessionParameters)
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func startRtmpSessionInternal(url: String, streamKey: String) {
         let uri = url + "/" + streamKey
+
+        let startReconnecting = { () -> Bool in
+            if self.sessionStarted && self.autoreconnect {
+                if let outputSession = self.outputSession as? RTMPSession {
+                    outputSession.reset()
+                    DispatchQueue.global().asyncAfter(deadline: .now() + self.reconnectPeriod, execute: { [weak self] in
+                        if let outputSession = self?.outputSession as? RTMPSession {
+                            outputSession.connectServer()
+                        }
+                    })
+                    self.sessionState = .reconnecting
+                    return true
+                }
+            }
+            return false
+        }
 
         let outputSession = RTMPSession(uri: uri) { [weak self] (_, state)  in
             guard let strongSelf = self else { return }
@@ -344,18 +369,25 @@ extension VCSimpleSession {
 
             switch state {
             case .connected:
-                strongSelf.sessionState = .starting
+                if strongSelf.sessionState != .reconnecting {
+                    strongSelf.sessionState = .starting
+                }
             case .sessionStarted:
                 strongSelf.graphManagementQueue.async { [weak strongSelf] in
                     strongSelf?.addEncodersAndPacketizers()
                 }
                 strongSelf.sessionState = .started
+                strongSelf.sessionStarted = true
             case .error:
-                strongSelf.sessionState = .error
-                strongSelf.endSession()
+                if !startReconnecting() {
+                    strongSelf.sessionState = .error
+                    strongSelf.endSession()
+                }
             case .notConnected:
-                strongSelf.sessionState = .ended
-                strongSelf.endSession()
+                if !startReconnecting() {
+                    strongSelf.sessionState = .ended
+                    strongSelf.endSession()
+                }
             default:
                 break
             }
