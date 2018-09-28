@@ -38,7 +38,6 @@ open class RTMPSession: IOutputSession {
 
     let streamInBuffer: PreallocBuffer = .init(4096)
     private let streamSession: IStreamSession = StreamSession()
-    private let outBuffer: [UInt8] = .init()
     let uri: URL
 
     private let callback: RTMPSessionStateCallback
@@ -242,6 +241,30 @@ open class RTMPSession: IOutputSession {
         Logger.debug("Tracking command(\(numberOfInvokes), \(cmd)")
         return numberOfInvokes
     }
+
+    open func reset() {
+        sentKeyframe = .init()
+
+        state = .none
+
+        s1.removeAll()
+        c1.removeAll()
+        uptime = 0
+
+        previousChunkMap = .init()
+        previousChunkData = .init()
+        trackedCommands = .init()
+
+        streamSession.disconnect()
+        streamInBuffer.reset()
+
+        outChunkSize = 128
+        inChunkSize = 128
+        bufferSize = 0
+
+        streamId = 0
+        numberOfInvokes = 0
+    }
 }
 
 extension RTMPSession {
@@ -268,8 +291,7 @@ extension RTMPSession {
             Logger.debug("unexpected return")
             return
         }
-        // reset the stream buffer.
-        streamInBuffer.reset()
+        reset()
         let port = uri.port ?? 1935
         Logger.info("Connecting:\(host):\(port), stream name:\(playPath)")
         streamSession.connect(host: host, port: port, sscb: { [weak self] (_, status) in
@@ -277,8 +299,14 @@ extension RTMPSession {
         })
     }
 
+    // swiftlint:disable:next function_body_length
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
-        guard !ending, let inMetadata = metadata as? RTMPMetadata, let metaData = inMetadata.data else { return }
+        guard !ending,
+            let inMetadata = metadata as? RTMPMetadata,
+            let metaData = inMetadata.data,
+            state.rawValue >= RTMPClientState.handshakeComplete.rawValue,
+            state.rawValue <= RTMPClientState.sessionStarted.rawValue
+            else { return }
 
         // make the lamdba capture the data
         var buf = Data(capacity: size)

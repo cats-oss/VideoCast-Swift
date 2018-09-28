@@ -15,6 +15,10 @@ open class Split: ITransform {
 
     }
 
+    deinit {
+        outputs.removeAll()
+    }
+
     open func setOutput(_ output: IOutput) {
         if !outputs.contains(where: {$0 === output}) {
             outputs.append(WeakRefIOutput(value: output))

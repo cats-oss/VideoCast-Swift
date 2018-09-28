@@ -15,6 +15,7 @@ public enum VCSessionState {
     case started
     case ended
     case error
+    case reconnecting
 }
 
 public enum VCCameraState {
