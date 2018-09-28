@@ -64,7 +64,7 @@ cd SRT
 ## Version History
 
 * 0.1.0
-        * Live Screen Broadcast
+ 	* Live Screen Broadcast
 	* 32 bit architecher support
 	* Auto reconnect
 	* Fixed low bitrate problems
