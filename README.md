@@ -15,7 +15,7 @@ VideoCast-Swift is a framework for broadcasting live video. It is based on [Vide
 Create a `Podfile` with the contents
 ``` ruby
 platform :ios, '8.0'
-pod 'VideoCast', '~> 0.0.2'
+pod 'VideoCast', '~> 0.1.0'
 use_frameworks!
 ```
 Next, run `pod install` and open the `xcworkspace` file that is created.
@@ -45,6 +45,7 @@ e.g. Source (Camera) -> Transform (Composite) -> Transform (H.264 Encode) -> Tra
  - Sources
    - Camera
    - Microphone
+   - ReplayKit 2(Live Screen Broadcast) 
 
 ## Build SRT
 
@@ -62,6 +63,12 @@ cd SRT
 
 ## Version History
 
+* 0.1.0
+        * Live Screen Broadcast
+	* 32 bit architecher support
+	* Auto reconnect
+	* Fixed low bitrate problems
+	* Other bugfixes
 * 0.0.2
 	* Metal videomixing and preview.
 	* SRT Adaptive bitrate
