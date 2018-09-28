@@ -284,6 +284,7 @@ open class MetalVideoMixer: IVideoMixer {
     }
 
     open func start() {
+        exiting.value = false
         _mixThread = Thread(target: self, selector: #selector(mixThread), object: nil)
         _mixThread?.start()
     }

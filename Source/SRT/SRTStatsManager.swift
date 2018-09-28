@@ -51,11 +51,14 @@ class SrtStatsManager {
     }
 
     open func reset() {
+        samples.removeAll()
     }
 
     open func start(_ sock: SRTSOCKET) {
         if !started {
+            reset()
             started = true
+            exiting.value = false
             self.sock = sock
             thread = Thread(target: self, selector: #selector(sampleThread), object: nil)
             thread?.start()
@@ -65,7 +68,6 @@ class SrtStatsManager {
     open func stop() {
         exiting.value = true
         cond.broadcast()
-        callback = nil
         if started {
             thread?.cancel()
             started = false
@@ -74,6 +76,10 @@ class SrtStatsManager {
 
     open func setThroughputCallback(_ callback: @escaping ThroughputCallback) {
         self.callback = callback
+    }
+
+    open func removeThroughputCallback() {
+        self.callback = nil
     }
 
     // swiftlint:disable:next cyclomatic_complexity function_body_length

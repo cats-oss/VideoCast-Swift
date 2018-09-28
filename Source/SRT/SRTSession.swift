@@ -15,6 +15,7 @@ public typealias SRTSessionParameters = MetaData<(
     logfile: String,
     internal_log: Bool,
     autoreconnect: Bool,
+    reconnectPeriod: TimeInterval,
     quiet: Bool
     )>
 
@@ -24,6 +25,7 @@ public enum SRTClientState: Int {
     case connected
     case error
     case notConnected
+    case reconnecting
 }
 
 public typealias SRTSessionStateCallback = (_ session: SRTSession, _ state: SRTClientState) -> Void
@@ -40,7 +42,10 @@ open class SRTSession: IOutputSession {
     private var logfile: String = ""
     private var internal_log: Bool = false
     private var autoreconnect: Bool = true
+    private var reconnectPeriod: TimeInterval = .init(5)
     private var quiet: Bool = false
+
+    private var reconnecting: Bool = false
 
     private let jobQueue: JobQueue = .init("srt")
 
@@ -67,6 +72,10 @@ open class SRTSession: IOutputSession {
         self.callback = callback
     }
 
+    deinit {
+        Logger.debug("SRTSession:deinit")
+    }
+
     open func setSessionParameters(_ parameters: IMetaData) {
         guard let params = parameters as? SRTSessionParameters, let data = params.data else {
             Logger.debug("unexpected return")
@@ -78,6 +87,7 @@ open class SRTSession: IOutputSession {
         logfile = data.logfile
         internal_log = data.internal_log
         autoreconnect = data.autoreconnect
+        reconnectPeriod = data.reconnectPeriod
         quiet = data.quiet
 
         start()
@@ -93,12 +103,15 @@ open class SRTSession: IOutputSession {
 
     open func stop(_ callback: @escaping StopSessionCallback) {
         statsManager.stop()
+        statsManager.removeThroughputCallback()
         ending.value = true
         cond.broadcast()
         if started {
             thread?.cancel()
             started = false
         }
+
+        callback()
     }
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
@@ -221,7 +234,12 @@ open class SRTSession: IOutputSession {
                 }
 
                 if !ending.value {
-                    cond.wait(until: Date.init(timeIntervalSinceNow: kPollDelay))
+                    if reconnecting {
+                        cond.wait(until: Date.init(timeIntervalSinceNow: reconnectPeriod))
+                        reconnecting = false
+                    } else {
+                        cond.wait(until: Date.init(timeIntervalSinceNow: kPollDelay))
+                    }
                 }
                 guard !ending.value else {
                     if let tar = tar {
@@ -316,13 +334,15 @@ open class SRTSession: IOutputSession {
                                 tarConnected = false
                             }
 
-                            if !autoreconnect {
+                            if ending.value || !autoreconnect {
                                 setClientState(.notConnected)
                                 doabort = true
                             } else {
                                 // force re-connection
                                 srt_epoll_remove_usock(pollid, s)
                                 statsManager.stop()
+                                setClientState(.reconnecting)
+                                reconnecting = true
                                 tar = nil
                             }
                         case SRTS_CONNECTED:

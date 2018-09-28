@@ -109,6 +109,7 @@ open class TCPThroughputAdaptation: IThroughputAdaptation {
     open func start() {
         if !started {
             started = true
+            exiting.value = false
             thread = Thread(target: self, selector: #selector(sampleThread), object: nil)
             thread?.start()
         }
