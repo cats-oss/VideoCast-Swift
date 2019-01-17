@@ -26,7 +26,7 @@ func hash(_ obj: AnyObject) -> Int {
 public class WeakRefISource {
     private(set) weak var value: ISource?
 
-    init(value: ISource?) {
+    public init(value: ISource?) {
         self.value = value
     }
 }
@@ -34,7 +34,7 @@ public class WeakRefISource {
 public class WeakRefIOutput {
     private(set) weak var value: IOutput?
 
-    init(value: IOutput?) {
+    public init(value: IOutput?) {
         self.value = value
     }
 }
