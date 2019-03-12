@@ -223,6 +223,22 @@ open class VCSimpleSession {
             }
         }
     }
+    
+    public var customFilter: BasicVideoFilter? {
+        didSet {
+            guard let videoMixer = videoMixer, let cameraSource = cameraSource, let customFilter = customFilter else {
+                return Logger.debug("unexpected return")
+            }
+            
+            if let videoFilter = videoMixer.filterFactory.filter(name: customFilter.name) as? IVideoFilter {
+                videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: videoFilter)
+                
+            } else {
+                FilterFactory.register(name: customFilter.name) { customFilter }
+                videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: customFilter)
+            }
+        }
+    }
 
     let screencast: Bool
 
