@@ -107,6 +107,7 @@ struct SRTSocketOption {
 }
 
 let srtOptions: [SRTSocketOption] = [
+    .init(name: "transtype", symbol: SRTO_TRANSTYPE, binding: .pre, type: .enumeration, valmap: enummap_transtype),
     .init(name: "maxbw", symbol: SRTO_MAXBW, binding: .pre, type: .int64, valmap: nil),
     .init(name: "pbkeylen", symbol: SRTO_PBKEYLEN, binding: .pre, type: .int, valmap: nil),
     .init(name: "passphrase", symbol: SRTO_PASSPHRASE, binding: .pre, type: .string, valmap: nil),
@@ -122,6 +123,7 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "latency", symbol: SRTO_LATENCY, binding: .pre, type: .int, valmap: nil),
     .init(name: "tsbpddelay", symbol: SRTO_TSBPDDELAY, binding: .pre, type: .int, valmap: nil),
     .init(name: "tlpktdrop", symbol: SRTO_TLPKTDROP, binding: .pre, type: .bool, valmap: nil),
+    .init(name: "snddropdelay", symbol: SRTO_SNDDROPDELAY, binding: .post, type: .int, valmap: nil),
     .init(name: "nakreport", symbol: SRTO_NAKREPORT, binding: .pre, type: .bool, valmap: nil),
     .init(name: "conntimeo", symbol: SRTO_CONNTIMEO, binding: .pre, type: .int, valmap: nil),
     .init(name: "lossmaxttl", symbol: SRTO_LOSSMAXTTL, binding: .pre, type: .int, valmap: nil),
@@ -132,9 +134,9 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "smoother", symbol: SRTO_SMOOTHER, binding: .pre, type: .string, valmap: nil),
     .init(name: "messageapi", symbol: SRTO_MESSAGEAPI, binding: .pre, type: .bool, valmap: nil),
     .init(name: "payloadsize", symbol: SRTO_PAYLOADSIZE, binding: .pre, type: .int, valmap: nil),
-    .init(name: "transtype", symbol: SRTO_TRANSTYPE, binding: .pre, type: .enumeration, valmap: enummap_transtype),
     .init(name: "kmrefreshrate", symbol: SRTO_KMREFRESHRATE, binding: .pre, type: .int, valmap: nil),
-    .init(name: "kmpreannounce", symbol: SRTO_KMPREANNOUNCE, binding: .pre, type: .int, valmap: nil)
+    .init(name: "kmpreannounce", symbol: SRTO_KMPREANNOUNCE, binding: .pre, type: .int, valmap: nil),
+    .init(name: "strictenc", symbol: SRTO_STRICTENC, binding: .pre, type: .bool, valmap: nil)
 ]
 
 // swiftlint:disable:next cyclomatic_complexity

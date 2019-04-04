@@ -7,7 +7,7 @@
 #  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 
 export IPHONEOS_DEPLOYMENT_TARGET=8.0
-SDKVERSION=11.4
+SDKVERSION=12.2
 
 build_srt() {
     PLATFORM=$1
@@ -18,7 +18,7 @@ build_srt() {
     mkdir -p ./build/ios_${ARCH}
     pushd ./build/ios_${ARCH}
 
-../../srt/configure --cmake-prefix-path=$IOS_OPENSSL --cmake-toolchain-file=scripts/iOS.cmake --enable-debug=0 --ios-platform=${IOS_PLATFORM} --ios-arch=${ARCH}
+../../srt/configure --cmake-prefix-path=$IOS_OPENSSL --use-openssl-pc=OFF --cmake-toolchain-file=scripts/iOS.cmake --enable-debug=0 --ios-platform=${IOS_PLATFORM} --ios-arch=${ARCH}
     make
     popd
 }
