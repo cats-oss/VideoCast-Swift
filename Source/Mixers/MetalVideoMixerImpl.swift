@@ -292,9 +292,7 @@ extension MetalVideoMixer {
                             let filter = self.sourceFilters.index(forKey: key)
 
                             if filter == nil {
-                                let newFilter =
-                                    self.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
-                                self.sourceFilters[key] = newFilter as? IVideoFilter
+                                self.sourceFilters[key] = BasicVideoFilterBGRA()
                             }
 
                             if currentFilter !== self.sourceFilters[key] {
@@ -376,9 +374,7 @@ extension MetalVideoMixer {
                             let filter = self.sourceFilters.index(forKey: key)
 
                             if filter == nil {
-                                let newFilter =
-                                    self.filterFactory.filter(name: "jp.co.cyberagent.VideoCast.filters.bgra")
-                                self.sourceFilters[key] = newFilter as? IVideoFilter
+                                self.sourceFilters[key] = BasicVideoFilterBGRA()
                             }
 
                             if currentFilter !== self.sourceFilters[key] {

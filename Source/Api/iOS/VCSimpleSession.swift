@@ -194,49 +194,14 @@ open class VCSimpleSession {
             }
         }
     }
-    open var filter: VCFilter = .normal {    /* Default is normal */
+    open var filter: IVideoFilter = BasicVideoFilterBGRA() {    /* Default is normal */
         didSet {
             guard let videoMixer = videoMixer, let cameraSource = cameraSource else {
                 return Logger.debug("unexpected return")
             }
 
-            let filterName: String
-            switch filter {
-            case .normal:
-                filterName = "jp.co.cyberagent.VideoCast.filters.bgra"
-            case .gray:
-                filterName = "jp.co.cyberagent.VideoCast.filters.grayscale"
-            case .invertColors:
-                filterName = "jp.co.cyberagent.VideoCast.filters.invertColors"
-            case .sepia:
-                filterName = "jp.co.cyberagent.VideoCast.filters.sepia"
-            case .fisheye:
-                filterName = "jp.co.cyberagent.VideoCast.filters.fisheye"
-            case .glow:
-                filterName = "jp.co.cyberagent.VideoCast.filters.glow"
-            }
-
             Logger.info("FILTER IS : \(filter)")
-
-            if let videoFilter = videoMixer.filterFactory.filter(name: filterName) as? IVideoFilter {
-                videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: videoFilter)
-            }
-        }
-    }
-    
-    public var customFilter: BasicVideoFilter? {
-        didSet {
-            guard let videoMixer = videoMixer, let cameraSource = cameraSource, let customFilter = customFilter else {
-                return Logger.debug("unexpected return")
-            }
-            
-            if let videoFilter = videoMixer.filterFactory.filter(name: customFilter.name) as? IVideoFilter {
-                videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: videoFilter)
-                
-            } else {
-                FilterFactory.register(name: customFilter.name) { customFilter }
-                videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: customFilter)
-            }
+            videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: filter)
         }
     }
 

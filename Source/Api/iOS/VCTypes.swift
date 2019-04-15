@@ -28,15 +28,6 @@ public enum VCAspectMode: Int {
     case fill
 }
 
-public enum VCFilter {
-    case normal
-    case gray
-    case invertColors
-    case sepia
-    case fisheye
-    case glow
-}
-
 public enum VCVideoCodecType: Int {
     case h264
     case hevc

@@ -10,8 +10,10 @@ import Foundation
 import GLKit
 
 open class GrayscaleVideoFilter: BasicVideoFilter {
-    internal static let isRegistered = registerFilter()
-
+    open override class var fragmentFunc: String {
+        return "grayscale_fragment"
+    }
+    
     #if targetEnvironment(simulator) || arch(arm)
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
@@ -25,27 +27,5 @@ void main(void) {
 }
 """)
     }
-    #else
-    open override var fragmentFunc: String {
-        return "grayscale_fragment"
-    }
     #endif
-
-    open override var name: String {
-        return "jp.co.cyberagent.VideoCast.filters.grayscale"
-    }
-
-    #if !targetEnvironment(simulator) && !arch(arm)
-    open override var piplineDescripter: String? {
-        return "grayscalePiplineState"
-    }
-    #endif
-
-    private static func registerFilter() -> Bool {
-        FilterFactory.register(
-            name: "jp.co.cyberagent.VideoCast.filters.grayscale",
-            instantiation: { return GrayscaleVideoFilter() }
-        )
-        return true
-    }
 }

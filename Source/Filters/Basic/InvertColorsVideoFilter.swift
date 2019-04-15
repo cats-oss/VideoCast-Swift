@@ -10,8 +10,10 @@ import Foundation
 import GLKit
 
 open class InvertColorsVideoFilter: BasicVideoFilter {
-    internal static let isRegistered = registerFilter()
-
+    open override class var fragmentFunc: String {
+        return "invertColors_fragment"
+    }
+    
     #if targetEnvironment(simulator) || arch(arm)
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
@@ -24,27 +26,5 @@ open class InvertColorsVideoFilter: BasicVideoFilter {
                }
 """)
     }
-    #else
-    open override var fragmentFunc: String {
-        return "invertColors_fragment"
-    }
     #endif
-
-    open override var name: String {
-        return "jp.co.cyberagent.VideoCast.filters.invertColors"
-    }
-
-    #if !targetEnvironment(simulator) && !arch(arm)
-    open override var piplineDescripter: String? {
-        return "invertColorsPiplineState"
-    }
-    #endif
-
-    private static func registerFilter() -> Bool {
-        FilterFactory.register(
-            name: "jp.co.cyberagent.VideoCast.filters.invertColors",
-            instantiation: { return InvertColorsVideoFilter() }
-        )
-        return true
-    }
 }

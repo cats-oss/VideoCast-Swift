@@ -88,17 +88,14 @@ extension VCSimpleSession {
             )
 
             self.videoSampleSource?.setOutput(aspectTransform)
-
-            guard let videoMixer = self.videoMixer,
-                let filter = videoMixer.filterFactory.filter(
-                    name: "jp.co.cyberagent.VideoCast.filters.bgra") as? IVideoFilter else {
-                        return Logger.debug("unexpected return")
-            }
+            
+            guard let videoMixer = self.videoMixer else { return Logger.debug("unexpected return") }
+            let filter = BasicVideoFilterBGRA()
 
             let delay = TimeInterval(0.5)
 
             videoMixer.setSourceFilter(WeakRefISource(value: videoSampleSource), filter: filter)
-            self.filter = .normal
+            self.filter = filter
             aspectTransform.setOutput(positionTransform)
             positionTransform.setOutput(videoMixer)
             self.aspectTransform = aspectTransform
@@ -149,14 +146,11 @@ extension VCSimpleSession {
 
                                         self.cameraSource?.setOutput(aspectTransform)
 
-                                        guard let videoMixer = self.videoMixer,
-                                            let filter = videoMixer.filterFactory.filter(
-                                                name: "jp.co.cyberagent.VideoCast.filters.bgra") as? IVideoFilter else {
-                                                    return Logger.debug("unexpected return")
-                                        }
+                                        guard let videoMixer = self.videoMixer else { return Logger.debug("unexpected return") }
+                                        let filter = BasicVideoFilterBGRA()
 
                                         videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: filter)
-                                        self.filter = .normal
+                                        self.filter = filter
                                         aspectTransform.setOutput(positionTransform)
                                         positionTransform.setOutput(videoMixer)
                                         self.aspectTransform = aspectTransform

@@ -30,6 +30,7 @@
 		81FA47EB2154E4BA002A2B1A /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81FA47EA2154E4BA002A2B1A /* ReplayKit.framework */; };
 		81FA47EE2154E4BA002A2B1A /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47ED2154E4BA002A2B1A /* SampleHandler.swift */; };
 		81FA48012154E4BA002A2B1A /* Screencast.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 81FA47E82154E4BA002A2B1A /* Screencast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8C58019B225F3C490074FF8A /* sample.metal in Sources */ = {isa = PBXBuildFile; fileRef = 8C58019A225F3C490074FF8A /* sample.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -127,6 +128,7 @@
 		81FA47ED2154E4BA002A2B1A /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
 		81FA47EF2154E4BA002A2B1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		81FA47F62154E4BA002A2B1A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		8C58019A225F3C490074FF8A /* sample.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = sample.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -206,6 +208,7 @@
 				81651B0021439FE60069F6FF /* ServerViewController.swift */,
 				81651B022143AA020069F6FF /* TextFiieldCell.swift */,
 				8151F3A51FFF12F300615BF4 /* ViewController.swift */,
+				8C58019A225F3C490074FF8A /* sample.metal */,
 				81CF2B761FFF136000A9E887 /* Supporting Files */,
 			);
 			path = Source;
@@ -420,6 +423,7 @@
 				81651B032143AA020069F6FF /* TextFiieldCell.swift in Sources */,
 				81651AFC21438D720069F6FF /* SelectViewController.swift in Sources */,
 				8151F3A41FFF12F300615BF4 /* AppDelegate.swift in Sources */,
+				8C58019B225F3C490074FF8A /* sample.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

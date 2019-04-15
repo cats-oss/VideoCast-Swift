@@ -122,8 +122,6 @@
 		81D330A020500EEC001E6AE7 /* SRTUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D3309E20500EEC001E6AE7 /* SRTUtil.swift */; };
 		81DD027A200457210064A203 /* IVideoFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD0279200457210064A203 /* IVideoFilter.swift */; };
 		81DD027B200457210064A203 /* IVideoFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD0279200457210064A203 /* IVideoFilter.swift */; };
-		81DD027D20046A8A0064A203 /* FilterFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD027C20046A8A0064A203 /* FilterFactory.swift */; };
-		81DD027E20046A8A0064A203 /* FilterFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD027C20046A8A0064A203 /* FilterFactory.swift */; };
 		81DD028120047B960064A203 /* MicSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD028020047B960064A203 /* MicSource.swift */; };
 		81DD028320047BB80064A203 /* CameraSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD028220047BB80064A203 /* CameraSource.swift */; };
 		81DD028620047C590064A203 /* PixelBufferSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DD028520047C590064A203 /* PixelBufferSource.swift */; };
@@ -299,7 +297,6 @@
 		81D3309A204FEC17001E6AE7 /* udt_wrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = udt_wrapper.h; sourceTree = "<group>"; };
 		81D3309E20500EEC001E6AE7 /* SRTUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTUtil.swift; sourceTree = "<group>"; };
 		81DD0279200457210064A203 /* IVideoFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IVideoFilter.swift; sourceTree = "<group>"; };
-		81DD027C20046A8A0064A203 /* FilterFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterFactory.swift; sourceTree = "<group>"; };
 		81DD028020047B960064A203 /* MicSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicSource.swift; sourceTree = "<group>"; };
 		81DD028220047BB80064A203 /* CameraSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSource.swift; sourceTree = "<group>"; };
 		81DD028520047C590064A203 /* PixelBufferSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBufferSource.swift; sourceTree = "<group>"; };
@@ -511,7 +508,6 @@
 		816ECEA31FFF4936002AE4F9 /* Filters */ = {
 			isa = PBXGroup;
 			children = (
-				81DD027C20046A8A0064A203 /* FilterFactory.swift */,
 				816ECEB01FFF4DFC002AE4F9 /* IFilter.swift */,
 				81DD0279200457210064A203 /* IVideoFilter.swift */,
 				812B917B2018556800D93731 /* Basic */,
@@ -939,7 +935,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				81DD027D20046A8A0064A203 /* FilterFactory.swift in Sources */,
 				81DD0299200492B80064A203 /* RTMPTypes.swift in Sources */,
 				817B2FA2215C98140086DDF7 /* Smoother.swift in Sources */,
 				816ECEAE1FFF4DD6002AE4F9 /* IOutput.swift in Sources */,
@@ -1051,7 +1046,6 @@
 				81E2E08D2008BE2700DE5465 /* JobQueue.swift in Sources */,
 				B126AC29210DB9F500E1EEF3 /* SRTModel.swift in Sources */,
 				81D1C1EC20328EED0087F23E /* FisheyeVideoFilter.swift in Sources */,
-				81DD027E20046A8A0064A203 /* FilterFactory.swift in Sources */,
 				81DD02902004825A0064A203 /* Split.swift in Sources */,
 				B142947E210C52A800B17FC2 /* TSMultiplexerWriter.swift in Sources */,
 				81E2E08A2008981A00DE5465 /* IPixelBuffer.swift in Sources */,
