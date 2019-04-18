@@ -25,6 +25,11 @@ public enum FilterLanguage {
 #endif
 
 public protocol IVideoFilter: IFilter {
+    var matrix: GLKMatrix4 { get set }
+    var dimensions: CGSize { get set }
+    static var vertexFunc: String { get }
+    static var fragmentFunc: String { get }
+    
     #if targetEnvironment(simulator) || arch(arm)
     var vertexKernel: String? { get }
     var pixelKernel: String? { get }
@@ -32,17 +37,7 @@ public protocol IVideoFilter: IFilter {
     var filterLanguage: FilterLanguage { get set }
     var program: GLuint { get set }
     #else
-    var vertexFunc: String { get }
-    var fragmentFunc: String { get }
-    var piplineDescripter: String? { get }
-
-    var renderPipelineState: MTLRenderPipelineState? { get set }
-    #endif
-
-    var matrix: GLKMatrix4 { get set }
-    var dimensions: CGSize { get set }
-
-    #if !targetEnvironment(simulator) && !arch(arm)
+    var renderPipelineState: MTLRenderPipelineState? { get }
     func render(_ renderEncoder: MTLRenderCommandEncoder)
     #endif
 }

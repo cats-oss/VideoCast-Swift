@@ -42,18 +42,16 @@ void main(void) {
 
     open var program: GLuint = 0
     #else
-    open var vertexFunc: String {
+    open var renderPipelineState: MTLRenderPipelineState?
+    #endif
+    
+    open class var vertexFunc: String {
         return "basic_vertex"
     }
-
-    open var fragmentFunc: String {
+    
+    open class var fragmentFunc: String {
         return "bgra_fragment"
     }
-
-    open var renderPipelineState: MTLRenderPipelineState?
-
-    open var renderEncoder: MTLRenderCommandEncoder?
-    #endif
 
     open var matrix = GLKMatrix4Identity
 
@@ -61,19 +59,13 @@ void main(void) {
 
     open var initialized = false
 
-    open var name: String {
-        return ""
-    }
-
     #if targetEnvironment(simulator) || arch(arm)
     private var vao: GLuint = 0
     private var uMatrix: Int32 = 0
     #else
     open var piplineDescripter: String? {
-        return nil
+        return .init(describing: type(of: self))
     }
-
-    private var device = DeviceManager.device
     #endif
 
     private var bound = false
@@ -122,36 +114,51 @@ void main(void) {
             break
         }
         #else
-        let defaultLibrary: MTLLibrary!
-        guard let libraryFile = Bundle(for: type(of: self)).path(forResource: "default", ofType: "metallib") else {
+        let frameworkBundleLibrary: MTLLibrary?
+        let mainBundleLibrary: MTLLibrary?
+        guard let frameworkLibraryFile = Bundle(for: BasicVideoFilter.self).path(forResource: "default", ofType: "metallib") else {
             fatalError(">> ERROR: Couldnt find a default shader library path")
         }
         do {
-            try defaultLibrary = device.makeLibrary(filepath: libraryFile)
+            try frameworkBundleLibrary = DeviceManager.device.makeLibrary(filepath: frameworkLibraryFile)
+            try mainBundleLibrary = Bundle.main.path(forResource: "default", ofType: "metallib").map(DeviceManager.device.makeLibrary)
         } catch {
             fatalError(">> ERROR: Couldnt create a default shader library")
         }
-
         // read the vertex and fragment shader functions from the library
-        let vertexProgram = defaultLibrary.makeFunction(name: vertexFunc)
-        let fragmentprogram = defaultLibrary.makeFunction(name: fragmentFunc)
-
+        
+        let vertexProgram: MTLFunction?
+        let vertexFunctionName = type(of: self).vertexFunc
+        if mainBundleLibrary?.functionNames.contains(vertexFunctionName) ?? false {
+            vertexProgram = mainBundleLibrary?.makeFunction(name: vertexFunctionName)
+        } else {
+            vertexProgram = frameworkBundleLibrary?.makeFunction(name: vertexFunctionName)
+        }
+        
+        let fragmentProgram: MTLFunction?
+        let fragmentFunctionName = type(of: self).fragmentFunc
+        if mainBundleLibrary?.functionNames.contains(fragmentFunctionName) ?? false {
+            fragmentProgram = mainBundleLibrary?.makeFunction(name: fragmentFunctionName)
+        } else {
+            fragmentProgram = frameworkBundleLibrary?.makeFunction(name: fragmentFunctionName)
+        }
+        
         //  create a pipeline state descriptor
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         if let piplineDescripter = piplineDescripter {
             renderPipelineDescriptor.label = piplineDescripter
         }
-
+        
         // set pixel formats that match the framebuffer we are drawing into
         renderPipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
 
         // set the vertex and fragment programs
         renderPipelineDescriptor.vertexFunction = vertexProgram
-        renderPipelineDescriptor.fragmentFunction = fragmentprogram
+        renderPipelineDescriptor.fragmentFunction = fragmentProgram
 
         do {
             // generate the pipeline state
-            try renderPipelineState = device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+            renderPipelineState = try DeviceManager.device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         } catch {
             fatalError("failed to generate the pipeline state \(error)")
         }
@@ -193,7 +200,7 @@ void main(void) {
         if #available(iOS 8.3, *) {
             renderEncoder.setVertexBytes(&matrix, length: MemoryLayout<GLKMatrix4>.size, index: 1)
         } else {
-            let buffer = device.makeBuffer(bytes: &matrix,
+            let buffer = DeviceManager.device.makeBuffer(bytes: &matrix,
                                                       length: MemoryLayout<GLKMatrix4>.size,
                                                       options: [])
             renderEncoder.setVertexBuffer(buffer, offset: 0, index: 1)

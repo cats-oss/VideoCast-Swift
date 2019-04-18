@@ -18,8 +18,6 @@ import Metal
  *  Sources must output VideoBufferMetadata with their buffers. This compositor uses homogeneous coordinates.
  */
 open class MetalVideoMixer: IVideoMixer {
-    public var filterFactory = FilterFactory()
-
     let metalJobQueue = JobQueue("jp.co.cyberagent.VideoCast.composite")
 
     let bufferDuration: TimeInterval

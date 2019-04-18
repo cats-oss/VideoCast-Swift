@@ -10,6 +10,12 @@ import UIKit
 import VideoCast
 import ReplayKit.RPBroadcast
 
+final class SampleFilter: BasicVideoFilter {
+    override class var fragmentFunc: String {
+        return "invertColors"
+    }
+}
+
 class ViewController: UIViewController {
 
     @IBOutlet weak var previewView: UIView!
@@ -52,6 +58,8 @@ class ViewController: UIViewController {
             _connecting = newValue
         }
     }
+    
+    var isFiltered = false
 
     // swiftlint:disable function_body_length
     override func viewDidLoad() {
@@ -201,26 +209,8 @@ class ViewController: UIViewController {
     }
 
     @IBAction func btnFilterTouch(_ sender: AnyObject) {
-        switch self.session.filter {
-
-        case .normal:
-            self.session.filter = .gray
-
-        case .gray:
-            self.session.filter = .invertColors
-
-        case .invertColors:
-            self.session.filter = .sepia
-
-        case .sepia:
-            self.session.filter = .fisheye
-
-        case .fisheye:
-            self.session.filter = .glow
-
-        case .glow:
-            self.session.filter = .normal
-        }
+        isFiltered.toggle()
+        self.session.filter = isFiltered ? SampleFilter() : BasicVideoFilterBGRA()
     }
 
     private func initSession() {
