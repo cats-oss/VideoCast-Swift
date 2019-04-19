@@ -417,6 +417,7 @@ extension MetalVideoMixer {
 
                                 // fragment texture for environment
                                 renderEncoder.setFragmentTexture(sourceTexture, index: 0)
+                                currentFilter.encode(withEncoder: renderEncoder)
 
                                 renderEncoder.setFragmentSamplerState(self.colorSamplerState, index: 0)
 
