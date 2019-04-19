@@ -164,7 +164,6 @@
 		81FACD5E20208B50001FFD6B /* StreamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FACD5D20208B50001FFD6B /* StreamSession.swift */; };
 		81FACD5F20208B50001FFD6B /* StreamSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FACD5D20208B50001FFD6B /* StreamSession.swift */; };
 		8CD4853C22682C510051AB36 /* BeautySkinFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CD4853B22682C510051AB36 /* BeautySkinFilter.swift */; };
-		8CD4853E226841160051AB36 /* functions.metal in Sources */ = {isa = PBXBuildFile; fileRef = 8CD4853D226841160051AB36 /* functions.metal */; };
 		B126AC22210DB98F00E1EEF3 /* SRTTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC21210DB98F00E1EEF3 /* SRTTarget.swift */; };
 		B126AC23210DB98F00E1EEF3 /* SRTTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC21210DB98F00E1EEF3 /* SRTTarget.swift */; };
 		B126AC25210DB9A700E1EEF3 /* SRTSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B126AC24210DB9A700E1EEF3 /* SRTSource.swift */; };
@@ -323,7 +322,6 @@
 		81FACD5A20208773001FFD6B /* IStreamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IStreamSession.swift; sourceTree = "<group>"; };
 		81FACD5D20208B50001FFD6B /* StreamSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamSession.swift; sourceTree = "<group>"; };
 		8CD4853B22682C510051AB36 /* BeautySkinFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeautySkinFilter.swift; sourceTree = "<group>"; };
-		8CD4853D226841160051AB36 /* functions.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = functions.metal; sourceTree = "<group>"; };
 		B126AC21210DB98F00E1EEF3 /* SRTTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTTarget.swift; sourceTree = "<group>"; };
 		B126AC24210DB9A700E1EEF3 /* SRTSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTSource.swift; sourceTree = "<group>"; };
 		B126AC27210DB9F500E1EEF3 /* SRTModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRTModel.swift; sourceTree = "<group>"; };
@@ -703,7 +701,6 @@
 			isa = PBXGroup;
 			children = (
 				81DFAE88212FEBDE002F5DAB /* basic.metal */,
-				8CD4853D226841160051AB36 /* functions.metal */,
 			);
 			path = shaders;
 			sourceTree = "<group>";
@@ -966,7 +963,6 @@
 				81DD028F2004825A0064A203 /* Split.swift in Sources */,
 				81FA47E22154DCDC002A2B1A /* AudioSampleSource.swift in Sources */,
 				81F4DB62203A95DE00966662 /* TSMultiplexer.swift in Sources */,
-				8CD4853E226841160051AB36 /* functions.metal in Sources */,
 				81DD028920047D330064A203 /* AspectTransform.swift in Sources */,
 				819AEC952050CE70006D76A3 /* SRTSocketOptions.swift in Sources */,
 				814265D31FFF6EBD001258F2 /* IVideoMixer.swift in Sources */,
