@@ -34,7 +34,6 @@ vertex VertexOut basic_vertex(
 
 fragment float4 preview_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {
@@ -44,7 +43,6 @@ fragment float4 preview_fragment(
 
 fragment float4 bgra_fragment(
                                  VertexOut vertexIn [[ stage_in ]],
-                                 constant Uniforms & uniforms [[ buffer(0) ]],
                                  texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                  sampler colorSampler [[ sampler(0) ]]
                                  ) {
@@ -59,7 +57,6 @@ constant float4x4 RGBtoYUV(float4(0.257,  0.439, -0.148, 0.0),
 
 fragment float4 bgra2yuva_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {
@@ -69,7 +66,6 @@ fragment float4 bgra2yuva_fragment(
 
 fragment float4 fisheye_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {
@@ -84,7 +80,6 @@ constant float step_h = 0.0027778;
 
 fragment float4 glow_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {
@@ -108,7 +103,6 @@ fragment float4 glow_fragment(
 
 fragment float4 grayscale_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {
@@ -119,7 +113,6 @@ fragment float4 grayscale_fragment(
 
 fragment float4 invertColors_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {
@@ -131,7 +124,6 @@ constant float3 SEPIA = float3(1.2, 1.0, 0.8);
 
 fragment float4 sepia_fragment(
                                VertexOut vertexIn [[ stage_in ]],
-                               constant Uniforms & uniforms [[ buffer(0) ]],
                                texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                                sampler colorSampler [[ sampler(0) ]]
                                ) {

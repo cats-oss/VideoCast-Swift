@@ -8,13 +8,8 @@ struct VertexOut {
     float2 texcoords;
 };
 
-struct Uniforms {
-    float4x4 modelViewProjectionMatrix;
-};
-
 fragment float4 invertColors(
                              VertexOut vertexIn [[ stage_in ]],
-                             constant Uniforms & uniforms [[ buffer(0) ]],
                              texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                              sampler colorSampler [[ sampler(0) ]]
                              ) {
@@ -44,7 +39,6 @@ float kernel_function(float center_luminance,
 /// Based on this reference: https://www.csie.ntu.edu.tw/~fuh/personal/FaceBeautificationandColorEnhancement.A2-1-0040.pdf
 fragment float4 beauty_skin(
                             VertexOut vertexIn [[ stage_in ]],
-                            constant Uniforms & uniforms [[ buffer(0) ]],
                             texture2d<float, access::sample> colorTexture [[ texture(0) ]],
                             sampler colorSampler [[ sampler(0) ]]
                             ) {

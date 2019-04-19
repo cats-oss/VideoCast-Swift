@@ -14,6 +14,10 @@ final class SampleFilter: BasicVideoFilter {
     override class var fragmentFunc: String {
         return "beauty_skin"
     }
+    
+//    override func encode(withEncoder encoder: MTLRenderCommandEncoder) {
+//        encoder.setFragmentBuffer(<#T##buffer: MTLBuffer?##MTLBuffer?#>, offset: <#T##Int#>, index: <#T##Int#>)
+//    }
 }
 
 class ViewController: UIViewController {
@@ -210,7 +214,7 @@ class ViewController: UIViewController {
 
     @IBAction func btnFilterTouch(_ sender: AnyObject) {
         isFiltered.toggle()
-        self.session.filter = isFiltered ? SampleFilter() : BasicVideoFilterBGRA()
+        self.session.filter = isFiltered ? InvertColorsVideoFilter() : SepiaVideoFilter()
     }
 
     private func initSession() {

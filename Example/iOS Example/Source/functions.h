@@ -11,11 +11,6 @@
 
 #include <simd/simd.h>
 
-struct Vertex {
-    vector_float4 position;
-    vector_float2 texcoords;
-};
-
 float gauss(float x, float sigma);
 vector_float3 rgb2hsv(vector_float3 col);
 vector_float3 hsv2rgb(vector_float3 col);
