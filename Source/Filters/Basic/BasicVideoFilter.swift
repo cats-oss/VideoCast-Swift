@@ -206,6 +206,10 @@ void main(void) {
             renderEncoder.setVertexBuffer(buffer, offset: 0, index: 1)
         }
     }
+    
+    /// Do nothing defaultly.
+    /// Override this function if you need to encode extra data.
+    open func encode(device: MTLDevice, encoder: MTLRenderCommandEncoder) {}
     #endif
 
     open func unbind() {

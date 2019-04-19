@@ -31,6 +31,7 @@
 		81FA47EE2154E4BA002A2B1A /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81FA47ED2154E4BA002A2B1A /* SampleHandler.swift */; };
 		81FA48012154E4BA002A2B1A /* Screencast.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 81FA47E82154E4BA002A2B1A /* Screencast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8C58019B225F3C490074FF8A /* sample.metal in Sources */ = {isa = PBXBuildFile; fileRef = 8C58019A225F3C490074FF8A /* sample.metal */; };
+		8C5F47AD2269A83C005B1180 /* functions.metal in Sources */ = {isa = PBXBuildFile; fileRef = 8C5F47A92269A83C005B1180 /* functions.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -129,6 +130,8 @@
 		81FA47EF2154E4BA002A2B1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		81FA47F62154E4BA002A2B1A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		8C58019A225F3C490074FF8A /* sample.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = sample.metal; sourceTree = "<group>"; };
+		8C5F47A92269A83C005B1180 /* functions.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = functions.metal; sourceTree = "<group>"; };
+		8C5F47AE2269A876005B1180 /* functions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = functions.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -209,6 +212,8 @@
 				81651B022143AA020069F6FF /* TextFiieldCell.swift */,
 				8151F3A51FFF12F300615BF4 /* ViewController.swift */,
 				8C58019A225F3C490074FF8A /* sample.metal */,
+				8C5F47A92269A83C005B1180 /* functions.metal */,
+				8C5F47AE2269A876005B1180 /* functions.h */,
 				81CF2B761FFF136000A9E887 /* Supporting Files */,
 			);
 			path = Source;
@@ -421,6 +426,7 @@
 				812ACEAE2140C6620052CC7C /* BroadcastsViewController.swift in Sources */,
 				81651B0121439FE60069F6FF /* ServerViewController.swift in Sources */,
 				81651B032143AA020069F6FF /* TextFiieldCell.swift in Sources */,
+				8C5F47AD2269A83C005B1180 /* functions.metal in Sources */,
 				81651AFC21438D720069F6FF /* SelectViewController.swift in Sources */,
 				8151F3A41FFF12F300615BF4 /* AppDelegate.swift in Sources */,
 				8C58019B225F3C490074FF8A /* sample.metal in Sources */,
@@ -591,6 +597,7 @@
 				DEVELOPMENT_TEAM = 2YBG8BB5C7;
 				INFOPLIST_FILE = Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

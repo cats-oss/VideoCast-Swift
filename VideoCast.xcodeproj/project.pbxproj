@@ -1167,6 +1167,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/SRT",
 				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SKIP_INSTALL = YES;

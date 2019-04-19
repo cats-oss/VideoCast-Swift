@@ -39,5 +39,6 @@ public protocol IVideoFilter: IFilter {
     #else
     var renderPipelineState: MTLRenderPipelineState? { get }
     func render(_ renderEncoder: MTLRenderCommandEncoder)
+    func encode(device: MTLDevice, encoder: MTLRenderCommandEncoder)
     #endif
 }
