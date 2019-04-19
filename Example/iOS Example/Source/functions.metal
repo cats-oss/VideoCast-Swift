@@ -27,21 +27,21 @@ float3 rgb2hsv(float3 col) {
     float s = max_value - min_value;
     float v = max_value;
     
-    if (h > 0.0h) {
+    if (h > 0.0) {
         if (max_value == r) {
             h = (g - b) / h;
-            if (h < 0.0h) {
+            if (h < 0.0) {
                 h += 6.0;
             }
         } else if (max_value == g) {
             h = 2.0 * (b - r) / h;
         } else {
-            h = 4.0f + (r - g) / h;
+            h = 4.0 + (r - g) / h;
         }
     }
     
-    h /= 6.0h;
-    if (max_value != 0.0h)
+    h /= 6.0;
+    if (max_value != 0.0)
         s /= max_value;
     
     return float3(h, s, v);
@@ -57,7 +57,7 @@ float3 hsv2rgb(float3 col) {
     float b = v;
     if (s == 0) { return float3(r, g, b); }
     
-    h *= 6.0h;
+    h *= 6.0;
     int i = int(h);
     float f = h - float(i);
     

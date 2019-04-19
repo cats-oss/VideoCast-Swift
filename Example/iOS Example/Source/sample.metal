@@ -17,7 +17,7 @@ fragment float4 invertColors(
     return float4(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
 }
 
-struct BeuatySkinParameters {
+struct BeautySkinParameters {
     int kernel_size; // Odd number is predered for centering target pixel
     float sigma;
     float luminance_sigma;
@@ -40,7 +40,7 @@ float kernel_function(float center_luminance,
 fragment float4 beauty_skin(
                             VertexOut vertexIn [[ stage_in ]],
                             texture2d<float, access::sample> colorTexture [[ texture(0) ]],
-                            constant BeuatySkinParameters & params [[ buffer(0) ]],
+                            constant BeautySkinParameters & params [[ buffer(0) ]],
                             sampler colorSampler [[ sampler(0) ]]
                             ) {
     const int radius = params.kernel_size / 2;
