@@ -209,7 +209,7 @@ void main(void) {
     
     /// Do nothing defaultly.
     /// Override this function if you need to encode extra data.
-    open func encode(withEncoder encoder: MTLRenderCommandEncoder) {}
+    open func encode(device: MTLDevice, encoder: MTLRenderCommandEncoder) {}
     #endif
 
     open func unbind() {

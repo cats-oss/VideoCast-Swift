@@ -11,13 +11,24 @@ import VideoCast
 import ReplayKit.RPBroadcast
 
 final class SampleFilter: BasicVideoFilter {
+    struct Parameters {
+        let kernelSize: Int32 = 7 // Odd number is predered for centering target pixel
+        let sigma: Float32 = 5
+        let luminanceSigma: Float32 = 0.1
+        let alphaFactor: Float32 = 0.2
+        let betaFactor: Float32 = 1.4
+    }
+    
+    private var parameters = Parameters()
+    
     override class var fragmentFunc: String {
         return "beauty_skin"
     }
     
-//    override func encode(withEncoder encoder: MTLRenderCommandEncoder) {
-//        encoder.setFragmentBuffer(<#T##buffer: MTLBuffer?##MTLBuffer?#>, offset: <#T##Int#>, index: <#T##Int#>)
-//    }
+    override func encode(device: MTLDevice, encoder: MTLRenderCommandEncoder) {
+        let buffer = device.makeBuffer(bytes: &parameters, length: MemoryLayout<Parameters>.size, options: [])
+        encoder.setFragmentBuffer(buffer, offset: 0, index: 0)
+    }
 }
 
 class ViewController: UIViewController {
@@ -214,7 +225,7 @@ class ViewController: UIViewController {
 
     @IBAction func btnFilterTouch(_ sender: AnyObject) {
         isFiltered.toggle()
-        self.session.filter = isFiltered ? InvertColorsVideoFilter() : SepiaVideoFilter()
+        self.session.filter = isFiltered ? SampleFilter() : BasicVideoFilterBGRA()
     }
 
     private func initSession() {
