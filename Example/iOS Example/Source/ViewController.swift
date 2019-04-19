@@ -12,7 +12,7 @@ import ReplayKit.RPBroadcast
 
 final class SampleFilter: BasicVideoFilter {
     override class var fragmentFunc: String {
-        return "invertColors"
+        return "beauty_skin"
     }
 }
 
