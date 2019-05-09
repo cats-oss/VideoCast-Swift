@@ -18,6 +18,7 @@ class StreamCallback: NSObject, StreamDelegate {
 
 open class StreamSession: IStreamSession {
     open var status: StreamStatus = .init()
+    open var negotiateSSL = false
 
     private var inputStream: InputStream?
     private var outputStream: OutputStream?
@@ -169,6 +170,12 @@ open class StreamSession: IStreamSession {
         inputStream?.schedule(in: runLoop, forMode: .defaultRunLoopMode)
         outputStream?.delegate = streamCallback
         outputStream?.schedule(in: runLoop, forMode: .defaultRunLoopMode)
+        if negotiateSSL {
+            inputStream?.setProperty(StreamSocketSecurityLevel.negotiatedSSL,
+                                     forKey: .socketSecurityLevelKey)
+            outputStream?.setProperty(StreamSocketSecurityLevel.negotiatedSSL,
+                                     forKey: .socketSecurityLevelKey)
+        }
         outputStream?.open()
         inputStream?.open()
 

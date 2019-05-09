@@ -24,8 +24,9 @@ public struct StreamStatus: OptionSet {
 
 public typealias StreamSessionCallback = (IStreamSession, StreamStatus) -> Void
 
-public protocol IStreamSession {
+public protocol IStreamSession: class {
     var status: StreamStatus { get }
+    var negotiateSSL: Bool { get set }
 
     func connect(host: String, port: Int, sscb callback: @escaping StreamSessionCallback)
     func disconnect()

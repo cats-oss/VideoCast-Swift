@@ -294,6 +294,7 @@ extension RTMPSession {
         reset()
         let port = uri.port ?? 1935
         Logger.info("Connecting:\(host):\(port), stream name:\(playPath)")
+        streamSession.negotiateSSL = (uri.scheme?.lowercased() == "rtmps")
         streamSession.connect(host: host, port: port, sscb: { [weak self] (_, status) in
             self?.streamStatusChanged(status)
         })
