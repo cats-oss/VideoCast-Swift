@@ -336,7 +336,7 @@ extension RTMPSession {
                     } else {
                         // Type 0.
                         put_byte(&chunk, val: chunkStreamId.rawValue & 0x1F)
-                        put_be24(&chunk, val: Int32(ts))
+                        put_be24(&chunk, val: Int32(ts & UInt64(Int32.max)))
                         put_be24(&chunk, val: Int32(metaData.msgLength))
                         put_byte(&chunk, val: metaData.msgTypeId.rawValue)
                         // msg stream id is little-endian
