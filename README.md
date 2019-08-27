@@ -64,7 +64,7 @@ cd SRT
 ## Version History
 
 * 0.1.2
-        * RTMPS
+ 	* RTMPS
 * 0.1.0
  	* Live Screen Broadcast
 	* 32 bit architecher support
