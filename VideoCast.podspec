@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name      = 'VideoCast'
-  s.version   = '0.1.0'
+  s.version   = '0.1.2'
   s.license   = { :type => "MIT", :file => "LICENSE" }
   s.summary   = 'A framework for broadcasting live video'
   s.homepage  = 'https://github.com/openfresh/VideoCast-Swift'
