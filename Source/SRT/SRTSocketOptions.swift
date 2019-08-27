@@ -121,7 +121,7 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "inputbw", symbol: SRTO_INPUTBW, binding: .post, type: .int64, valmap: nil),
     .init(name: "oheadbw", symbol: SRTO_OHEADBW, binding: .post, type: .int, valmap: nil),
     .init(name: "latency", symbol: SRTO_LATENCY, binding: .pre, type: .int, valmap: nil),
-    .init(name: "tsbpddelay", symbol: SRTO_TSBPDDELAY, binding: .pre, type: .int, valmap: nil),
+    .init(name: "tsbpdmode", symbol: SRTO_TSBPDMODE, binding: .pre, type: .bool, valmap: nil),
     .init(name: "tlpktdrop", symbol: SRTO_TLPKTDROP, binding: .pre, type: .bool, valmap: nil),
     .init(name: "snddropdelay", symbol: SRTO_SNDDROPDELAY, binding: .post, type: .int, valmap: nil),
     .init(name: "nakreport", symbol: SRTO_NAKREPORT, binding: .pre, type: .bool, valmap: nil),
@@ -131,7 +131,7 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "peerlatency", symbol: SRTO_PEERLATENCY, binding: .pre, type: .int, valmap: nil),
     .init(name: "minversion", symbol: SRTO_MINVERSION, binding: .pre, type: .int, valmap: nil),
     .init(name: "streamid", symbol: SRTO_STREAMID, binding: .pre, type: .string, valmap: nil),
-    .init(name: "smoother", symbol: SRTO_SMOOTHER, binding: .pre, type: .string, valmap: nil),
+    .init(name: "congestion", symbol: SRTO_CONGESTION, binding: .pre, type: .string, valmap: nil),
     .init(name: "messageapi", symbol: SRTO_MESSAGEAPI, binding: .pre, type: .bool, valmap: nil),
     .init(name: "payloadsize", symbol: SRTO_PAYLOADSIZE, binding: .pre, type: .int, valmap: nil),
     .init(name: "kmrefreshrate", symbol: SRTO_KMREFRESHRATE, binding: .pre, type: .int, valmap: nil),
@@ -144,16 +144,6 @@ func srtConfigurePre(_ socket: SRTSOCKET,
                      host: String,
                      options: inout [String: String],
                      failures: inout [String]) -> SRTOptionMode {
-
-    if options["passphrase"] != nil {
-        /*
-        // Insert default
-        if options["pbkeylen"] == nil {
-            options["pbkeylen"] = "16"
-        }
-         */
-    }
-
     let mode: SRTOptionMode
     var modestr: String = "default"
 
@@ -182,6 +172,13 @@ func srtConfigurePre(_ socket: SRTSOCKET,
     } else {
         mode = .failure
         failures.append("mode")
+    }
+    
+    if let l = options["linger"] {
+        let l_linger = Int32(l) ?? 0
+        let l_onoff: Int32 = l_linger > 0 ? 1 : 0
+        var lin = linger(l_onoff: l_onoff, l_linger: l_linger)
+        srt_setsockopt(socket, Int32(SRTOptionBinding.pre.rawValue), SRTO_LINGER, &lin, Int32(MemoryLayout.size(ofValue: lin)))
     }
 
     var all_clear: Bool = true
