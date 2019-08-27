@@ -70,10 +70,12 @@ open class SRTSession: IOutputSession {
     public init(uri: String, callback: @escaping SRTSessionStateCallback) {
         self.uri = uri
         self.callback = callback
+        srt_startup()
     }
 
     deinit {
         Logger.debug("SRTSession:deinit")
+        srt_cleanup()
     }
 
     open func setSessionParameters(_ parameters: IMetaData) {
