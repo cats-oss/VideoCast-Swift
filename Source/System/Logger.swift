@@ -9,7 +9,7 @@
 import Foundation
 import os.log
 
-class Logger {
+open class Logger {
     struct LogFlags: OptionSet {
         let rawValue: Int
 
@@ -50,7 +50,7 @@ class Logger {
 
     static let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.logger", qos: .background)
 
-    class func error<T>(_ message: @autoclosure () -> T,
+    public class func error<T>(_ message: @autoclosure () -> T,
                         file: String = #file,
                         function: String = #function,
                         line: Int = #line ) {
@@ -64,7 +64,7 @@ class Logger {
                    message: message)
     }
 
-    class func warn<T>(_ message: @autoclosure () -> T,
+    public class func warn<T>(_ message: @autoclosure () -> T,
                        file: String = #file,
                        function: String = #function,
                        line: Int = #line ) {
@@ -78,7 +78,7 @@ class Logger {
                    message: message)
     }
 
-    class func info<T>(_ message: @autoclosure () -> T,
+    public class func info<T>(_ message: @autoclosure () -> T,
                        file: String = #file,
                        function: String = #function,
                        line: Int = #line ) {
@@ -92,7 +92,7 @@ class Logger {
                    message: message)
     }
 
-    class func debug<T>(_ message: @autoclosure () -> T,
+    public class func debug<T>(_ message: @autoclosure () -> T,
                         file: String = #file,
                         function: String = #function,
                         line: Int = #line ) {
@@ -106,7 +106,7 @@ class Logger {
                    message: message)
     }
 
-    class func verbose<T>(_ message: @autoclosure () -> T,
+    public class func verbose<T>(_ message: @autoclosure () -> T,
                           file: String = #file,
                           function: String = #function,
                           line: Int = #line ) {
