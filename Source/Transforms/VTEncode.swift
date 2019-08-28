@@ -176,7 +176,7 @@ open class VTEncode: IEncoder {
         enc.compressionSessionOutput(ptr, size: size, pts: pts, dts: dts, isKey: isKeyframe)
     }
 
-    init(frame_w: Int,
+    public init(frame_w: Int,
          frame_h: Int,
          fps: Int,
          bitrate: Int,

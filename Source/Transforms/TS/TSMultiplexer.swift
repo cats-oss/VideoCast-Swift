@@ -246,7 +246,7 @@ extension TSMultiplexer {
         let timeBase: CMTime
         var data: MpegTSWriteStream?
 
-        init(id: Int, mediaType: AVMediaType, videoCodecType: CMVideoCodecType?, timeBase: CMTime) {
+        public init(id: Int, mediaType: AVMediaType, videoCodecType: CMVideoCodecType?, timeBase: CMTime) {
             self.id = id
             self.mediaType = mediaType
             self.videoCodecType = videoCodecType

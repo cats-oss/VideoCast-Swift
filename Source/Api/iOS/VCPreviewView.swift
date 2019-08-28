@@ -48,7 +48,7 @@ open class VCPreviewView: UIView {
 
     private var layerSizeDidUpdate = false
 
-    var flipX = false
+    public var flipX = false
 
     final public override class var layerClass: AnyClass {
         #if targetEnvironment(simulator) || arch(arm)

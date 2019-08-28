@@ -39,7 +39,7 @@ public class WeakRefIOutput {
     }
 }
 
-func syncSafe<T>(_ work: () -> T) -> T {
+public func syncSafe<T>(_ work: () -> T) -> T {
     if Thread.isMainThread {
         return work()
     } else {
