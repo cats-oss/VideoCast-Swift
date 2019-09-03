@@ -181,7 +181,11 @@ open class AudioMixer: IAudioMixer {
                 self.outFrequencyInHz)
             let mult = self.inGain[h].map { $0 * g } ?? 0
 
-            resampledBuffer.buffer.withUnsafeBytes { (p: UnsafePointer<Int16>) in
+            resampledBuffer.buffer.withUnsafeBytes {
+                guard let p = $0.baseAddress?.assumingMemoryBound(to: Int16.self) else {
+                    Logger.error("unaligned pointer \($0)")
+                    return
+                }
                 var mix = p
                 var bytesLeft = resampledBuffer.buffer.count
                 var so = startOffset

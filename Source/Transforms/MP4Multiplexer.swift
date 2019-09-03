@@ -6,6 +6,7 @@
 //  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 //
 
+// swiftlint:disable file_length
 import Foundation
 import AVFoundation
 
@@ -140,9 +141,16 @@ extension MP4Multiplexer {
         let memoryBlock = UnsafeMutableRawPointer.allocate(byteCount: size,
                                                            alignment: MemoryLayout<UInt8>.alignment)
         memoryBlock.initializeMemory(as: UInt8.self, from: data, count: size)
-        CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault,
-                                           memoryBlock, size, kCFAllocatorDefault, nil, 0, size,
-                                           kCMBlockBufferAssureMemoryNowFlag, &bufferOut)
+        CMBlockBufferCreateWithMemoryBlock(
+            allocator: kCFAllocatorDefault,
+            memoryBlock: memoryBlock,
+            blockLength: size,
+            blockAllocator: kCFAllocatorDefault,
+            customBlockSource: nil,
+            offsetToData: 0,
+            dataLength: size,
+            flags: kCMBlockBufferAssureMemoryNowFlag,
+            blockBufferOut: &bufferOut)
         guard let buffer = bufferOut else {
             Logger.debug("unexpected return")
             return
@@ -218,8 +226,16 @@ extension MP4Multiplexer {
             let memoryBlock = UnsafeMutableRawPointer.allocate(byteCount: size,
                                                                alignment: MemoryLayout<UInt8>.alignment)
             memoryBlock.initializeMemory(as: UInt8.self, from: data, count: size)
-            CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, memoryBlock, size, kCFAllocatorDefault,
-                                               nil, 0, size, kCMBlockBufferAssureMemoryNowFlag, &bufferOut)
+            CMBlockBufferCreateWithMemoryBlock(
+                allocator: kCFAllocatorDefault,
+                memoryBlock: memoryBlock,
+                blockLength: size,
+                blockAllocator: kCFAllocatorDefault,
+                customBlockSource: nil,
+                offsetToData: 0,
+                dataLength: size,
+                flags: kCMBlockBufferAssureMemoryNowFlag,
+                blockBufferOut: &bufferOut)
             guard let buffer = bufferOut else {
                 Logger.debug("unexpected return")
                 return
@@ -249,7 +265,15 @@ extension MP4Multiplexer {
             asbd.mSampleRate = Float64(metaData.frequencyInHz)
             asbd.mChannelsPerFrame = UInt32(metaData.channelCount)
 
-            CMAudioFormatDescriptionCreate(kCFAllocatorDefault, &asbd, 0, nil, size, data, nil, &audioFormat)
+            CMAudioFormatDescriptionCreate(
+                allocator: kCFAllocatorDefault,
+                asbd: &asbd,
+                layoutSize: 0,
+                layout: nil,
+                magicCookieSize: size,
+                magicCookie: data,
+                extensions: nil,
+                formatDescriptionOut: &audioFormat)
 
             let audio = AVAssetWriterInput(mediaType: .audio, outputSettings: nil, sourceFormatHint: audioFormat)
 
@@ -320,7 +344,7 @@ extension MP4Multiplexer {
 
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func writeSample(_ mediaType: AVMediaType) {
         let samples = (mediaType == .video) ? videoSamples : audioSamples
         if samples.count > 1 || (exiting.value && !samples.isEmpty) {
@@ -340,13 +364,24 @@ extension MP4Multiplexer {
 
             sampleInput.timingInfo.duration =
                 nextSampleInput.timingInfo.decodeTimeStamp - sampleInput.timingInfo.decodeTimeStamp
-            if CMTimeCompare(kCMTimeZero, sampleInput.timingInfo.duration) == 0 {
+            if CMTimeCompare(CMTime.zero, sampleInput.timingInfo.duration) == 0 {
                 // last sample
                 sampleInput.timingInfo.duration = .init(value: 1, timescale: 100000)
             }
 
-            CMSampleBufferCreate(kCFAllocatorDefault, sampleInput.buffer, true, nil, nil,
-                                 format, 1, 1, &sampleInput.timingInfo, 1, &size, &sampleOut)
+            CMSampleBufferCreate(
+                allocator: kCFAllocatorDefault,
+                dataBuffer: sampleInput.buffer,
+                dataReady: true,
+                makeDataReadyCallback: nil,
+                refcon: nil,
+                formatDescription: format,
+                sampleCount: 1,
+                sampleTimingEntryCount: 1,
+                sampleTimingArray: &sampleInput.timingInfo,
+                sampleSizeEntryCount: 1,
+                sampleSizeArray: &size,
+                sampleBufferOut: &sampleOut)
 
             guard let sample = sampleOut else {
                 Logger.debug("unexpected return")
@@ -410,8 +445,12 @@ extension MP4Multiplexer {
         switch videoCodecType {
         case kCMVideoCodecType_H264:
             let ret = CMVideoFormatDescriptionCreateFromH264ParameterSets(
-                kCFAllocatorDefault, dataParamArray.count, &dataParamArray,
-                &sizeParamArray, 4, &videoFormat)
+                allocator: kCFAllocatorDefault,
+                parameterSetCount: dataParamArray.count,
+                parameterSetPointers: &dataParamArray,
+                parameterSetSizes: &sizeParamArray,
+                nalUnitHeaderLength: 4,
+                formatDescriptionOut: &videoFormat)
             guard ret == noErr else {
                 Logger.error("could not create video format for h264")
                 return
@@ -419,13 +458,13 @@ extension MP4Multiplexer {
         case kCMVideoCodecType_HEVC:
             if #available(iOS 11.0, *) {
                 let ret = CMVideoFormatDescriptionCreateFromHEVCParameterSets(
-                    kCFAllocatorDefault,
-                    dataParamArray.count,
-                    &dataParamArray,
-                    &sizeParamArray,
-                    4,
-                    nil,
-                    &videoFormat)
+                    allocator: kCFAllocatorDefault,
+                    parameterSetCount: dataParamArray.count,
+                    parameterSetPointers: &dataParamArray,
+                    parameterSetSizes: &sizeParamArray,
+                    nalUnitHeaderLength: 4,
+                    extensions: nil,
+                    formatDescriptionOut: &videoFormat)
                 guard ret == noErr else {
                     Logger.error("could not create video format for hevc")
                     return
@@ -451,17 +490,17 @@ extension MP4Multiplexer {
     private func primeAudio(audioSample: CMSampleBuffer) {
         var attachmentMode: CMAttachmentMode = .init()
         let trimDuration = CMGetAttachment(audioSample,
-                                           kCMSampleBufferAttachmentKey_TrimDurationAtStart,
-                                           &attachmentMode)
+                                           key: kCMSampleBufferAttachmentKey_TrimDurationAtStart,
+                                           attachmentModeOut: &attachmentMode)
 
         if trimDuration == nil {
             Logger.debug("Prime audio")
             let trimTime: CMTime = .init(seconds: 0.1, preferredTimescale: 1000000000)
-            let timeDict = CMTimeCopyAsDictionary(trimTime, kCFAllocatorDefault)
+            let timeDict = CMTimeCopyAsDictionary(trimTime, allocator: kCFAllocatorDefault)
             CMSetAttachment(audioSample,
-                            kCMSampleBufferAttachmentKey_TrimDurationAtStart,
-                            timeDict,
-                            kCMAttachmentMode_ShouldPropagate)
+                            key: kCMSampleBufferAttachmentKey_TrimDurationAtStart,
+                            value: timeDict,
+                            attachmentMode: kCMAttachmentMode_ShouldPropagate)
         }
     }
 }

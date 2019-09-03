@@ -268,7 +268,7 @@ open class MetalVideoMixer: IVideoMixer {
             layerMap[zIndex] = []
         }
 
-        let layerIndex = layerMap[zIndex]?.index(of: hashValue)
+        let layerIndex = layerMap[zIndex]?.firstIndex(of: hashValue)
         if layerIndex == nil {
             layerMap[zIndex]?.append(hashValue)
         }

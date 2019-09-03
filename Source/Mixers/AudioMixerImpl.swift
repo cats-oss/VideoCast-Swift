@@ -167,13 +167,13 @@ extension AudioMixer {
             usesOSStruct: inUsesOSStruct
         )
 
-        let size: Int = outBuffer.buffer.withUnsafeMutableBytes { (mData: UnsafeMutablePointer<UInt8>) in
+        let size: Int = outBuffer.buffer.withUnsafeMutableBytes {
              var outBufferList = AudioBufferList(
                 mNumberBuffers: 1,
                 mBuffers: AudioBuffer(
                     mNumberChannels: UInt32(outChannelCount),
                     mDataByteSize: UInt32(outBufferSize),
-                    mData: mData
+                    mData: $0.baseAddress
             ))
 
             var sampleCount = UInt32(outBufferSampleCount)

@@ -19,5 +19,5 @@ s.source_files = [ 'Source/**/*.{swift,h,metal}', 'SRT/*.{h,cpp}', 'SRT/Includes
     'CLANG_WARN_DOCUMENTATION_COMMENTS' => 'NO',
   }
   s.cocoapods_version = ">= 1.4.0"
-  s.swift_version = "4.1.2"
+  s.swift_version = "5.0"
 end
