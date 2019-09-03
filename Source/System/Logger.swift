@@ -51,9 +51,9 @@ open class Logger {
     static let queue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.logger", qos: .background)
 
     public class func error<T>(_ message: @autoclosure () -> T,
-                        file: String = #file,
-                        function: String = #function,
-                        line: Int = #line ) {
+                               file: String = #file,
+                               function: String = #function,
+                               line: Int = #line ) {
         Logger.log(synchronous: asyncError,
                    level: levelDef,
                    flag: .error,
@@ -65,9 +65,9 @@ open class Logger {
     }
 
     public class func warn<T>(_ message: @autoclosure () -> T,
-                       file: String = #file,
-                       function: String = #function,
-                       line: Int = #line ) {
+                              file: String = #file,
+                              function: String = #function,
+                              line: Int = #line ) {
         Logger.log(synchronous: asyncWarn,
                    level: levelDef,
                    flag: .warn,
@@ -79,9 +79,9 @@ open class Logger {
     }
 
     public class func info<T>(_ message: @autoclosure () -> T,
-                       file: String = #file,
-                       function: String = #function,
-                       line: Int = #line ) {
+                              file: String = #file,
+                              function: String = #function,
+                              line: Int = #line ) {
         Logger.log(synchronous: asyncInfo,
                    level: levelDef,
                    flag: .info,
@@ -93,9 +93,9 @@ open class Logger {
     }
 
     public class func debug<T>(_ message: @autoclosure () -> T,
-                        file: String = #file,
-                        function: String = #function,
-                        line: Int = #line ) {
+                               file: String = #file,
+                               function: String = #function,
+                               line: Int = #line ) {
         Logger.log(synchronous: asyncDebug,
                    level: levelDef,
                    flag: .debug,
@@ -107,9 +107,9 @@ open class Logger {
     }
 
     public class func verbose<T>(_ message: @autoclosure () -> T,
-                          file: String = #file,
-                          function: String = #function,
-                          line: Int = #line ) {
+                                 file: String = #file,
+                                 function: String = #function,
+                                 line: Int = #line ) {
         Logger.log(synchronous: asyncVerbose,
                    level: levelDef,
                    flag: .verbose,

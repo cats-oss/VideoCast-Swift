@@ -177,13 +177,13 @@ open class VTEncode: IEncoder {
     }
 
     public init(frame_w: Int,
-         frame_h: Int,
-         fps: Int,
-         bitrate: Int,
-         keyframeInterval: Int,
-         codecType: CMVideoCodecType,
-         useBaseline: Bool = true,
-         ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
+                frame_h: Int,
+                fps: Int,
+                bitrate: Int,
+                keyframeInterval: Int,
+                codecType: CMVideoCodecType,
+                useBaseline: Bool = true,
+                ctsOffset: CMTime = .init(value: 0, timescale: VC_TIME_BASE)) {
         self.frameW = frame_w
         self.frameH = frame_h
         self.fps = fps

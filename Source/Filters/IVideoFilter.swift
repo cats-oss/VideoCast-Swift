@@ -29,7 +29,7 @@ public protocol IVideoFilter: IFilter {
     var dimensions: CGSize { get set }
     static var vertexFunc: String { get }
     static var fragmentFunc: String { get }
-    
+
     #if targetEnvironment(simulator) || arch(arm)
     var vertexKernel: String? { get }
     var pixelKernel: String? { get }

@@ -10,7 +10,7 @@ import Foundation
 
 public protocol IFilter: class {
     var initialized: Bool { get }
-    
+
     func initialize()
 
     func bind()

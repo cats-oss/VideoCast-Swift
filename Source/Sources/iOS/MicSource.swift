@@ -14,12 +14,12 @@ import AVFoundation
  *
  */
 open class MicSource: ISource {
-    open var hashValue: Int {
-        return ObjectIdentifier(self).hashValue
+    open func hash(into hasher: inout Hasher) {
+        hasher.combine(ObjectIdentifier(self).hashValue)
     }
 
     public static func == (lhs: MicSource, rhs: MicSource) -> Bool {
-        return lhs.hashValue == rhs.hashValue
+        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
     }
 
     open var filter: IFilter?

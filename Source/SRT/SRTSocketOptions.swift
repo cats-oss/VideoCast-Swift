@@ -173,12 +173,13 @@ func srtConfigurePre(_ socket: SRTSOCKET,
         mode = .failure
         failures.append("mode")
     }
-    
+
     if let l = options["linger"] {
         let l_linger = Int32(l) ?? 0
         let l_onoff: Int32 = l_linger > 0 ? 1 : 0
         var lin = linger(l_onoff: l_onoff, l_linger: l_linger)
-        srt_setsockopt(socket, Int32(SRTOptionBinding.pre.rawValue), SRTO_LINGER, &lin, Int32(MemoryLayout.size(ofValue: lin)))
+        srt_setsockopt(socket, Int32(SRTOptionBinding.pre.rawValue),
+                       SRTO_LINGER, &lin, Int32(MemoryLayout.size(ofValue: lin)))
     }
 
     var all_clear: Bool = true

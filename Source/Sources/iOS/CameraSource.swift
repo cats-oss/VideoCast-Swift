@@ -11,12 +11,12 @@ import AVFoundation
 import GLKit
 
 open class CameraSource: ISource {
-    open var hashValue: Int {
-        return ObjectIdentifier(self).hashValue
+    open func hash(into hasher: inout Hasher) {
+        hasher.combine(ObjectIdentifier(self).hashValue)
     }
 
     public static func == (lhs: CameraSource, rhs: CameraSource) -> Bool {
-        return lhs.hashValue == rhs.hashValue
+        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
     }
 
     open var filter: IFilter?

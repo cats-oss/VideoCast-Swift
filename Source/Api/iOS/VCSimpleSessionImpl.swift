@@ -88,7 +88,7 @@ extension VCSimpleSession {
             )
 
             self.videoSampleSource?.setOutput(aspectTransform)
-            
+
             guard let videoMixer = self.videoMixer else { return Logger.debug("unexpected return") }
             let filter = BasicVideoFilterBGRA()
 
@@ -146,7 +146,8 @@ extension VCSimpleSession {
 
                                         self.cameraSource?.setOutput(aspectTransform)
 
-                                        guard let videoMixer = self.videoMixer else { return Logger.debug("unexpected return") }
+                                        guard let videoMixer = self.videoMixer else {
+                                            return Logger.debug("unexpected return") }
                                         let filter = BasicVideoFilterBGRA()
 
                                         videoMixer.setSourceFilter(WeakRefISource(value: cameraSource), filter: filter)

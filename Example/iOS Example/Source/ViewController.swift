@@ -58,7 +58,7 @@ class ViewController: UIViewController {
             _connecting = newValue
         }
     }
-    
+
     var isFiltered = false
 
     // swiftlint:disable function_body_length
