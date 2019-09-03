@@ -223,6 +223,7 @@ open class AACEncode: IEncoder {
         self.output = output
     }
 
+    // swiftlint:disable:next function_body_length
     open func pushBuffer(_ data: UnsafeRawPointer, size: Int, metadata: IMetaData) {
         guard let audioConverter = audioConverter else {
             Logger.debug("unexpected return")
@@ -237,7 +238,11 @@ open class AACEncode: IEncoder {
             outputBuffer = Data(count: required_bytes)
         }
 
-        outputBuffer.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>) in
+        outputBuffer.withUnsafeMutableBytes {
+            guard let ptr = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                Logger.error("unaligned pointer \($0)")
+                return
+            }
             var p = ptr
             var p_out = data.assumingMemoryBound(to: UInt8.self)
 

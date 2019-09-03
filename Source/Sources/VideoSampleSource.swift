@@ -50,7 +50,10 @@ open class VideoSampleSource: ISource {
         var rotate = false
         if #available(iOS 11.0, *) {
             if let orientationAttachment =
-                CMGetAttachment(inputBuffer, RPVideoSampleOrientationKey as CFString, nil) as? NSNumber {
+                CMGetAttachment(
+                    inputBuffer,
+                    key: RPVideoSampleOrientationKey as CFString,
+                    attachmentModeOut: nil) as? NSNumber {
                 if let orientation = CGImagePropertyOrientation(rawValue: orientationAttachment.uint32Value) {
                     switch orientation {
                     case .up:
@@ -69,6 +72,8 @@ open class VideoSampleSource: ISource {
                     case .leftMirrored:
                         inputImage = inputImage.oriented(.rightMirrored)
                         rotate = true
+                    @unknown default:
+                        Logger.error("unknown orientation \(orientation)")
                     }
                 }
             }

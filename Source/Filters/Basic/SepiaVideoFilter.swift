@@ -13,7 +13,7 @@ open class SepiaVideoFilter: BasicVideoFilter {
     open override class var fragmentFunc: String {
         return "sepia_fragment"
     }
-    
+
     #if targetEnvironment(simulator) || arch(arm)
     open override var pixelKernel: String? {
         return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """

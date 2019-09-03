@@ -167,9 +167,9 @@ open class StreamSession: IStreamSession {
         let runLoop = RunLoop.current
         self.runLoop = runLoop
         inputStream?.delegate = streamCallback
-        inputStream?.schedule(in: runLoop, forMode: .defaultRunLoopMode)
+        inputStream?.schedule(in: runLoop, forMode: RunLoop.Mode.default)
         outputStream?.delegate = streamCallback
-        outputStream?.schedule(in: runLoop, forMode: .defaultRunLoopMode)
+        outputStream?.schedule(in: runLoop, forMode: RunLoop.Mode.default)
         if negotiateSSL {
             inputStream?.setProperty(StreamSocketSecurityLevel.negotiatedSSL,
                                      forKey: .socketSecurityLevelKey)

@@ -71,7 +71,7 @@ open class Smoother: ITransform {
 
     @objc private func sampleThread() {
         var firstTime: Date?
-        var firstCMTime = kCMTimeZero
+        var firstCMTime = CMTime.zero
         Thread.current.name = "jp.co.cyberagent.VideoCast.smoother"
         while !exiting.value {
             cond.lock()
@@ -86,7 +86,7 @@ open class Smoother: ITransform {
 
             let waitTime: TimeInterval
             if let firstTime = firstTime {
-                if cmtime == kCMTimeZero {
+                if cmtime == CMTime.zero {
                     waitTime = delay
                 } else {
                     waitTime = max((cmtime - firstCMTime).seconds - (now.timeIntervalSince(firstTime)) + delay, 0)
@@ -104,7 +104,11 @@ open class Smoother: ITransform {
                 break
             }
 
-            sample.buf.buffer.withUnsafeBytes { (data: UnsafePointer<UInt8>) in
+            sample.buf.buffer.withUnsafeBytes {
+                guard let data = $0.baseAddress else {
+                    Logger.error("invalid pointer \($0)")
+                    return
+                }
                 output?.pushBuffer(data, size: sample.buf.buffer.count, metadata: sample.metadata)
             }
         }

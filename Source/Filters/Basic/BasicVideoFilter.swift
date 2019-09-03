@@ -44,11 +44,11 @@ void main(void) {
     #else
     open var renderPipelineState: MTLRenderPipelineState?
     #endif
-    
+
     open class var vertexFunc: String {
         return "basic_vertex"
     }
-    
+
     open class var fragmentFunc: String {
         return "bgra_fragment"
     }
@@ -116,17 +116,19 @@ void main(void) {
         #else
         let frameworkBundleLibrary: MTLLibrary?
         let mainBundleLibrary: MTLLibrary?
-        guard let frameworkLibraryFile = Bundle(for: BasicVideoFilter.self).path(forResource: "default", ofType: "metallib") else {
+        guard let frameworkLibraryFile =
+            Bundle(for: BasicVideoFilter.self).path(forResource: "default", ofType: "metallib") else {
             fatalError(">> ERROR: Couldnt find a default shader library path")
         }
         do {
             try frameworkBundleLibrary = DeviceManager.device.makeLibrary(filepath: frameworkLibraryFile)
-            try mainBundleLibrary = Bundle.main.path(forResource: "default", ofType: "metallib").map(DeviceManager.device.makeLibrary)
+            try mainBundleLibrary =
+                Bundle.main.path(forResource: "default", ofType: "metallib").map(DeviceManager.device.makeLibrary)
         } catch {
             fatalError(">> ERROR: Couldnt create a default shader library")
         }
         // read the vertex and fragment shader functions from the library
-        
+
         let vertexProgram: MTLFunction?
         let vertexFunctionName = type(of: self).vertexFunc
         if mainBundleLibrary?.functionNames.contains(vertexFunctionName) ?? false {
@@ -134,7 +136,7 @@ void main(void) {
         } else {
             vertexProgram = frameworkBundleLibrary?.makeFunction(name: vertexFunctionName)
         }
-        
+
         let fragmentProgram: MTLFunction?
         let fragmentFunctionName = type(of: self).fragmentFunc
         if mainBundleLibrary?.functionNames.contains(fragmentFunctionName) ?? false {
@@ -142,13 +144,13 @@ void main(void) {
         } else {
             fragmentProgram = frameworkBundleLibrary?.makeFunction(name: fragmentFunctionName)
         }
-        
+
         //  create a pipeline state descriptor
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         if let piplineDescripter = piplineDescripter {
             renderPipelineDescriptor.label = piplineDescripter
         }
-        
+
         // set pixel formats that match the framebuffer we are drawing into
         renderPipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
 

@@ -14,12 +14,12 @@ import AVFoundation
  *
  */
 open class MicSource: ISource {
-    open var hashValue: Int {
-        return ObjectIdentifier(self).hashValue
+    open func hash(into hasher: inout Hasher) {
+        hasher.combine(ObjectIdentifier(self).hashValue)
     }
 
     public static func == (lhs: MicSource, rhs: MicSource) -> Bool {
-        return lhs.hashValue == rhs.hashValue
+        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
     }
 
     open var filter: IFilter?
@@ -88,7 +88,7 @@ open class MicSource: ISource {
     public init(sampleRate: Double = 48000,
                 preferedChannelCount: Int = 2,
                 excludeAudioUnit: ((AudioUnit) -> Void)? = nil,
-                mode: String = AVAudioSessionModeDefault) {
+                mode: AVAudioSession.Mode = .default) {
         self.sampleRate = sampleRate
         self.channelCount = preferedChannelCount
 
@@ -100,8 +100,8 @@ open class MicSource: ISource {
             if granted {
 
                 do {
-                    try session.setCategory(AVAudioSessionCategoryPlayAndRecord,
-                                            with: [.defaultToSpeaker, .mixWithOthers, .allowBluetooth])
+                    try session.setCategory(.playAndRecord,
+                                            options: [.defaultToSpeaker, .mixWithOthers, .allowBluetooth])
                     try session.setActive(true)
                 } catch {
                     Logger.error("Failed to set up audio session: \(error)")
@@ -176,7 +176,7 @@ open class MicSource: ISource {
                     NotificationCenter.default.addObserver(
                         interruptionHandler,
                         selector: #selector(InterruptionHandler.handleInterruption(notification:)),
-                        name: .AVAudioSessionInterruption, object: nil
+                        name: AVAudioSession.interruptionNotification, object: nil
                     )
                 }
 
@@ -266,7 +266,7 @@ private class InterruptionHandler: NSObject {
             Logger.debug("unexpected return")
             return
         }
-        let interuptionVal = AVAudioSessionInterruptionType(
+        let interuptionVal = AVAudioSession.InterruptionType(
             rawValue: (interuptionType as AnyObject).uintValue )
 
         if interuptionVal == .began {

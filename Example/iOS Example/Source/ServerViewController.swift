@@ -71,7 +71,7 @@ class ServerViewController: UITableViewController, UITextFieldDelegate {
         cell.textfield.keyboardType = itemProps[indexPath.row].keyboardType
         cell.textfield.attributedPlaceholder = NSAttributedString(
             string: itemProps[indexPath.row].placeholder,
-            attributes: [NSAttributedStringKey.foregroundColor: UIColor.darkGray])
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.darkGray])
         cell.textfield.tag = indexPath.row
         cell.textfield.delegate = self
 

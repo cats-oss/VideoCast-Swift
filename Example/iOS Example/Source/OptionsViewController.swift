@@ -205,7 +205,7 @@ class OptionsViewController: UITableViewController, UITextFieldDelegate {
         cell.textfield.keyboardType = .numbersAndPunctuation
         cell.textfield.attributedPlaceholder = NSAttributedString(
             string: "",
-            attributes: [NSAttributedStringKey.foregroundColor: UIColor.darkGray])
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.darkGray])
         cell.textfield.tag = kind.rawValue
         cell.textfield.delegate = self
         cell.textfield.text = text

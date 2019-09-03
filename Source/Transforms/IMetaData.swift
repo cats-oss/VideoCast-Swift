@@ -29,7 +29,7 @@ open class MetaData<Types>: IMetaData {
     open var data: Types!
 
     convenience public required init() {
-        self.init(pts: kCMTimeZero, dts: kCMTimeZero)
+        self.init(pts: CMTime.zero, dts: CMTime.zero)
     }
 
     convenience public required init(ts: CMTime) {

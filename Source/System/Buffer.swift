@@ -112,7 +112,6 @@ func put_tag(_ data: inout [UInt8], tag: [UInt8]) {
 }
 
 func put_string(_ data: inout [UInt8], string: String) {
-    // swiftlint:disable:next empty_count
     if string.count < 0xFFFF {
         put_byte(&data, val: AMFDataType.string.rawValue)
         put_be16(&data, val: Int16(string.count))

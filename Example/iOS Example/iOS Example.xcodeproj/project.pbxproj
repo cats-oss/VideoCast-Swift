@@ -297,6 +297,7 @@
 				TargetAttributes = {
 					8151F39F1FFF12F300615BF4 = {
 						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -306,6 +307,7 @@
 					};
 					81FA47E72154E4BA002A2B1A = {
 						CreatedOnToolsVersion = 10.0;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -594,7 +596,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -613,7 +615,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -635,7 +637,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example.broadcast-upload-extension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -656,7 +658,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "io.github.openfresh.videocast.ios-example.broadcast-upload-extension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

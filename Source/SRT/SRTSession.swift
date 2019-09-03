@@ -156,7 +156,11 @@ open class SRTSession: IOutputSession {
                         do {
                             guard let tar = self.tar else { return }
 
-                            try buf.buffer.withUnsafeBytes { (data: UnsafePointer<Int8>) in
+                            try buf.buffer.withUnsafeBytes {
+                                guard let data = $0.baseAddress?.assumingMemoryBound(to: Int8.self) else {
+                                    Logger.error("unaligned pointer \($0)")
+                                    return
+                                }
                                 let size = buf.buffer.count
                                 if !tar.isOpen {
                                     self.lostBytes += size

@@ -53,18 +53,30 @@ extension RTMPSession {
             c1.append(UInt8(arc4random_uniform(256)))
         }
 
-        c1.withUnsafeBytes { (p: UnsafePointer<UInt8>) in
+        c1.withUnsafeBytes {
+            guard let p = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                Logger.error("unaligned pointer \($0)")
+                return
+            }
             write(p, size: c1.count)
         }
     }
 
     private func handshake2() {
         setClientState(.handshake2)
-        s1.withUnsafeMutableBytes { (p: UnsafeMutablePointer<UInt32>) in
+        s1.withUnsafeMutableBytes {
+            guard let p = $0.baseAddress?.assumingMemoryBound(to: UInt32.self) else {
+                Logger.error("unaligned pointer \($0)")
+                return
+            }
             (p + 1).pointee = uptime
         }
 
-        s1.withUnsafeBytes { (p: UnsafePointer<UInt8>) in
+        s1.withUnsafeBytes {
+            guard let p = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                Logger.error("unaligned pointer \($0)")
+                return
+            }
             write(p, size: s1.count)
         }
     }
