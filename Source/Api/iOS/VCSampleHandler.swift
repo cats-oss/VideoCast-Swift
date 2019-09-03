@@ -110,6 +110,8 @@ open class VCSampleHandler: RPBroadcastSampleHandler {
         case .audioMic:
             // Handle audio sample buffer for mic audio
             session?.pushAudioMic(sampleBuffer)
+        @unknown default:
+            Logger.error("unknown sampleBufferType(\(sampleBufferType))")
         }
     }
 

@@ -56,7 +56,11 @@ struct SRTSocketOption {
         var oo: SRTOptionValue?
         extract(type, value: value, o: &oo)
         guard let o = oo else { return false }
-        let result = o.data.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) in
+        let result = o.data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> Int32 in
+            guard let ptr = p.baseAddress else {
+                Logger.error("invalid pointer \(p)")
+                return -1
+            }
             return setso(socket, data: ptr, size: Int32(o.size))
         }
         return result != -1

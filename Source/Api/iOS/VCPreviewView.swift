@@ -345,10 +345,10 @@ private extension VCPreviewView {
 
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(applicationDidEnterBackground),
-                                               name: .UIApplicationDidEnterBackground, object: nil)
+                                               name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(applicationWillEnterForeground),
-                                               name: .UIApplicationWillEnterForeground, object: nil)
+                                               name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     @objc func applicationDidEnterBackground() {

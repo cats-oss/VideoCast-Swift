@@ -53,13 +53,13 @@ open class AudioSampleSource: ISource {
 
         let ret = CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(
             sampleBuffer,
-            nil,
-            &audioBufferList,
-            MemoryLayout<AudioBufferList>.size,
-            nil,
-            nil,
-            kCMSampleBufferFlag_AudioBufferList_Assure16ByteAlignment,
-            &blockBuffer
+            bufferListSizeNeededOut: nil,
+            bufferListOut: &audioBufferList,
+            bufferListSize: MemoryLayout<AudioBufferList>.size,
+            blockBufferAllocator: nil,
+            blockBufferMemoryAllocator: nil,
+            flags: kCMSampleBufferFlag_AudioBufferList_Assure16ByteAlignment,
+            blockBufferOut: &blockBuffer
         )
         assert(ret == noErr)
         let numSamples = CMSampleBufferGetNumSamples(sampleBuffer)

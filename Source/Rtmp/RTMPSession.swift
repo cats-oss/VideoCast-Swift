@@ -136,7 +136,11 @@ open class RTMPSession: IOutputSession {
                 clearing = true
             }
             networkQueue.enqueue {
-                buf.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) in
+                buf.withUnsafeBytes {
+                    guard let ptr = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                        Logger.error("unaligned pointer \($0)")
+                        return
+                    }
                     var p = ptr
                     var tosend = buf.count
 
@@ -321,7 +325,11 @@ extension RTMPSession {
                 chunk.reserveCapacity(size+64)
                 var len = buf.count
                 var tosend = min(len, self.outChunkSize)
-                buf.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) in
+                buf.withUnsafeBytes {
+                    guard let ptr = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                        Logger.error("unaligned pointer \($0)")
+                        return
+                    }
                     var p = ptr
                     let ts = UInt64(metaData.timestamp)
                     let chunkStreamId = metaData.chunkStreamId

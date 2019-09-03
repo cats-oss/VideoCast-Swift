@@ -61,7 +61,7 @@ open class Logger {
                    file: file,
                    function: function,
                    line: line,
-                   message: message)
+                   message: message())
     }
 
     public class func warn<T>(_ message: @autoclosure () -> T,
@@ -75,7 +75,7 @@ open class Logger {
                    file: file,
                    function: function,
                    line: line,
-                   message: message)
+                   message: message())
     }
 
     public class func info<T>(_ message: @autoclosure () -> T,
@@ -89,7 +89,7 @@ open class Logger {
                    file: file,
                    function: function,
                    line: line,
-                   message: message)
+                   message: message())
     }
 
     public class func debug<T>(_ message: @autoclosure () -> T,
@@ -103,7 +103,7 @@ open class Logger {
                    file: file,
                    function: function,
                    line: line,
-                   message: message)
+                   message: message())
     }
 
     public class func verbose<T>(_ message: @autoclosure () -> T,
@@ -117,7 +117,7 @@ open class Logger {
                    file: file,
                    function: function,
                    line: line,
-                   message: message)
+                   message: message())
     }
 
     class func log<T>(

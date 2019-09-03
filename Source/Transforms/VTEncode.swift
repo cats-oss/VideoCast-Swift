@@ -11,6 +11,7 @@ import Foundation
 import CoreVideo
 import VideoToolbox
 
+// swiftlint:disable:next type_body_length
 open class VTEncode: IEncoder {
     private let encodeQueue: DispatchQueue = .init(label: "jp.co.cyberagent.VideoCast.vtencode")
     private weak var output: IOutput?
@@ -46,16 +47,16 @@ open class VTEncode: IEncoder {
 
                 let v = _bitrate
                 var ret = VTSessionSetProperty(compressionSession,
-                                               kVTCompressionPropertyKey_AverageBitRate,
-                                               NSNumber(value: _bitrate))
+                                               key: kVTCompressionPropertyKey_AverageBitRate,
+                                               value: NSNumber(value: _bitrate))
 
                 if ret != noErr {
                     Logger.error("VTEncode::setBitrate Error setting bitrate! \(ret)")
                 }
                 var ref: NSNumber = 0
                 ret = VTSessionCopyProperty(compressionSession,
-                                            kVTCompressionPropertyKey_AverageBitRate,
-                                            kCFAllocatorDefault, &ref)
+                                            key: kVTCompressionPropertyKey_AverageBitRate,
+                                            allocator: kCFAllocatorDefault, valueOut: &ref)
 
                 if ret == noErr && ref != 0 {
                     _bitrate = Int(truncating: ref)
@@ -66,7 +67,7 @@ open class VTEncode: IEncoder {
                 let duration = Int64(1)
                 let limit = [bytes, duration] as CFArray
 
-                VTSessionSetProperty(compressionSession, kVTCompressionPropertyKey_DataRateLimits, limit)
+                VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_DataRateLimits, value: limit)
             }
         }
     }
@@ -88,7 +89,7 @@ open class VTEncode: IEncoder {
             Logger.debug("unexpected return")
             return
         }
-        let attachments: NSArray? = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, false)
+        let attachments: NSArray? = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false)
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         let dts = CMSampleBufferGetDecodeTimeStamp(sampleBuffer)
 
@@ -102,7 +103,6 @@ open class VTEncode: IEncoder {
         }
 
         if isKeyframe {
-
             // Send the SPS and PPS.
             if let format = CMSampleBufferGetFormatDescription(sampleBuffer) {
                 var vpsSize: Int = 0
@@ -115,13 +115,43 @@ open class VTEncode: IEncoder {
 
                 switch enc.codecType {
                 case kCMVideoCodecType_H264:
-                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, 0, &sps, &spsSize, &parmCount, nil)
-                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format, 1, &pps, &ppsSize, &parmCount, nil)
+                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                        format,
+                        parameterSetIndex: 0,
+                        parameterSetPointerOut: &sps,
+                        parameterSetSizeOut: &spsSize,
+                        parameterSetCountOut: &parmCount,
+                        nalUnitHeaderLengthOut: nil)
+                    CMVideoFormatDescriptionGetH264ParameterSetAtIndex(
+                        format,
+                        parameterSetIndex: 1,
+                        parameterSetPointerOut: &pps,
+                        parameterSetSizeOut: &ppsSize,
+                        parameterSetCountOut: &parmCount,
+                        nalUnitHeaderLengthOut: nil)
                 case kCMVideoCodecType_HEVC:
                     if #available(iOS 11.0, *) {
-                        CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(format, 0, &vps, &vpsSize, &parmCount, nil)
-                        CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(format, 1, &sps, &spsSize, &parmCount, nil)
-                        CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(format, 2, &pps, &ppsSize, &parmCount, nil)
+                        CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(
+                            format,
+                            parameterSetIndex: 0,
+                            parameterSetPointerOut: &vps,
+                            parameterSetSizeOut: &vpsSize,
+                            parameterSetCountOut: &parmCount,
+                            nalUnitHeaderLengthOut: nil)
+                        CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(
+                            format,
+                            parameterSetIndex: 1,
+                            parameterSetPointerOut: &sps,
+                            parameterSetSizeOut: &spsSize,
+                            parameterSetCountOut: &parmCount,
+                            nalUnitHeaderLengthOut: nil)
+                        CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(
+                            format,
+                            parameterSetIndex: 2,
+                            parameterSetPointerOut: &pps,
+                            parameterSetSizeOut: &ppsSize,
+                            parameterSetCountOut: &parmCount,
+                            nalUnitHeaderLengthOut: nil)
                     } else {
                         Logger.error("unsupported codec type: \(enc.codecType)")
                         return
@@ -167,7 +197,11 @@ open class VTEncode: IEncoder {
 
         var bufferData: UnsafeMutablePointer<Int8>?
         var size: Int = 0
-        CMBlockBufferGetDataPointer(block, 0, nil, &size, &bufferData)
+        CMBlockBufferGetDataPointer(block,
+                                    atOffset: 0,
+                                    lengthAtOffsetOut: nil,
+                                    totalLengthOut: &size,
+                                    dataPointerOut: &bufferData)
 
         guard let ptr = bufferData else {
             Logger.debug("unexpected return")
@@ -237,7 +271,14 @@ open class VTEncode: IEncoder {
             }
 
             let ref = data.assumingMemoryBound(to: CVPixelBuffer.self).pointee
-            VTCompressionSessionEncodeFrame(session, ref, pts, dur, frameProps as NSDictionary?, nil, &flags)
+            VTCompressionSessionEncodeFrame(
+                session,
+                imageBuffer: ref,
+                presentationTimeStamp: pts,
+                duration: dur,
+                frameProperties: frameProps as NSDictionary?,
+                sourceFrameRefcon: nil,
+                infoFlagsOut: &flags)
 
             if forceKeyframe {
                 frameProps = nil
@@ -306,16 +347,16 @@ open class VTEncode: IEncoder {
                 ]
 
                 err = VTCompressionSessionCreate(
-                    kCFAllocatorDefault,
-                    Int32(frameW),
-                    Int32(frameH),
-                    codecType,
-                    encoderSpecifications as NSDictionary?,
-                    pixelBufferOptions as NSDictionary?,
-                    nil,
-                    vtCallback,
-                    UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
-                    &sessionOut)
+                    allocator: kCFAllocatorDefault,
+                    width: Int32(frameW),
+                    height: Int32(frameH),
+                    codecType: codecType,
+                    encoderSpecification: encoderSpecifications as NSDictionary?,
+                    imageBufferAttributes: pixelBufferOptions as NSDictionary?,
+                    compressedDataAllocator: nil,
+                    outputCallback: vtCallback,
+                    refcon: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
+                    compressionSessionOut: &sessionOut)
 
             }
 
@@ -326,25 +367,36 @@ open class VTEncode: IEncoder {
             if err == noErr {
                 compressionSession = session
 
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_MaxKeyFrameInterval,
-                                           NSNumber(value: keyframeInterval))
+                err = VTSessionSetProperty(
+                    session,
+                    key: kVTCompressionPropertyKey_MaxKeyFrameInterval,
+                    value: NSNumber(value: keyframeInterval))
             }
 
             if err == noErr {
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ExpectedFrameRate, NSNumber(value: fps))
+                err = VTSessionSetProperty(
+                    session,
+                    key: kVTCompressionPropertyKey_ExpectedFrameRate,
+                    value: NSNumber(value: fps))
             }
 
             if err == noErr {
                 let allowFrameReodering = useBaseline ? kCFBooleanFalse : kCFBooleanTrue
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_AllowFrameReordering, allowFrameReodering)
+                err = VTSessionSetProperty(
+                    session,
+                    key: kVTCompressionPropertyKey_AllowFrameReordering,
+                    value: allowFrameReodering)
             }
 
             if err == noErr {
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_AverageBitRate, NSNumber(value: _bitrate))
+                err = VTSessionSetProperty(
+                    session,
+                    key: kVTCompressionPropertyKey_AverageBitRate,
+                    value: NSNumber(value: _bitrate))
             }
 
             if err == noErr {
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue)
+                err = VTSessionSetProperty(session, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanTrue)
             }
 
             if err == noErr {
@@ -366,11 +418,17 @@ open class VTEncode: IEncoder {
                     return
                 }
 
-                err = VTSessionSetProperty(session, kVTCompressionPropertyKey_ProfileLevel, profileLevel)
+                err = VTSessionSetProperty(
+                    session,
+                    key: kVTCompressionPropertyKey_ProfileLevel,
+                    value: profileLevel)
             }
             if codecType == kCMVideoCodecType_H264 {
                 if !useBaseline {
-                    VTSessionSetProperty(session, kVTCompressionPropertyKey_H264EntropyMode, kVTH264EntropyMode_CABAC)
+                    VTSessionSetProperty(
+                        session,
+                        key: kVTCompressionPropertyKey_H264EntropyMode,
+                        value: kVTH264EntropyMode_CABAC)
                 }
             }
             if err == noErr {

@@ -26,7 +26,7 @@ open class Split: ITransform {
     }
 
     open func removeOutput(_ output: IOutput) {
-        if let it = outputs.index(where: {$0 === output}) {
+        if let it = outputs.firstIndex(where: {$0 === output}) {
             outputs.remove(at: it)
         }
     }

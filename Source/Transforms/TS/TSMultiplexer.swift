@@ -174,11 +174,20 @@ open class TSMultiplexer: ITransform {
 
         if ts.mux_rate > 1 {
             service.pcr_packet_period =
-                Int(CMTimeMultiplyByRatio(ts.pcr_period, Int32(ts.mux_rate), Int32(C.TS_PACKET_SIZE * 8)).seconds)
+                Int(CMTimeMultiplyByRatio(
+                    ts.pcr_period,
+                    multiplier: Int32(ts.mux_rate),
+                    divisor: Int32(C.TS_PACKET_SIZE * 8)).seconds)
             ts.sdt_packet_period =
-                Int(CMTimeMultiplyByRatio(C.SDT_RETRANS_TIME, Int32(ts.mux_rate), Int32(C.TS_PACKET_SIZE * 8)).seconds)
+                Int(CMTimeMultiplyByRatio(
+                    C.SDT_RETRANS_TIME,
+                    multiplier: Int32(ts.mux_rate),
+                    divisor: Int32(C.TS_PACKET_SIZE * 8)).seconds)
             ts.pat_packet_period =
-                Int(CMTimeMultiplyByRatio(C.PAT_RETRANS_TIME, Int32(ts.mux_rate), Int32(C.TS_PACKET_SIZE * 8)).seconds)
+                Int(CMTimeMultiplyByRatio(
+                    C.PAT_RETRANS_TIME,
+                    multiplier: Int32(ts.mux_rate),
+                    divisor: Int32(C.TS_PACKET_SIZE * 8)).seconds)
 
             if !ts.copyts {
                 ts.first_pcr = max_delay.convertScale(C.PCR_TIME_BASE, method: .default)
@@ -267,7 +276,11 @@ extension TSMultiplexer {
         buf.append(data.assumingMemoryBound(to: UInt8.self), count: size)
 
         jobQueue.enqueue {
-            buf.withUnsafeBytes { (p: UnsafePointer<UInt8>) in
+            buf.withUnsafeBytes {
+                guard let p = $0.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                    Logger.error("unaligned pointer \($0)")
+                    return
+                }
                 let size = buf.count
                 let st = self.streams[metadata.streamIndex]
                 guard let ts_st = st.data else { return }
@@ -312,7 +325,10 @@ extension TSMultiplexer {
                         guard let ts_st2 = st2.data else { continue }
                         if !ts_st2.payload.isEmpty
                             && (ts_st2.payload_dts == nil ||
-                                cond(dts, ts_st2.payload_dts, CMTimeMultiplyByRatio(delay, 1, 2))) {
+                                cond(dts, ts_st2.payload_dts, CMTimeMultiplyByRatio(
+                                    delay,
+                                    multiplier: 1,
+                                    divisor: 2))) {
                             self.write_pes(st2, payload: ts_st2.payload, payload_size: ts_st2.payload.count,
                                            pts: ts_st2.payload_pts, dts: ts_st2.payload_dts,
                                            key: ts_st2.key, steram_id: stream_id)

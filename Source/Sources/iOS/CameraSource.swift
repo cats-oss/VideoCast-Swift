@@ -166,7 +166,7 @@ open class CameraSource: ISource {
                                         callbackSession,
                                         selector:
                                         #selector(type(of: callbackSession).orientationChanged(notification:)),
-                                        name: .UIApplicationDidChangeStatusBarOrientation,
+                                        name: UIApplication.didChangeStatusBarOrientationNotification,
                                         object: nil)
                                 } else {
                                     UIDevice.current.beginGeneratingDeviceOrientationNotifications()
@@ -174,7 +174,7 @@ open class CameraSource: ISource {
                                         callbackSession,
                                         selector:
                                         #selector(type(of: callbackSession).orientationChanged(notification:)),
-                                        name: .UIDeviceOrientationDidChange, object: nil)
+                                        name: UIDevice.orientationDidChangeNotification, object: nil)
                                 }
                             }
                         } catch {

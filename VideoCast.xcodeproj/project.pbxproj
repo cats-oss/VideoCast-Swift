@@ -841,7 +841,7 @@
 				TargetAttributes = {
 					811BF9961FFE2F7D00E90EEF = {
 						CreatedOnToolsVersion = 9.2;
-						LastSwiftMigration = 0920;
+						LastSwiftMigration = 1030;
 						ProvisioningStyle = Automatic;
 					};
 					811BF99E1FFE2F7D00E90EEF = {
@@ -1173,7 +1173,7 @@
 				SWIFT_INCLUDE_PATHS = "${SRCROOT}";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -1204,7 +1204,7 @@
 				SKIP_INSTALL = YES;
 				SWIFT_INCLUDE_PATHS = "${SRCROOT}";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
