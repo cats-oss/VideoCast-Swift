@@ -8,6 +8,7 @@
 
 import Foundation
 import AudioToolbox
+import AVFoundation
 
 open class AACEncode: IEncoder {
     private let kSamplesPerFrame: UInt32 = 1024
