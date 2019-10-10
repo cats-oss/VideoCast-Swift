@@ -8,42 +8,10 @@
 
 import Foundation
 import GLKit
-#if !targetEnvironment(simulator) && !arch(arm)
 import Metal
-#endif
 
 open class BasicVideoFilter: IVideoFilter {
-    #if targetEnvironment(simulator) || arch(arm)
-    open var vertexKernel: String? {
-        return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
-attribute vec2 aPos;
-attribute vec2 aCoord;
-varying vec2   vCoord;
-uniform mat4   uMat;
-void main(void) {
-    gl_Position = uMat * vec4(aPos,0.,1.);
-    vCoord = aCoord;
-}
-""")
-    }
-
-    open var pixelKernel: String? {
-        return kernel(language: .GL_ES2_3, target: filterLanguage, kernelstr: """
-precision mediump float;
-varying vec2      vCoord;
-uniform sampler2D uTex0;
-void main(void) {
-    gl_FragData[0] = texture2D(uTex0, vCoord);
-}
-""")
-    }
-
-    open var filterLanguage: FilterLanguage = .GL_ES2_3
-
-    open var program: GLuint = 0
-    #else
     open var renderPipelineState: MTLRenderPipelineState?
-    #endif
 
     open class var vertexFunc: String {
         return "basic_vertex"
@@ -59,14 +27,9 @@ void main(void) {
 
     open var initialized = false
 
-    #if targetEnvironment(simulator) || arch(arm)
-    private var vao: GLuint = 0
-    private var uMatrix: Int32 = 0
-    #else
     open var piplineDescripter: String? {
         return .init(describing: type(of: self))
     }
-    #endif
 
     private var bound = false
 
@@ -74,46 +37,7 @@ void main(void) {
 
     }
 
-    deinit {
-        #if targetEnvironment(simulator) || arch(arm)
-        glDeleteProgram(program)
-        glDeleteVertexArraysOES(1, &vao)
-        #endif
-    }
-
-    // swiftlint:disable:next function_body_length
     open func initialize() {
-        #if targetEnvironment(simulator) || arch(arm)
-        switch filterLanguage {
-        case .GL_ES2_3, .GL_2:
-            guard let vertexKernel = vertexKernel, let pixelKernel = pixelKernel else {
-                Logger.debug("unexpected return")
-                break
-            }
-
-            program = buildProgram(vertex: vertexKernel, fragment: pixelKernel)
-            glGenVertexArraysOES(1, &vao)
-            glBindVertexArrayOES(vao)
-            uMatrix = glGetUniformLocation(program, "uMat")
-            let attrpos = glGetAttribLocation(program, "aPos")
-            let attrtex = glGetAttribLocation(program, "aCoord")
-            let unitex = glGetUniformLocation(program, "uTex0")
-            glUniform1i(unitex, 0)
-            glEnableVertexAttribArray(GLuint(attrpos))
-            glEnableVertexAttribArray(GLuint(attrtex))
-            glVertexAttribPointer(
-                GLuint(attrpos), GLint(BUFFER_SIZE_POSITION),
-                GLenum(GL_FLOAT), GLboolean(GL_FALSE),
-                GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_POSITION)
-            glVertexAttribPointer(
-                GLuint(attrtex), GLint(BUFFER_SIZE_POSITION),
-                GLenum(GL_FLOAT), GLboolean(GL_FALSE),
-                GLsizei(BUFFER_STRIDE), BUFFER_OFFSET_TEXTURE)
-            initialized = true
-        case .GL_3:
-            break
-        }
-        #else
         let frameworkBundleLibrary: MTLLibrary?
         let mainBundleLibrary: MTLLibrary?
         guard let frameworkLibraryFile =
@@ -165,34 +89,16 @@ void main(void) {
             fatalError("failed to generate the pipeline state \(error)")
         }
         initialized = true
-        #endif
     }
 
     open func bind() {
-        #if targetEnvironment(simulator) || arch(arm)
-        switch filterLanguage {
-        case .GL_ES2_3, .GL_2:
-            if !bound {
-                if !initialized {
-                    initialize()
-                }
-                glUseProgram(program)
-                glBindVertexArrayOES(vao)
-            }
-            glUniformMatrix4fv(uMatrix, 1, GLboolean(GL_FALSE), matrix.array)
-        case .GL_3:
-            break
-        }
-        #else
         if !bound {
             if !initialized {
                 initialize()
             }
         }
-        #endif
     }
 
-    #if !targetEnvironment(simulator) && !arch(arm)
     open func render(_ renderEncoder: MTLRenderCommandEncoder) {
         guard let renderPipelineState = renderPipelineState else { return }
         // set the pipeline state object which contains its precompiled shaders
@@ -208,7 +114,6 @@ void main(void) {
             renderEncoder.setVertexBuffer(buffer, offset: 0, index: 1)
         }
     }
-    #endif
 
     open func unbind() {
         bound = false

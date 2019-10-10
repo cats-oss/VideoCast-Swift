@@ -17,7 +17,6 @@
 		811692312125591D0074EA71 /* SRTStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8116922F2125591D0074EA71 /* SRTStats.swift */; };
 		811BF9A01FFE2F7D00E90EEF /* VideoCast.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 811BF9971FFE2F7D00E90EEF /* VideoCast.framework */; };
 		811D4B971FFF1B2E004EC189 /* VCSimpleSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811D4B961FFF1B2E004EC189 /* VCSimpleSession.swift */; };
-		811EDA08214A2EA000CE203E /* GLESUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811EDA07214A2EA000CE203E /* GLESUtil.swift */; };
 		81278854212E7285008776B6 /* VCPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81278853212E7285008776B6 /* VCPreviewView.swift */; };
 		81278856212EBC0B008776B6 /* MetalVideoMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81278855212EBC0B008776B6 /* MetalVideoMixer.swift */; };
 		81278857212EBC0B008776B6 /* MetalVideoMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81278855212EBC0B008776B6 /* MetalVideoMixer.swift */; };
@@ -224,7 +223,6 @@
 		811BF9971FFE2F7D00E90EEF /* VideoCast.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VideoCast.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		811BF99F1FFE2F7D00E90EEF /* VideoCast iOS Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VideoCast iOS Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		811D4B961FFF1B2E004EC189 /* VCSimpleSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCSimpleSession.swift; sourceTree = "<group>"; };
-		811EDA07214A2EA000CE203E /* GLESUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLESUtil.swift; sourceTree = "<group>"; };
 		81278853212E7285008776B6 /* VCPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCPreviewView.swift; sourceTree = "<group>"; };
 		81278855212EBC0B008776B6 /* MetalVideoMixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalVideoMixer.swift; sourceTree = "<group>"; };
 		812B91782018556100D93731 /* BasicVideoFilterBGRA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicVideoFilterBGRA.swift; sourceTree = "<group>"; };
@@ -688,7 +686,6 @@
 			children = (
 				81DD028220047BB80064A203 /* CameraSource.swift */,
 				B126AC2D210DD62400E1EEF3 /* CameraSourceCallback.swift */,
-				811EDA07214A2EA000CE203E /* GLESUtil.swift */,
 				81DD028020047B960064A203 /* MicSource.swift */,
 			);
 			path = iOS;
@@ -967,7 +964,6 @@
 				81DD028C2004822B0064A203 /* PositionTransform.swift in Sources */,
 				814265C41FFF5519001258F2 /* IMetaData.swift in Sources */,
 				81CE06F8204EA85000E71AB6 /* SRTTransmit.swift in Sources */,
-				811EDA08214A2EA000CE203E /* GLESUtil.swift in Sources */,
 				81278854212E7285008776B6 /* VCPreviewView.swift in Sources */,
 				81E2E0892008981A00DE5465 /* IPixelBuffer.swift in Sources */,
 				B142946E210C471900B17FC2 /* RTMPSessionHandlePacket.swift in Sources */,

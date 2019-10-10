@@ -8,9 +8,7 @@
 
 import Foundation
 import GLKit
-#if !targetEnvironment(simulator) && !arch(arm)
 import Metal
-#endif
 
 /*
  *  Takes CVPixelBufferRef inputs and outputs a single CVPixelBufferRef that
@@ -30,17 +28,6 @@ open class MetalVideoMixer: IVideoMixer {
 
     let pixelBufferPool: CVPixelBufferPool?
     var pixelBuffer = [CVPixelBuffer?](repeating: nil, count: 2)
-    #if targetEnvironment(simulator) || arch(arm)
-    var textureCache: CVOpenGLESTextureCache?
-    var texture = [CVOpenGLESTexture?](repeating: nil, count: 2)
-
-    var glesCtx: EAGLContext?
-    var vbo: GLuint = 0
-    private var vao: GLuint = 0
-    var fbo = [GLuint](repeating: 0, count: 2)
-    private var prog: GLuint = 0
-    private var uMat: GLuint = 0
-    #else
     var textureCache: CVMetalTextureCache?
     var texture = [CVMetalTexture?](repeating: nil, count: 2)
 
@@ -49,9 +36,9 @@ open class MetalVideoMixer: IVideoMixer {
     var colorSamplerState: MTLSamplerState?
     var metalTexture = [MTLTexture?](repeating: nil, count: 2)
 
-    let device: MTLDevice = MTLCreateSystemDefaultDevice()!
+    let device = DeviceManager.device
     let commandQueue = DeviceManager.commandQueue
-    #endif
+
     private let callbackSession: MetalObjCCallback
 
     var frameW: Int
@@ -84,29 +71,6 @@ open class MetalVideoMixer: IVideoMixer {
      *  \param frameDuration    The duration of time a frame is presented, in seconds. 30 FPS would be (1/30)
      */
 
-    #if targetEnvironment(simulator) || arch(arm)
-    public init(
-        frame_w: Int,
-        frame_h: Int,
-        frameDuration: TimeInterval,
-        pixelBufferPool: CVPixelBufferPool? = nil,
-        excludeContext: (() -> Void)? = nil) {
-        bufferDuration = frameDuration
-        frameW = frame_w
-        frameH = frame_h
-        self.pixelBufferPool = pixelBufferPool
-
-        zRange.0 = .max
-        zRange.1 = .min
-
-        callbackSession = MetalObjCCallback()
-        callbackSession.mixer = self
-
-        perfGLSync(glContext: glesCtx, jobQueue: metalJobQueue) {
-            self.setupGLES(excludeContext: excludeContext)
-        }
-    }
-    #else
     public init(
         frame_w: Int,
         frame_h: Int,
@@ -127,29 +91,13 @@ open class MetalVideoMixer: IVideoMixer {
             self.setupMetal()
         }
     }
-    #endif
 
     deinit {
         Logger.debug("MetalVideoMixer::deinit")
 
-        #if targetEnvironment(simulator) || arch(arm)
-        perfGLSync(glContext: glesCtx, jobQueue: metalJobQueue) {
-            glDeleteBuffers(1, &self.vbo)
-            self.deleteTextures()
-
-            self.sourceBuffers.removeAll()
-
-            if let textureCache = self.textureCache {
-                CVOpenGLESTextureCacheFlush(textureCache, 0)
-            }
-
-            self.glesCtx = nil
-        }
-        #else
         metalJobQueue.enqueueSync {
             self.sourceBuffers.removeAll()
         }
-        #endif
 
         _mixThread?.cancel()
 
@@ -242,27 +190,17 @@ open class MetalVideoMixer: IVideoMixer {
 
             let source = metaData.source
 
-            #if targetEnvironment(simulator) || arch(arm)
-            guard let textureCache = self.textureCache, let glesCtx = self.glesCtx, let hashValue = self.hashWeak(source) else {
-                return Logger.debug("unexpected return")
-            }
-            #else
             guard let textureCache = self.textureCache, let hashValue = self.hashWeak(source) else {
                 return Logger.debug("unexpected return")
             }
-            #endif
 
             let inPixelBuffer = data.assumingMemoryBound(to: PixelBuffer.self).pointee
 
             if self.sourceBuffers[hashValue] == nil {
                 self.sourceBuffers[hashValue] = .init()
             }
-            #if targetEnvironment(simulator) || arch(arm)
-            self.sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache,
-                                                     jobQueue: self.metalJobQueue, glContext: glesCtx)
-            #else
-            self.sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache, jobQueue: self.metalJobQueue)
-            #endif
+            self.sourceBuffers[hashValue]?.setBuffer(inPixelBuffer,
+                                                     textureCache: textureCache, jobQueue: self.metalJobQueue)
             self.sourceBuffers[hashValue]?.blends = metaData.blends
 
             if self.layerMap[zIndex] == nil {
@@ -308,45 +246,9 @@ open class MetalVideoMixer: IVideoMixer {
             frameW = width
             frameH = height
 
-            #if targetEnvironment(simulator) || arch(arm)
-            perfGLAsync(glContext: glesCtx, jobQueue: metalJobQueue) { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.createTextures()
-            }
-            #else
             metalJobQueue.enqueue {
                 self.createTextures()
             }
-            #endif
         }
     }
 }
-
-#if targetEnvironment(simulator) || arch(arm)
-// Dispatch and execute synchronously
-func perfGLSync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
-    perfGL(isSync: true, glContext: glContext, jobQueue: jobQueue, execute: execute)
-}
-
-// Dispatch and execute asynchronously
-func perfGLAsync(glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
-    perfGL(isSync: false, glContext: glContext, jobQueue: jobQueue, execute: execute)
-}
-
-// Convenience function to dispatch an OpenGL ES job to the created JobQueue
-private func perfGL(isSync: Bool, glContext: EAGLContext?, jobQueue: JobQueue, execute: @escaping () -> Void) {
-    let cl = {
-        let context = EAGLContext.current()
-        if let glContext = glContext {
-            EAGLContext.setCurrent(glContext)
-        }
-        execute()
-        EAGLContext.setCurrent(context)
-    }
-    if isSync {
-        jobQueue.enqueueSync(cl)
-    } else {
-        jobQueue.enqueue(cl)
-    }
-}
-#endif
