@@ -231,48 +231,50 @@ open class MetalVideoMixer: IVideoMixer {
             return Logger.debug("unexpected return")
         }
 
-        if zIndex < zRange.0 {
-            zRange.0 = zIndex
-        }
+        metalJobQueue.enqueueSync {
+            if zIndex < self.zRange.0 {
+                self.zRange.0 = zIndex
+            }
 
-        if zIndex > zRange.1 {
-            zRange.1 = zIndex
-        }
+            if zIndex > self.zRange.1 {
+                self.zRange.1 = zIndex
+            }
 
-        let source = metaData.source
+            let source = metaData.source
 
-        #if targetEnvironment(simulator) || arch(arm)
-        guard let textureCache = textureCache, let glesCtx = glesCtx, let hashValue = hashWeak(source) else {
-            return Logger.debug("unexpected return")
-        }
-        #else
-        guard let textureCache = textureCache, let hashValue = hashWeak(source) else {
-            return Logger.debug("unexpected return")
-        }
-        #endif
+            #if targetEnvironment(simulator) || arch(arm)
+            guard let textureCache = self.textureCache, let glesCtx = self.glesCtx, let hashValue = self.hashWeak(source) else {
+                return Logger.debug("unexpected return")
+            }
+            #else
+            guard let textureCache = self.textureCache, let hashValue = self.hashWeak(source) else {
+                return Logger.debug("unexpected return")
+            }
+            #endif
 
-        let inPixelBuffer = data.assumingMemoryBound(to: PixelBuffer.self).pointee
+            let inPixelBuffer = data.assumingMemoryBound(to: PixelBuffer.self).pointee
 
-        if sourceBuffers[hashValue] == nil {
-            sourceBuffers[hashValue] = .init()
-        }
-        #if targetEnvironment(simulator) || arch(arm)
-        sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache,
-                                            jobQueue: metalJobQueue, glContext: glesCtx)
-        #else
-        sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache, jobQueue: metalJobQueue)
-        #endif
-        sourceBuffers[hashValue]?.blends = metaData.blends
+            if self.sourceBuffers[hashValue] == nil {
+                self.sourceBuffers[hashValue] = .init()
+            }
+            #if targetEnvironment(simulator) || arch(arm)
+            self.sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache,
+                                                     jobQueue: self.metalJobQueue, glContext: glesCtx)
+            #else
+            self.sourceBuffers[hashValue]?.setBuffer(inPixelBuffer, textureCache: textureCache, jobQueue: self.metalJobQueue)
+            #endif
+            self.sourceBuffers[hashValue]?.blends = metaData.blends
 
-        if layerMap[zIndex] == nil {
-            layerMap[zIndex] = []
-        }
+            if self.layerMap[zIndex] == nil {
+                self.layerMap[zIndex] = []
+            }
 
-        let layerIndex = layerMap[zIndex]?.firstIndex(of: hashValue)
-        if layerIndex == nil {
-            layerMap[zIndex]?.append(hashValue)
+            let layerIndex = self.layerMap[zIndex]?.firstIndex(of: hashValue)
+            if layerIndex == nil {
+                self.layerMap[zIndex]?.append(hashValue)
+            }
+            self.sourceMats[hashValue] = metaData.matrix
         }
-        sourceMats[hashValue] = metaData.matrix
     }
 
     /*! ITransform::setEpoch */
