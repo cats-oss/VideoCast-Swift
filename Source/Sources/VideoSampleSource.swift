@@ -72,8 +72,6 @@ open class VideoSampleSource: ISource {
                     case .leftMirrored:
                         inputImage = inputImage.oriented(.rightMirrored)
                         rotate = true
-                    @unknown default:
-                        Logger.error("unknown orientation \(orientation)")
                     }
                 }
             }
