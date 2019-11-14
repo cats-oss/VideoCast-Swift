@@ -180,7 +180,28 @@ extension RTMPSession {
             return true
 
         case .only:
-            streamInBuffer.didRead(1)
+            guard let previousChunk = previousChunkMap[chunk_stream_id] else {
+                Logger.error("could not find previous chunk with stream id \(chunk_stream_id)")
+                return false
+            }
+            // the message length is the same as previous message.
+            Logger.debug("Previous chunk length:\(previousChunk.msg_length), " +
+                "msgid:\(previousChunk.msg_type_id), streamid:\(String(describing: previousChunk.msg_stream_id))")
+            guard streamInBuffer.availableBytes >= 1 else {
+                Logger.debug("Not enough a header")
+                // DEBUG only
+                Logger.dumpBuffer("RTMPChunk3 ERROR",
+                                  buf: streamInBuffer.readBuffer, size: streamInBuffer.availableBytes)
+                return false
+            }
+            var msg: [UInt8] = .init(repeating: 0, count: Int(previousChunk.msg_length))
+            let full_msgsize = tryReadOneMessage(&msg, from_offset: 1)
+            guard full_msgsize > 0 else {
+                Logger.debug("Not enough one message in buffer")
+                return false
+            }
+            streamInBuffer.didRead(1 + full_msgsize)
+            handleMessage(msg, msgTypeId: previousChunk.msg_type_id)
             return true
         }
     }
