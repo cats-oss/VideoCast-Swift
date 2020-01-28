@@ -22,6 +22,7 @@ open class VTEncode: IEncoder {
     private let keyframeInterval: Int
     private var _bitrate: Int
     private let codecType: CMVideoCodecType
+    private let kLimitToAverageBitRateFactor = 1.5
 
     private let ctsOffset: CMTime
 
@@ -63,7 +64,8 @@ open class VTEncode: IEncoder {
                 } else {
                     _bitrate = v
                 }
-                let bytes = Int64(_bitrate / 8)
+                let bytes = Int64(Double(_bitrate) * kLimitToAverageBitRateFactor / 8)
+
                 let duration = Int64(1)
                 let limit = [bytes, duration] as CFArray
 
@@ -393,6 +395,18 @@ open class VTEncode: IEncoder {
                     session,
                     key: kVTCompressionPropertyKey_AverageBitRate,
                     value: NSNumber(value: _bitrate))
+            }
+
+            if err == noErr {
+                let bytes = Int64(Double(_bitrate) * kLimitToAverageBitRateFactor / 8)
+
+                let duration = Int64(1)
+                let limit = [bytes, duration] as CFArray
+
+                err = VTSessionSetProperty(
+                    session,
+                    key: kVTCompressionPropertyKey_DataRateLimits,
+                    value: limit)
             }
 
             if err == noErr {
