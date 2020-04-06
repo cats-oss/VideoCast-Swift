@@ -49,7 +49,7 @@ public struct SRTLogFAs: OptionSet {
         self.rawValue = rawValue
     }
 
-    public static let general   = SRTLogFAs(rawValue: 0)
+    public static let general   = SRTLogFAs([])
     public static let bstats    = SRTLogFAs(rawValue: 1 << 0)
     public static let control   = SRTLogFAs(rawValue: 1 << 1)
     public static let data      = SRTLogFAs(rawValue: 1 << 2)

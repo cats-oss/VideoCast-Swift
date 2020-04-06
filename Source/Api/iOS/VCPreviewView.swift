@@ -146,7 +146,7 @@ open class VCPreviewView: UIView {
                                                               &strongSelf.texture[currentBuffer]
                     )
 
-                    if let texture = strongSelf.texture[currentBuffer] {
+                    if strongSelf.texture[currentBuffer] != nil {
                         CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
                     } else {
                         fatalError("could not create texture")
