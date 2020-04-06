@@ -247,7 +247,7 @@ open class AACEncode: IEncoder {
             var p = ptr
             var p_out = data.assumingMemoryBound(to: UInt8.self)
 
-            for i in 0..<aac_packet_count {
+            for _ in 0..<aac_packet_count {
                 var num_packets: UInt32 = 1
 
                 var buf = AudioBuffer()

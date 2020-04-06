@@ -270,106 +270,102 @@ open class SRTSession: IOutputSession {
                     setClientState(.connecting)
                 }
 
-                var srtrfdslen: Int32 = 1
-                var srtrfds: [SRTSOCKET] = .init(repeating: SRT_INVALID_SOCK, count: 1)
-                var srtwfdslen: Int32 = 1
-                var srtwfds: [SRTSOCKET] = .init(repeating: SRT_INVALID_SOCK, count: 1)
-                if srt_epoll_wait(pollid,
-                                  &srtrfds, &srtrfdslen, &srtwfds, &srtwfdslen,
-                                  0,
-                                  nil, nil, nil, nil) >= 0 {
-                    /*if false
-                     {
-                     Logger.debug("Event: srtrfdslen \(srtrfdslen) sysrfdslen \(sysrfdslen)")
-                     }*/
-
+                let fdsSize = 2
+                let event: SRT_EPOLL_EVENT = .init(fd: SRT_INVALID_SOCK, events: 0)
+                var events: [SRT_EPOLL_EVENT] = .init(repeating: event, count: fdsSize)
+                let eventSize = srt_epoll_uwait(pollid, &events, Int32(fdsSize), 100)
+                if eventSize > 0 {
                     var doabort: Bool = false
-                    if srtrfdslen > 0 || srtwfdslen > 0 {
-                        let s = srtrfdslen > 0 ? srtrfds[0] : srtwfds[0]
-                        guard let t = tar, t.getSRTSocket() == s else {
-                            Logger.error("Unexpected socket poll: \(s)")
+                    if eventSize > fdsSize {
+                        Logger.error("SRT event overflow")
+                        doabort = true
+                        setClientState(.error)
+                        break
+                    }
+                    let s = events[0].fd
+                    guard let t = tar, t.getSRTSocket() == s else {
+                        Logger.error("Unexpected socket poll: \(s)")
+                        doabort = true
+                        setClientState(.error)
+                        break
+                    }
+
+                    let dirstring = "target"
+
+                    let status = srt_getsockstate(s)
+                    if false && status != SRTS_CONNECTED {
+                        Logger.debug("\(dirstring) status \(status)")
+                    }
+                    switch status {
+                    case SRTS_LISTENING:
+                        if false && !quiet {
+                            Logger.debug("New SRT client connection")
+                        }
+
+                        guard let tar = tar else {
+                            Logger.error("SRT client hasn't been created")
+                            break
+                        }
+
+                        let res = try tar.acceptNewClient()
+                        if !res {
+                            Logger.error("Failed to accept SRT connection")
                             doabort = true
                             setClientState(.error)
                             break
                         }
 
-                        let dirstring = "target"
+                        srt_epoll_remove_usock(pollid, s)
 
-                        let status = srt_getsockstate(s)
-                        if false && status != SRTS_CONNECTED {
-                            Logger.debug("\(dirstring) status \(status)")
+                        let ns = tar.getSRTSocket()
+                        var events: Int32 = Int32(SRT_EPOLL_IN.rawValue | SRT_EPOLL_ERR.rawValue)
+                        if srt_epoll_add_usock(pollid, ns, &events) != 0 {
+                            Logger.error("Failed to add SRT client to poll, \(ns)")
+                            doabort = true
+                            setClientState(.error)
+                        } else {
+                            if !quiet {
+                                Logger.debug("Accepted SRT \(dirstring) connection")
+                            }
+                            tarConnected = true
+                            setClientState(.connected)
+                            firstConnection = false
                         }
-                        switch status {
-                        case SRTS_LISTENING:
-                            if false && !quiet {
-                                Logger.debug("New SRT client connection")
+                    case SRTS_BROKEN, SRTS_NONEXIST, SRTS_CLOSED:
+                        if tarConnected {
+                            if !quiet {
+                                Logger.debug("SRT target disconnected")
                             }
+                            tarConnected = false
+                        }
 
-                            guard let tar = tar else {
-                                Logger.error("SRT client hasn't been created")
-                                break
-                            }
-
-                            let res = try tar.acceptNewClient()
-                            if !res {
-                                Logger.error("Failed to accept SRT connection")
-                                doabort = true
-                                setClientState(.error)
-                                break
-                            }
-
+                        if firstConnection || ending.value || !autoreconnect {
+                            setClientState(.notConnected)
+                            doabort = true
+                        } else {
+                            // force re-connection
                             srt_epoll_remove_usock(pollid, s)
-
-                            let ns = tar.getSRTSocket()
-                            var events: Int32 = Int32(SRT_EPOLL_IN.rawValue | SRT_EPOLL_ERR.rawValue)
-                            if srt_epoll_add_usock(pollid, ns, &events) != 0 {
-                                Logger.error("Failed to add SRT client to poll, \(ns)")
-                                doabort = true
-                                setClientState(.error)
-                            } else {
-                                if !quiet {
-                                    Logger.debug("Accepted SRT \(dirstring) connection")
-                                }
-                                tarConnected = true
-                                setClientState(.connected)
-                                firstConnection = false
-                            }
-                        case SRTS_BROKEN, SRTS_NONEXIST, SRTS_CLOSED:
-                            if tarConnected {
-                                if !quiet {
-                                    Logger.debug("SRT target disconnected")
-                                }
-                                tarConnected = false
-                            }
-
-                            if firstConnection || ending.value || !autoreconnect {
-                                setClientState(.notConnected)
-                                doabort = true
-                            } else {
-                                // force re-connection
-                                srt_epoll_remove_usock(pollid, s)
-                                statsManager.stop()
-                                setClientState(.reconnecting)
-                                reconnecting = true
-                                tar = nil
-                            }
-                        case SRTS_CONNECTED:
-                            if !tarConnected {
-                                if !quiet {
-                                    Logger.debug("SRT target connected")
-                                }
-                                tarConnected = true
-                                firstConnection = false
-                                setClientState(.connected)
-                                if let tar = tar {
-                                    statsManager.start(tar.sock)
-                                }
-                            }
-
-                        default:
-                            // No-Op
-                            break
+                            statsManager.stop()
+                            setClientState(.reconnecting)
+                            reconnecting = true
+                            tar = nil
                         }
+                    case SRTS_CONNECTED:
+                        if !tarConnected {
+                            if !quiet {
+                                Logger.debug("SRT target connected")
+                            }
+                            tarConnected = true
+                            firstConnection = false
+                            setClientState(.connected)
+                            if let tar = tar {
+                                statsManager.start(tar.sock)
+                            }
+                        }
+
+                    default:
+                        // No-Op
+                        break
                     }
 
                     if doabort {

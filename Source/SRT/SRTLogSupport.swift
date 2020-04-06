@@ -49,13 +49,14 @@ public struct SRTLogFAs: OptionSet {
         self.rawValue = rawValue
     }
 
-    public static let general   = SRTLogFAs(rawValue: 0)
+    public static let general   = SRTLogFAs([])
     public static let bstats    = SRTLogFAs(rawValue: 1 << 0)
     public static let control   = SRTLogFAs(rawValue: 1 << 1)
     public static let data      = SRTLogFAs(rawValue: 1 << 2)
     public static let tsbpd     = SRTLogFAs(rawValue: 1 << 3)
     public static let rexmit    = SRTLogFAs(rawValue: 1 << 4)
     public static let haicrypt  = SRTLogFAs(rawValue: 1 << 5)
+    public static let congest   = SRTLogFAs(rawValue: 1 << 6)
 
     public static let all: SRTLogFAs = [.bstats, .control, .data, .tsbpd, .rexmit, .haicrypt]
 
@@ -77,6 +78,9 @@ public struct SRTLogFAs: OptionSet {
         }
         if self.contains(.haicrypt) {
             srt_addlogfa(SRT_LOGFA_HAICRYPT)
+        }
+        if self.contains(.congest) {
+            srt_addlogfa(SRT_LOGFA_CONGEST)
         }
     }
 }

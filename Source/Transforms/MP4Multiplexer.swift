@@ -431,51 +431,54 @@ extension MP4Multiplexer {
             return
         }
 
-        let pointerVPS = UnsafePointer<UInt8>(vps)
-        let pointerSPS = UnsafePointer<UInt8>(sps)
-        let pointerPPS = UnsafePointer<UInt8>(pps)
+        withUnsafePointer(to: &vps[0]) { pointerVPS in
+            withUnsafePointer(to: &sps[0]) { pointerSPS in
+                withUnsafePointer(to: &pps[0]) { pointerPPS in
+                    var dataParamArray = [pointerSPS, pointerPPS]
+                    var sizeParamArray = [sps.count, pps.count]
+                    if videoCodecType == kCMVideoCodecType_HEVC {
+                        dataParamArray.insert(pointerVPS, at: 0)
+                        sizeParamArray.insert(vps.count, at: 0)
+                    }
 
-        var dataParamArray = [pointerSPS, pointerPPS]
-        var sizeParamArray = [sps.count, pps.count]
-        if videoCodecType == kCMVideoCodecType_HEVC {
-            dataParamArray.insert(pointerVPS, at: 0)
-            sizeParamArray.insert(vps.count, at: 0)
-        }
-
-        switch videoCodecType {
-        case kCMVideoCodecType_H264:
-            let ret = CMVideoFormatDescriptionCreateFromH264ParameterSets(
-                allocator: kCFAllocatorDefault,
-                parameterSetCount: dataParamArray.count,
-                parameterSetPointers: &dataParamArray,
-                parameterSetSizes: &sizeParamArray,
-                nalUnitHeaderLength: 4,
-                formatDescriptionOut: &videoFormat)
-            guard ret == noErr else {
-                Logger.error("could not create video format for h264")
-                return
-            }
-        case kCMVideoCodecType_HEVC:
-            if #available(iOS 11.0, *) {
-                let ret = CMVideoFormatDescriptionCreateFromHEVCParameterSets(
-                    allocator: kCFAllocatorDefault,
-                    parameterSetCount: dataParamArray.count,
-                    parameterSetPointers: &dataParamArray,
-                    parameterSetSizes: &sizeParamArray,
-                    nalUnitHeaderLength: 4,
-                    extensions: nil,
-                    formatDescriptionOut: &videoFormat)
-                guard ret == noErr else {
-                    Logger.error("could not create video format for hevc")
-                    return
+                    switch videoCodecType {
+                    case kCMVideoCodecType_H264:
+                        let ret = CMVideoFormatDescriptionCreateFromH264ParameterSets(
+                            allocator: kCFAllocatorDefault,
+                            parameterSetCount: dataParamArray.count,
+                            parameterSetPointers: &dataParamArray,
+                            parameterSetSizes: &sizeParamArray,
+                            nalUnitHeaderLength: 4,
+                            formatDescriptionOut: &videoFormat)
+                        guard ret == noErr else {
+                            Logger.error("could not create video format for h264")
+                            return
+                        }
+                    case kCMVideoCodecType_HEVC:
+                        if #available(iOS 11.0, *) {
+                            let ret = CMVideoFormatDescriptionCreateFromHEVCParameterSets(
+                                allocator: kCFAllocatorDefault,
+                                parameterSetCount: dataParamArray.count,
+                                parameterSetPointers: &dataParamArray,
+                                parameterSetSizes: &sizeParamArray,
+                                nalUnitHeaderLength: 4,
+                                extensions: nil,
+                                formatDescriptionOut: &videoFormat)
+                            guard ret == noErr else {
+                                Logger.error("could not create video format for hevc")
+                                return
+                            }
+                        } else {
+                            Logger.error("unsupported codec type: \(videoCodecType)")
+                            return
+                        }
+                    default:
+                        return
+                    }
                 }
-            } else {
-                Logger.error("unsupported codec type: \(videoCodecType)")
-                return
             }
-        default:
-            return
         }
+
         let video = AVAssetWriterInput(mediaType: .video, outputSettings: nil, sourceFormatHint: videoFormat)
         video.expectsMediaDataInRealTime = true
 

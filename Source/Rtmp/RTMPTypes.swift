@@ -214,19 +214,19 @@ public struct FlvFlags: OptionSet {
         self.rawValue = rawValue
     }
 
-    public static let mono   = FlvFlags(rawValue: 0)
+    public static let mono   = FlvFlags([])
     public static let stereo = FlvFlags(rawValue: 1)
 
-    public static let samplesize8bit    = FlvFlags(rawValue: 0)
+    public static let samplesize8bit    = FlvFlags([])
     public static let samplesize16bit   = FlvFlags(rawValue: 1 << FLV_AUDIO_SAMPLESSIZE_OFFSET)
 
     /**< signifies 5512Hz and 8000Hz in the case of NELLYMOSER */
-    public static let samplerateSpecial  = FlvFlags(rawValue: 0)
+    public static let samplerateSpecial  = FlvFlags([])
     public static let samplerate11025hz = FlvFlags(rawValue: 1 << FLV_AUDIO_SAMPLERATE_OFFSET)
     public static let samplerate22050hz = FlvFlags(rawValue: 2 << FLV_AUDIO_SAMPLERATE_OFFSET)
     public static let samplerate44100hz = FlvFlags(rawValue: 3 << FLV_AUDIO_SAMPLERATE_OFFSET)
 
-    public static let codecIdPcm                  = FlvFlags(rawValue: 0)
+    public static let codecIdPcm                  = FlvFlags([])
     public static let codecIdAdpcm                = FlvFlags(rawValue: 1 << FLV_AUDIO_CODECID_OFFSET)
     public static let codecIdMp3                  = FlvFlags(rawValue: 2 << FLV_AUDIO_CODECID_OFFSET)
     public static let codecIdPcmLe                = FlvFlags(rawValue: 3 << FLV_AUDIO_CODECID_OFFSET)
