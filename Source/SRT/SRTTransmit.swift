@@ -16,5 +16,5 @@ enum SRTError: Error {
 }
 
 class SrtConf {
-    static var transmit_chunk_size: Int32 = SRT_LIVE_DEF_PLSIZE
+    static var transmit_chunk_size: Int32 = SRT_LIVE_MAX_PLSIZE
 }
