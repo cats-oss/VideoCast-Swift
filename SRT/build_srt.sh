@@ -7,7 +7,7 @@
 #  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 
 export IPHONEOS_DEPLOYMENT_TARGET=8.0
-SDKVERSION=12.4
+SDKVERSION=13.4
 
 build_srt() {
     PLATFORM=$1
@@ -24,8 +24,6 @@ build_srt() {
 }
 
 build_srt iPhoneSimulator SIMULATOR64 x86_64
-build_srt iPhoneSimulator SIMULATOR i386
-build_srt iPhoneOS OS armv7
 build_srt iPhoneOS OS arm64
 
 cp ./build/ios_arm64/version.h Includes
@@ -35,4 +33,4 @@ cp ./srt/srtcore/platform_sys.h Includes
 cp ./srt/srtcore/udt.h Includes
 cp ./srt/srtcore/srt4udt.h Includes
 
-lipo -output libsrt.a -create ./build/ios_x86_64/libsrt.a ./build/ios_i386/libsrt.a ./build/ios_armv7/libsrt.a ./build/ios_arm64/libsrt.a
+lipo -output libsrt.a -create ./build/ios_x86_64/libsrt.a ./build/ios_arm64/libsrt.a

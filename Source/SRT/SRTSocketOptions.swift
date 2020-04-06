@@ -140,7 +140,9 @@ let srtOptions: [SRTSocketOption] = [
     .init(name: "payloadsize", symbol: SRTO_PAYLOADSIZE, binding: .pre, type: .int, valmap: nil),
     .init(name: "kmrefreshrate", symbol: SRTO_KMREFRESHRATE, binding: .pre, type: .int, valmap: nil),
     .init(name: "kmpreannounce", symbol: SRTO_KMPREANNOUNCE, binding: .pre, type: .int, valmap: nil),
-    .init(name: "strictenc", symbol: SRTO_STRICTENC, binding: .pre, type: .bool, valmap: nil)
+    .init(name: "enforcedencryption", symbol: SRTO_ENFORCEDENCRYPTION, binding: .pre, type: .bool, valmap: nil),
+    .init(name: "peeridletimeo", symbol: SRTO_PEERIDLETIMEO, binding: .pre, type: .int, valmap: nil),
+    .init(name: "packetfilter", symbol: SRTO_PACKETFILTER, binding: .pre, type: .string, valmap: nil)
 ]
 
 // swiftlint:disable:next cyclomatic_complexity
