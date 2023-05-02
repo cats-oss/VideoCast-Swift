@@ -7,13 +7,12 @@
 #  Copyright © 2018年 CyberAgent, Inc. All rights reserved.
 
 export IPHONEOS_DEPLOYMENT_TARGET=8.0
-SDKVERSION=16.1
 
 build_srt() {
     PLATFORM=$1
     IOS_PLATFORM=$2
     ARCH=$3
-    IOS_OPENSSL=$(pwd)/openssl/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk
+    IOS_OPENSSL=$(ls -d "$(pwd)/openssl/bin/${PLATFORM}"*-"${ARCH}".sdk)
     
     mkdir -p ./build/ios_${IOS_PLATFORM}_${ARCH}
     pushd ./build/ios_${IOS_PLATFORM}_${ARCH}
