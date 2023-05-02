@@ -8,7 +8,7 @@
 
 pushd ./openssl
 
-./build-libssl.sh --archs="x86_64 i386 armv7 arm64"
+./build-libssl.sh --archs="x86_64 i386 armv7 arm64" --version=1.1.1d
 
 popd
 
