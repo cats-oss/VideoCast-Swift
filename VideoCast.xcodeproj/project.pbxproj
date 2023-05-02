@@ -3,10 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 48;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		68B3B1FD2A013F8E00519C5B /* libcrypto.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 68B3B1F72A013E3100519C5B /* libcrypto.xcframework */; };
+		68B3B1FE2A013F8E00519C5B /* libcrypto.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 68B3B1F72A013E3100519C5B /* libcrypto.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		68B3B2002A013F9000519C5B /* libsrt.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 68B3B1F62A013E3000519C5B /* libsrt.xcframework */; };
+		68B3B2012A013F9000519C5B /* libsrt.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 68B3B1F62A013E3000519C5B /* libsrt.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		811531852021647900919F9F /* IThroughputAdaptation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811531842021647900919F9F /* IThroughputAdaptation.swift */; };
 		811531862021647900919F9F /* IThroughputAdaptation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811531842021647900919F9F /* IThroughputAdaptation.swift */; };
 		8115318820216A7F00919F9F /* TCPThroughputAdaptation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8115318720216A7F00919F9F /* TCPThroughputAdaptation.swift */; };
@@ -47,8 +51,6 @@
 		814265D71FFF6F35001258F2 /* IAudioMixer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814265D51FFF6F35001258F2 /* IAudioMixer.swift */; };
 		814EA591205AD18D002D4657 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 814EA590205AD18D002D4657 /* LICENSE */; };
 		814EA593205AD199002D4657 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 814EA592205AD199002D4657 /* README.md */; };
-		8161D57E2057A82800813B7A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8161D57B20578A2B00813B7A /* libcrypto.a */; };
-		8161D57F2057A82800813B7A /* libsrt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 81BFD40920578428002E90D8 /* libsrt.a */; };
 		816E872D1FFE34EB005ACB46 /* VideoCast.h in Headers */ = {isa = PBXBuildFile; fileRef = 818C0AFA1FFE1B62008CF132 /* VideoCast.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		816E872E1FFE3612005ACB46 /* VideoCast.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 818C0B121FFE1DDB008CF132 /* VideoCast.framework */; };
 		816ECEA01FFF27D4002AE4F9 /* VCSessionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 816ECE9F1FFF27D4002AE4F9 /* VCSessionDelegate.swift */; };
@@ -215,7 +217,24 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		68B3B1FF2A013F8E00519C5B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				68B3B1FE2A013F8E00519C5B /* libcrypto.xcframework in Embed Frameworks */,
+				68B3B2012A013F9000519C5B /* libsrt.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		68B3B1F62A013E3000519C5B /* libsrt.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libsrt.xcframework; path = SRT/libsrt.xcframework; sourceTree = "<group>"; };
+		68B3B1F72A013E3100519C5B /* libcrypto.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libcrypto.xcframework; path = SRT/libcrypto.xcframework; sourceTree = "<group>"; };
 		811531842021647900919F9F /* IThroughputAdaptation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IThroughputAdaptation.swift; sourceTree = "<group>"; };
 		8115318720216A7F00919F9F /* TCPThroughputAdaptation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCPThroughputAdaptation.swift; sourceTree = "<group>"; };
 		8115318A2021744600919F9F /* PreallocBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreallocBuffer.swift; sourceTree = "<group>"; };
@@ -342,9 +361,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8161D57E2057A82800813B7A /* libcrypto.a in Frameworks */,
-				8161D57F2057A82800813B7A /* libsrt.a in Frameworks */,
 				81B8CD6F204F943F00B581F6 /* libc++.tbd in Frameworks */,
+				68B3B2002A013F9000519C5B /* libsrt.xcframework in Frameworks */,
+				68B3B1FD2A013F8E00519C5B /* libcrypto.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -385,6 +404,8 @@
 		810C8CF2204E4B43002DFDCB /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				68B3B1F72A013E3100519C5B /* libcrypto.xcframework */,
+				68B3B1F62A013E3000519C5B /* libsrt.xcframework */,
 				81B8CD6C204F93D700B581F6 /* libcrypto.a */,
 				81B8CD6A204F93B000B581F6 /* libssl.a */,
 				81B8CD6E204F943E00B581F6 /* libc++.tbd */,
@@ -762,6 +783,7 @@
 				811BF9931FFE2F7D00E90EEF /* Frameworks */,
 				811BF9941FFE2F7D00E90EEF /* Headers */,
 				811BF9951FFE2F7D00E90EEF /* Resources */,
+				68B3B1FF2A013F8E00519C5B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1151,14 +1173,19 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 2YBG8BB5C7;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SRT/srt/srtcore";
 				INFOPLIST_FILE = Source/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/SRT",
@@ -1182,14 +1209,19 @@
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 2YBG8BB5C7;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SRT/srt/srtcore";
 				INFOPLIST_FILE = Source/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/SRT",
@@ -1213,7 +1245,11 @@
 				DEVELOPMENT_TEAM = 5PN926HWK3;
 				INFOPLIST_FILE = Tests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "jp.co.cyberagent.VideoCast-iOS-Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
@@ -1229,7 +1265,11 @@
 				DEVELOPMENT_TEAM = 5PN926HWK3;
 				INFOPLIST_FILE = Tests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "jp.co.cyberagent.VideoCast-iOS-Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
@@ -1346,8 +1386,9 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_INCLUDE_PATHS = "${SRCROOT}/SRT";
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -1363,14 +1404,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 2YBG8BB5C7;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
 				INFOPLIST_FILE = Source/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SDKROOT = macosx;
@@ -1389,14 +1434,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 2YBG8BB5C7;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
 				INFOPLIST_FILE = Source/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.openfresh.videocast;
 				PRODUCT_NAME = VideoCast;
 				SDKROOT = macosx;
@@ -1414,7 +1463,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 5PN926HWK3;
 				INFOPLIST_FILE = Tests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = "jp.co.cyberagent.VideoCast-macOS-Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1432,7 +1485,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 5PN926HWK3;
 				INFOPLIST_FILE = Tests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = "jp.co.cyberagent.VideoCast-macOS-Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
